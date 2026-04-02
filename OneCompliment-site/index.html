@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover"/>
+  <meta name="color-scheme" content="dark light"/>
+  <meta name="theme-color" content="#0C0C0C" media="(prefers-color-scheme: dark)"/>
+  <meta name="theme-color" content="#FEFDF8" media="(prefers-color-scheme: light)"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="format-detection" content="telephone=no"/>
+  <meta name="description" content="One compliment. Every day. A daily challenge that makes the people around you feel seen."/>
+  <title>OneC🌻mpliment — Today's Challenge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400&family=DM+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--gold:#F5C842;--green:#A8E6CF;--bg:#0C0C0C;--text:#F2EDE4;--dim:rgba(242,237,228,0.65);--faint:rgba(242,237,228,0.40);--surf:rgba(255,255,255,0.04);--bord:rgba(255,255,255,0.08);--font:'Lora',Georgia,serif;--mono:'DM Mono',monospace}
+    @media(prefers-color-scheme:light){
+      :root{--bg:#FEFDF8;--text:#1A1A1A;--dim:rgba(26,26,26,0.62);--faint:rgba(26,26,26,0.42);--surf:rgba(0,0,0,0.04);--bord:rgba(0,0,0,0.10)}
+      body::before{opacity:.10}
+      .gold-card,.rule-box{background:rgba(245,200,66,0.10);border-color:rgba(245,200,66,0.28);color:var(--text)}
+      .rule-reminder{background:rgba(245,200,66,0.08);border-color:rgba(245,200,66,0.22);color:var(--text)}
+      .example-card{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.09)}
+      .why-row{background:rgba(0,0,0,0.03)}
+      .stat-pill{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.08)}
+      .peek-box{background:rgba(245,200,66,0.08);border-color:rgba(245,200,66,0.18)}
+      .app-banner{background:linear-gradient(135deg,rgba(245,200,66,0.10),rgba(168,230,207,0.08))}
+      .btn-ghost{border-color:rgba(0,0,0,0.12);color:var(--dim)}
+      .btn-back{color:var(--faint)}
+      input,textarea{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.14);color:var(--text)}
+      input::placeholder,textarea::placeholder{color:rgba(26,26,26,0.42)}
+      #bottom-nav{background:rgba(254,253,248,0.95);border-top-color:rgba(0,0,0,0.08)}
+      #lang-sheet,#settings-overlay>div{background:#FEFDF8;border-color:rgba(0,0,0,0.08)}
+      .sheet-handle{background:rgba(0,0,0,0.12)}
+      .lang-btn{background:rgba(0,0,0,0.03);border-color:rgba(0,0,0,0.07)}
+      .lang-search{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.10);color:var(--text)}
+      .settings-btn{background:rgba(0,0,0,0.05);border-color:rgba(0,0,0,0.10)}
+      .nav-btn{color:rgba(26,26,26,0.45)}
+      #milestone-overlay{background:#FEFDF8}
+      .progress-bar-wrap{background:rgba(0,0,0,0.07)}
+      .divider{background:rgba(0,0,0,0.08)}
+      .quote{color:rgba(26,26,26,0.70)}
+      .label-dim{color:rgba(26,26,26,0.52)}
+      .input-meta{color:rgba(26,26,26,0.48)}
+      #privacy-note{color:rgba(26,26,26,0.48)}
+      .pro-banner{border-color:rgba(245,200,66,0.35)}
+      .pro-feature-card{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.09)}
+      .group-card{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.09)}
+      .member-chip{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.09)}
+      .privacy-note-box{background:rgba(168,230,207,0.08);border-color:rgba(168,230,207,0.22)}
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html{-webkit-text-size-adjust:100%}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex;justify-content:center;-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.45}
+    .wrap{width:100%;max-width:480px;padding:0 24px 80px;position:relative;z-index:1}
+    .screen{display:none;flex-direction:column;gap:24px;padding-top:52px;animation:fadeUp .4s ease both}
+    .screen.active{display:flex}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+    h1{font-size:clamp(24px,6vw,30px);font-weight:700;line-height:1.2}
+    .nav{display:flex;justify-content:space-between;align-items:center}
+    .logo{font-size:18px;font-weight:700}
+    .nav-right{display:flex;align-items:center;gap:10px}
+    .date{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+    .settings-btn{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:20px;padding:6px 10px;cursor:pointer;font-size:14px;color:var(--dim)}
+    .label{font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);font-family:var(--mono)}
+    .label-dim{font-size:10px;letter-spacing:.20em;text-transform:uppercase;color:var(--faint);font-family:var(--mono)}
+    .card{background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:18px 20px}
+    .gold-card{background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.22);border-radius:16px;padding:18px 20px}
+    .divider{height:1px;background:var(--bord)}
+    .rule-box{background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.20);border-radius:14px;padding:16px 18px;font-size:16px;line-height:1.7;color:var(--text)}
+    .example-card{background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:16px 18px}
+    .quote{font-size:16px;font-style:italic;color:var(--dim);line-height:1.65;padding-left:14px;border-left:2px solid rgba(245,200,66,.35)}
+    .quote-note{font-size:12px;color:var(--faint);margin-top:10px;font-family:var(--mono)}
+    .why-row{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.03);border-radius:12px;padding:14px 16px}
+    .why-icon{font-size:18px;flex-shrink:0;line-height:1.6}
+    .why-text{font-size:13px;color:var(--faint);line-height:1.7;font-style:italic}
+    .btn{background:var(--gold);color:#0C0C0C;border:none;border-radius:14px;padding:18px 24px;font-size:16px;font-weight:700;font-family:var(--font);cursor:pointer;width:100%;transition:transform .15s;touch-action:manipulation;min-height:44px}
+    .btn:hover{transform:scale(1.015)}
+    .btn:disabled{opacity:.38;cursor:not-allowed;transform:none}
+    .btn-ghost{background:none;border:1px solid var(--bord);border-radius:14px;padding:14px 24px;font-size:14px;color:var(--dim);font-family:var(--font);cursor:pointer;width:100%;touch-action:manipulation;min-height:44px}
+    .btn-back{background:none;border:none;color:var(--faint);font-size:14px;cursor:pointer;font-family:var(--font);padding:0;align-self:flex-start}
+    input,textarea{background:rgba(255,255,255,.05);border:1px solid var(--bord);border-radius:12px;padding:14px 16px;font-size:16px;color:var(--text);font-family:var(--font);outline:none;width:100%;transition:border-color .2s;-webkit-appearance:none}
+    input:focus,textarea:focus{border-color:rgba(245,200,66,.40)}
+    input::placeholder,textarea::placeholder{color:var(--faint)}
+    textarea{resize:none;line-height:1.65}
+    .input-group{display:flex;flex-direction:column;gap:8px}
+    .input-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);font-family:var(--mono)}
+    .rule-reminder{background:rgba(245,200,66,.07);border:1px solid rgba(245,200,66,.18);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--dim);line-height:1.6}
+    .stat-row{display:flex;gap:10px}
+    .stat-pill{flex:1;background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:14px 10px;text-align:center}
+    .stat-value{font-size:22px;font-weight:700;font-family:var(--mono)}
+    .stat-label{font-size:10px;color:var(--faint);margin-top:5px}
+    .progress-bar-wrap{height:6px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+    .progress-bar-fill{height:100%;background:linear-gradient(to right,#F5C842,#FFB347);border-radius:99px;transition:width .6s ease}
+    #screen-bloom{align-items:center;justify-content:center;min-height:80vh;gap:32px}
+    .bloom-wrap{position:relative;width:160px;height:160px;display:flex;align-items:center;justify-content:center}
+    .bloom-emoji{font-size:96px;line-height:1;position:relative;z-index:2;transition:transform .35s cubic-bezier(.34,1.56,.64,1),filter .3s}
+    .ray{position:absolute;width:4px;height:40px;background:linear-gradient(to top,var(--gold),transparent);border-radius:4px;transform-origin:bottom center;bottom:50%;left:calc(50% - 2px);opacity:0}
+    @keyframes rayShoot{0%{opacity:0;transform:rotate(var(--r)) scaleY(0)}40%{opacity:1}100%{opacity:0;transform:rotate(var(--r)) scaleY(1) translateY(-40px)}}
+    @keyframes glowPulse{0%,100%{filter:drop-shadow(0 0 16px rgba(245,200,66,.4))}50%{filter:drop-shadow(0 0 40px rgba(245,200,66,.75))}}
+    #milestone-overlay{position:fixed;inset:0;background:#0D0D0D;z-index:90;display:none;align-items:center;justify-content:center;padding:24px}
+    #milestone-overlay.active{display:flex}
+    #milestone-card{width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;opacity:0;transform:scale(.88);transition:all .5s cubic-bezier(.34,1.56,.64,1)}
+    #milestone-card.show{opacity:1;transform:scale(1)}
+    #confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:99;overflow:hidden;display:none}
+    #confetti-wrap.active{display:block}
+    .confetti-piece{position:absolute;top:-40px;animation:cffall linear forwards}
+    @keyframes cffall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+    #lang-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;display:none;align-items:flex-end;justify-content:center}
+    #lang-overlay.active{display:flex}
+    #lang-sheet{background:#141414;border-radius:24px 24px 0 0;padding:16px 24px 52px;width:100%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;gap:14px;border:1px solid rgba(255,255,255,.10);border-bottom:none}
+    .lang-search{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:12px 16px;font-size:15px;color:#F2EDE4;font-family:var(--font);outline:none;flex-shrink:0}
+    #lang-list{overflow-y:auto;display:flex;flex-direction:column;gap:6px;flex:1}
+    .lang-btn{display:flex;align-items:center;gap:12px;border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#F2EDE4}
+    .lang-btn.selected{background:rgba(245,200,66,.12);border-color:rgba(245,200,66,.35)}
+    #bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,10,.97);border-top:1px solid rgba(255,255,255,.10);display:none;justify-content:space-around;align-items:center;padding:10px 8px calc(24px + env(safe-area-inset-bottom));z-index:10;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+    #bottom-nav.active{display:flex}
+    .nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;font-family:var(--font);color:rgba(242,237,228,0.45);font-size:10px;touch-action:manipulation;min-height:52px;justify-content:center;padding:0 4px;min-width:56px;letter-spacing:.03em}
+    .done-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:20px;text-align:center}
+    .peek-box{display:flex;align-items:center;gap:12px;background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.15);border-radius:14px;padding:14px 16px;width:100%;text-align:left}
+    .app-banner{background:linear-gradient(135deg,rgba(245,200,66,.10),rgba(168,230,207,.07));border:1px solid rgba(245,200,66,.22);border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:14px;text-align:center}
+    .app-feature{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--dim);text-align:left}
+    .pro-banner{background:linear-gradient(135deg,rgba(245,200,66,.12),rgba(245,180,66,.06));border:1px solid rgba(245,200,66,.35);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;width:100%;text-align:center}
+    .pro-feature-card{background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;text-align:left}
+    .pro-badge{display:inline-block;font-size:10px;letter-spacing:.15em;text-transform:uppercase;background:rgba(245,200,66,.15);color:var(--gold);border:1px solid rgba(245,200,66,.30);border-radius:20px;padding:4px 12px;font-family:var(--mono)}
+    .landing-sun{font-size:72px;animation:bob 3s ease-in-out infinite}
+    @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+    .group-card{background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;cursor:pointer}
+    .group-card:active{opacity:.85}
+    .member-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surf);border:1px solid var(--bord);border-radius:20px;padding:5px 10px;font-size:12px;color:var(--dim)}
+    .avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#0D0D0D;flex-shrink:0}
+    .privacy-note-box{background:rgba(168,230,207,.06);border:1px solid rgba(168,230,207,.18);border-radius:12px;padding:14px 16px;font-size:12px;color:var(--dim);line-height:1.6}
+    @media(max-width:400px){.wrap{padding:0 16px 60px}}
+    @media(min-width:768px){.wrap{padding:0 32px 80px}}
+    @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+    #cookie-banner{position:fixed;left:16px;right:16px;bottom:16px;z-index:500;background:rgba(12,12,12,.96);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:none;flex-direction:column;gap:12px}
+    #cookie-banner.show{display:flex}
+    .cookie-title{font-size:14px;font-weight:700;color:var(--text)}
+    .cookie-copy{font-size:12px;line-height:1.6;color:var(--dim)}
+    .cookie-actions{display:flex;gap:10px}
+    .cookie-btn{flex:1;border:none;border-radius:12px;padding:12px 14px;font-size:13px;font-family:var(--font);cursor:pointer}
+    .cookie-btn.accept{background:var(--gold);color:#0C0C0C;font-weight:700}
+    .cookie-btn.reject{background:none;color:var(--dim);border:1px solid var(--bord)}
+    @media(prefers-color-scheme:light){#cookie-banner{background:rgba(254,253,248,.98);border-color:rgba(0,0,0,.10)}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ONBOARDING -->
+
+<div class="screen active" id="screen-onboard">
+  <div style="min-height:90vh;display:flex;align-items:center;justify-content:center">
+    <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:32px;text-align:center">
+      <div style="display:flex;gap:8px" id="onboard-dots"></div>
+      <div style="font-size:72px;animation:bob 3s ease-in-out infinite" id="onboard-emoji"></div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:clamp(22px,5vw,28px);font-weight:700;line-height:1.25;color:var(--text)" id="onboard-headline"></div>
+        <div style="font-size:16px;color:var(--dim);line-height:1.75" id="onboard-sub"></div>
+      </div>
+      <button class="btn" id="onboard-cta" onclick="nextOnboard()">...</button>
+      <button id="onboard-skip" onclick="finishOnboard()" style="background:none;border:none;color:var(--faint);font-size:13px;cursor:pointer;font-family:var(--font)">Skip intro</button>
+    </div>
+  </div>
+</div>
+
+<!-- LANDING -->
+
+<div class="screen" id="screen-landing">
+  <div class="nav">
+    <div class="logo" style="display:flex;flex-direction:column;line-height:1.15;font-weight:700"><span style="font-size:14px;letter-spacing:0.03em">One</span><span style="font-size:14px">C🌻mpliment</span></div>
+    <div class="nav-right">
+      <div class="date" id="nav-date"></div>
+      <button class="settings-btn" onclick="openLang()"><span id="header-flag">🌐</span></button>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:16px;padding:16px 0 8px">
+    <div class="landing-sun">☀️</div>
+    <div style="font-size:clamp(28px,7vw,36px);font-weight:700;line-height:1.15">One compliment.<br/>Every day.</div>
+    <div style="font-size:16px;color:var(--dim);line-height:1.7;max-width:340px">A daily challenge that makes the people around you feel seen.</div>
+  </div>
+  <div class="stat-row">
+    <div class="stat-pill"><div class="stat-value" style="color:var(--gold)">1</div><div class="stat-label">challenge/day</div></div>
+    <div class="stat-pill"><div class="stat-value" style="color:var(--gold)">☀️→🌻</div><div class="stat-label">your daily bloom</div></div>
+    <div class="stat-pill"><div class="stat-value" style="color:var(--gold)">0</div><div class="stat-label">downloads needed</div></div>
+  </div>
+  <div class="gold-card">
+    <div class="label">TODAY'S CHALLENGE</div>
+    <div style="font-size:20px;font-weight:700;color:var(--text);line-height:1.3;margin-top:8px" id="landing-prompt"></div>
+    <div style="font-size:13px;color:var(--faint);font-style:italic;margin-top:8px">Tap below to see the full rule and example before you start.</div>
+  </div>
+  <button class="btn" onclick="goTo('screen-brief')">Play Today's Challenge ☀️</button>
+  <div style="text-align:center;font-size:12px;color:var(--faint);margin-top:-12px">No account needed. Plays in your browser.</div>
+  <div style="text-align:center;font-size:12px;margin-top:-8px">
+    <a href="privacy.html" style="color:var(--faint);text-decoration:none">Privacy Policy</a>
+  </div>
+</div>
+
+<!-- BRIEF -->
+
+<div class="screen" id="screen-brief">
+  <div class="nav">
+    <button class="btn-back" onclick="goTo('screen-landing')">← Back</button>
+    <button class="settings-btn" onclick="openLang()"><span id="brief-flag">🌐</span></button>
+  </div>
+  <div class="label">TODAY'S CHALLENGE</div>
+  <h1 id="brief-prompt"></h1>
+  <div class="divider"></div>
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="label">THE RULE</div>
+    <div class="rule-box" id="brief-rule"></div>
+    <div class="example-card">
+      <div class="label-dim" style="margin-bottom:10px">EXAMPLE</div>
+      <div class="quote" id="brief-example"></div>
+      <div class="quote-note">This is just one way. Yours will be completely different.</div>
+    </div>
+    <div class="why-row">
+      <span class="why-icon">💡</span>
+      <span class="why-text" id="brief-why"></span>
+    </div>
+  </div>
+  <button class="btn" onclick="goTo('screen-write')">I get it — let me write it ☀️</button>
+</div>
+
+<!-- WRITE -->
+
+<div class="screen" id="screen-write">
+  <div class="nav">
+    <button class="btn-back" onclick="goTo('screen-brief')">← Back to Rules</button>
+    <button class="settings-btn" onclick="openLang()"><span id="write-flag">🌐</span></button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:22px;font-weight:700;line-height:1.25" id="write-prompt"></div>
+    <div class="rule-reminder" id="write-rule"></div>
+  </div>
+  <div class="input-group">
+    <div class="label-dim">WHO ARE YOU LIFTING?</div>
+    <input id="recipient" placeholder="e.g. a friend, a family member, anyone..." maxlength="40" oninput="checkSubmit()"/>
+  </div>
+  <div class="input-group">
+    <div class="label-dim">YOUR COMPLIMENT</div>
+    <textarea id="response" rows="5" placeholder="Write it here..." maxlength="280" oninput="onWrite()"></textarea>
+    <div class="input-meta"><span id="wcount">0 words</span><span id="ccount">0/280</span></div>
+  </div>
+  <button class="btn" onclick="alert('clicked'); submitChallenge()">Submit</button>
+  <div style="text-align:center;font-size:11px;color:var(--faint);line-height:1.5" id="privacy-note">Your words belong to you. Only your streak is shared.</div>
+</div>
+
+<!-- BLOOM -->
+
+<div class="screen" id="screen-bloom">
+  <div class="bloom-wrap">
+    <div class="bloom-emoji" id="bloom-emoji">☀️</div>
+  </div>
+  <div style="font-size:20px;font-weight:700;text-align:center;line-height:1.3" id="bloom-msg">Take a breath.<br/>Write something real.</div>
+</div>
+
+<!-- DONE -->
+
+<div class="screen" id="screen-done">
+  <div class="done-wrap">
+    <div style="font-size:60px">🌻</div>
+    <div style="font-size:24px;font-weight:700;line-height:1.2">You lifted someone today.</div>
+    <div style="font-size:14px;color:var(--dim);line-height:1.6;max-width:280px" id="done-sub"></div>
+    <div class="gold-card" style="width:100%;text-align:left">
+      <div class="label" style="margin-bottom:10px">WHAT YOU SAID</div>
+      <div style="font-size:16px;font-style:italic;line-height:1.55" id="done-quote"></div>
+      <div style="font-size:12px;color:var(--faint);margin-top:8px" id="done-to"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:24px">🔥</span>
+      <span style="font-size:46px;font-weight:700;color:var(--gold);letter-spacing:-.03em" id="done-streak">1</span>
+      <span style="font-size:12px;color:var(--faint)" id="done-streak-label">day streak</span>
+    </div>
+    <div class="peek-box" id="done-peek" style="display:none">
+      <span id="done-peek-emoji" style="font-size:24px"></span>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)" id="done-peek-title"></div>
+        <div style="font-size:11px;color:var(--faint);margin-top:2px">Come back tomorrow ☀️</div>
+      </div>
+    </div>
+    <!-- Share -->
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%">
+      <div class="label-dim">SHARE YOUR BLOOM</div>
+      <div style="background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:18px;font-family:var(--mono);font-size:13px;color:var(--dim);white-space:pre-wrap;line-height:1.9" id="share-preview"></div>
+      <div id="copied-badge" style="background:#A8E6CF;color:#0C0C0C;border-radius:10px;padding:12px;font-size:14px;font-weight:700;text-align:center;display:none">✓ Copied!</div>
+      <button class="btn" onclick="copyShare()">📋 Copy & Share</button>
+      <div style="display:flex;gap:10px">
+        <button style="flex:1;background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:14px 8px;cursor:pointer;font-size:12px;color:var(--faint);font-family:var(--font);text-align:center" onclick="copyShare()">📸 Instagram</button>
+        <button style="flex:1;background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:14px 8px;cursor:pointer;font-size:12px;color:var(--faint);font-family:var(--font);text-align:center" onclick="copyShare()">𝕏 Twitter</button>
+        <button style="flex:1;background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:14px 8px;cursor:pointer;font-size:12px;color:var(--faint);font-family:var(--font);text-align:center" onclick="copyShare()">💬 Message</button>
+      </div>
+    </div>
+    <!-- Pro Banner -->
+    <div class="pro-banner">
+      <div class="pro-badge">✦ OneC🌻mpliment Pro</div>
+      <div style="font-size:19px;font-weight:700;color:var(--text);line-height:1.3">Take your streak to the next level</div>
+      <div class="pro-feature-card">
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">🔥</span><span style="font-size:14px;font-weight:700;color:var(--text)">Streak Freeze</span><span style="font-size:10px;color:var(--gold);background:rgba(245,200,66,.12);border-radius:20px;padding:2px 8px;font-family:var(--mono);margin-left:auto">1 per week</span></div>
+        <div style="font-size:13px;color:var(--dim);line-height:1.6">Life happens. One day a week you can freeze your streak so it doesn't reset. Resets every Monday.</div>
+      </div>
+      <div class="pro-feature-card">
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">👥</span><span style="font-size:14px;font-weight:700;color:var(--text)">Unlimited Groups</span><span style="font-size:10px;color:var(--gold);background:rgba(245,200,66,.12);border-radius:20px;padding:2px 8px;font-family:var(--mono);margin-left:auto">vs 8 free</span></div>
+        <div style="font-size:13px;color:var(--dim);line-height:1.6">Free groups cap at 8 members. Pro removes that limit entirely.</div>
+      </div>
+      <div class="pro-feature-card">
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">🛟</span><span style="font-size:14px;font-weight:700;color:var(--text)">Squad Rescue</span><span style="font-size:10px;color:var(--gold);background:rgba(245,200,66,.12);border-radius:20px;padding:2px 8px;font-family:var(--mono);margin-left:auto">1 per month</span></div>
+        <div style="font-size:13px;color:var(--dim);line-height:1.6">About to miss a day? Send a rescue signal to your squad to save the group streak.</div>
+      </div>
+      <div class="pro-feature-card">
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">📖</span><span style="font-size:14px;font-weight:700;color:var(--text)">Challenge History</span><span style="font-size:10px;color:var(--gold);background:rgba(245,200,66,.12);border-radius:20px;padding:2px 8px;font-family:var(--mono);margin-left:auto">365 days</span></div>
+        <div style="font-size:13px;color:var(--dim);line-height:1.6">Every compliment you've ever written, saved. A full year of kindness — documented.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <a href="https://buy.stripe.com/dRm5kE98q8Z7eIJdHpao801" target="_blank" style="background:var(--gold);color:#0C0C0C;border-radius:14px;padding:16px;font-size:15px;font-weight:700;font-family:var(--font);text-decoration:none;display:block;text-align:center">🌻 Get Pro — $3.99/month</a>
+        <a href="https://buy.stripe.com/9B6cN64Sab7fgQRdHpao800" target="_blank" style="background:none;border:1px solid rgba(245,200,66,.35);border-radius:14px;padding:14px;font-size:13px;color:var(--gold);font-family:var(--font);text-decoration:none;display:block;text-align:center">$29.99/year — save 37% ✦</a>
+      </div>
+      <div style="font-size:11px;color:var(--faint);font-family:var(--mono)">Cancel anytime · Secure checkout via Stripe</div>
+    </div>
+    <!-- App Banner -->
+    <div class="app-banner">
+      <div style="display:flex;flex-direction:column;line-height:1.2;font-weight:700;align-self:center"><span style="font-size:22px">One</span><span style="font-size:22px">C🌻mpliment</span></div>
+      <div style="font-size:20px;font-weight:700;color:var(--text);line-height:1.25">Want to save your streak and play with friends?</div>
+      <div style="font-size:14px;color:var(--dim);line-height:1.6">The browser version is just the beginning. The app is where the real magic happens.</div>
+      <div style="display:flex;flex-direction:column;gap:8px;text-align:left">
+        <div class="app-feature">👥 Create groups with friends, family, or coworkers</div>
+        <div class="app-feature">🔥 Group streaks — don't let your squad down</div>
+        <div class="app-feature">🌻 See what everyone in your group said each day</div>
+        <div class="app-feature">🏅 Milestone moments at 7, 30, and 100 days</div>
+        <div class="app-feature">📋 Weekly squad recap every Sunday</div>
+      </div>
+      <a class="btn" href="#" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px">🌻 Download OneC🌻mpliment — Free</a>
+      <div style="font-size:11px;color:var(--faint);font-family:var(--mono)">Available on iOS & Android</div>
+    </div>
+    <!-- For Teams -->
+    <div style="background:rgba(168,230,207,.07);border:1px solid rgba(168,230,207,.2);border-radius:18px;padding:20px;text-align:center;display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:13px;color:var(--faint);letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono)">For Schools & Organizations</div>
+      <div style="font-size:18px;font-weight:700;color:var(--text);line-height:1.3">Run this as a challenge with your whole team</div>
+      <div style="font-size:13px;color:var(--dim);line-height:1.6">Teachers, coaches, HR teams, and churches use OneC🌻mpliment to run group kindness challenges.</div>
+      <a href="onecompliment-org.html" onclick="if(window.gtag){gtag('event','click_teams_page')}" style="background:#A8E6CF;color:#0C0C0C;border-radius:12px;padding:14px 20px;font-size:14px;font-weight:700;font-family:var(--font);text-decoration:none;display:block;text-align:center">🏢 Learn more for teams →</a>
+    </div>
+    <button class="btn-ghost" onclick="playAgain()">Back to home ☀️</button>
+    <div class="footer-links" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="privacy.html" style="font-size:12px;color:var(--faint);text-decoration:none">Privacy Policy</a>
+    </div>
+  </div>
+</div>
+
+<!-- GROUPS SCREEN — inside .wrap -->
+
+<div class="screen" id="screen-groups">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div style="font-size:20px;font-weight:700;color:var(--text)">👥 My Groups</div>
+    <button class="btn-back" onclick="goTo('screen-landing')">← Back</button>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span style="font-size:10px;color:#A8E6CF;background:rgba(168,230,207,.1);border:1px solid rgba(168,230,207,.2);border-radius:20px;padding:3px 10px;font-family:var(--mono)">🔒 Invite-only</span>
+    <span style="font-size:10px;color:#A8E6CF;background:rgba(168,230,207,.1);border:1px solid rgba(168,230,207,.2);border-radius:20px;padding:3px 10px;font-family:var(--mono)">🛡 No contact harvesting</span>
+  </div>
+  <div id="groups-list"></div>
+  <button class="btn" onclick="showCreateGroup()">+ Create a Group</button>
+  <!-- Create Group Form -->
+  <div id="create-group-form" style="display:none;flex-direction:column;gap:16px;background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:20px">
+    <div style="font-size:16px;font-weight:700;color:var(--text)">Create a Group</div>
+    <div class="input-group">
+      <div class="label-dim">GROUP NAME</div>
+      <input id="new-group-name" placeholder="e.g. Morning Crew, Family, Work Squad..." maxlength="40"/>
+    </div>
+    <div class="input-group">
+      <div class="label-dim">INVITE BY EMAIL</div>
+      <div style="display:flex;gap:8px">
+        <input id="invite-email" type="email" placeholder="friend@email.com" style="flex:1"/>
+        <button onclick="addEmail()" style="background:rgba(245,200,66,.15);border:1px solid rgba(245,200,66,.3);border-radius:12px;padding:0 16px;font-size:14px;color:var(--gold);cursor:pointer;font-family:var(--font);flex-shrink:0;white-space:nowrap">Add</button>
+      </div>
+      <div id="email-chips" style="display:flex;flex-wrap:wrap;gap:8px;min-height:0"></div>
+    </div>
+    <div class="input-group">
+      <div class="label-dim">OR SHARE AN INVITE LINK</div>
+      <div style="display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.03);border:1px solid var(--bord);border-radius:12px;padding:12px 14px">
+        <span style="font-size:12px;color:var(--faint);flex:1;font-family:var(--mono);overflow:hidden;white-space:nowrap;text-overflow:ellipsis" id="invite-link-text">onecompliment.app?join=...</span>
+        <button onclick="copyInviteLink()" style="background:none;border:1px solid var(--bord);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--dim);cursor:pointer;font-family:var(--font);flex-shrink:0">Copy</button>
+      </div>
+    </div>
+    <div class="privacy-note-box">
+      <div style="font-weight:700;color:var(--text);margin-bottom:4px">🔒 How we handle your contacts</div>
+      In this browser version, email addresses entered for groups stay on this device in local storage and are not sent to our servers. Invite links are shared manually. You can delete a group and clear its locally stored data at any time.
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="hideCreateGroup()" class="btn-ghost" style="flex:1">Cancel</button>
+      <button onclick="createGroup()" class="btn" style="flex:2">Create Group ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP FEED SCREEN — inside .wrap -->
+
+<div class="screen" id="screen-feed">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-size:11px;color:var(--faint);font-family:var(--mono);letter-spacing:.1em" id="feed-type-label"></div>
+      <div style="font-size:20px;font-weight:700;color:var(--text)" id="feed-group-name"></div>
+    </div>
+    <button class="btn-back" onclick="goTo('screen-groups')">← Groups</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+    <div class="stat-pill"><div class="stat-value" style="color:var(--gold)" id="feed-streak">0</div><div class="stat-label">streak</div></div>
+    <div class="stat-pill"><div class="stat-value" style="color:var(--gold)" id="feed-members">0</div><div class="stat-label">members</div></div>
+    <div class="stat-pill"><div class="stat-value" style="color:var(--gold)" id="feed-bloomed">0</div><div class="stat-label">bloomed</div></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap" id="feed-avatars"></div>
+  <div class="label-dim">TODAY'S COMPLIMENTS</div>
+  <div id="feed-list"></div>
+  <button onclick="leaveGroup()" style="background:none;border:1px solid rgba(255,80,80,.18);border-radius:12px;padding:12px;font-size:13px;color:rgba(255,100,100,.55);font-family:var(--font);cursor:pointer;width:100%">Leave Group</button>
+</div>
+
+</div><!-- end .wrap -->
+
+<!-- MILESTONE -->
+
+<div id="milestone-overlay">
+  <div id="milestone-card">
+    <div id="ms-emoji" style="font-size:64px"></div>
+    <div id="ms-badge" style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;border-radius:20px;padding:5px 16px;font-family:var(--mono)"></div>
+    <div style="font-size:52px;font-weight:700;letter-spacing:-.03em" id="ms-streak"></div>
+    <div style="font-size:13px;color:rgba(242,237,228,.4);margin-top:-16px">days straight</div>
+    <div style="font-size:18px;font-weight:700;color:#F5F0E8;line-height:1.3" id="ms-title"></div>
+    <div style="font-size:15px;color:rgba(242,237,228,.5);line-height:1.7;font-family:var(--font);max-width:300px" id="ms-message"></div>
+    <div style="display:flex;gap:8px;justify-content:center" id="ms-confetti-row"></div>
+    <div style="font-size:12px;color:rgba(242,237,228,.3);font-style:italic" id="ms-group"></div>
+    <button id="ms-continue" style="width:100%;border:none;border-radius:14px;padding:18px 24px;font-size:16px;font-weight:700;font-family:var(--font);cursor:pointer;margin-top:8px">Continue →</button>
+  </div>
+</div>
+<div id="confetti-wrap"></div>
+
+<!-- LANG -->
+
+<div id="lang-overlay" onclick="closeLang(event)">
+  <div id="lang-sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div style="font-size:18px;font-weight:700;color:#F2EDE4">🌐 Language</div>
+    <input class="lang-search" placeholder="Search languages..." oninput="filterLangs(this.value)" id="lang-search"/>
+    <div id="lang-list"></div>
+    <button class="btn-ghost" onclick="closeLang()">Done</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+
+<div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:flex-end;justify-content:center" onclick="closeSettings(event)">
+  <div style="background:#161616;border-radius:24px 24px 0 0;padding:16px 24px 52px;width:100%;max-width:480px;display:flex;flex-direction:column;gap:20px;border:1px solid rgba(255,255,255,0.08);border-bottom:none" onclick="event.stopPropagation()">
+    <div style="width:40px;height:4px;background:rgba(255,255,255,.2);border-radius:99px;align-self:center"></div>
+    <div style="font-size:20px;font-weight:700;color:#F2EDE4">Settings</div>
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:14px 16px">
+      <div style="font-size:13px;font-weight:700;color:#F2EDE4">OneC🌻mpliment</div>
+      <div style="font-size:11px;color:rgba(242,237,228,0.5);font-family:var(--mono);margin-top:4px">Browser Version · Free</div>
+    </div>
+    <!-- Notifications -->
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:10px;letter-spacing:0.2em;color:rgba(242,237,228,0.5);text-transform:uppercase;font-family:var(--mono)">Daily Reminder</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:14px 16px">
+        <div><div style="font-size:14px;color:#F2EDE4">Remind me daily</div><div style="font-size:11px;color:rgba(242,237,228,0.5);font-family:var(--mono);margin-top:3px">One nudge. That's it.</div></div>
+        <div id="notif-toggle" onclick="toggleNotif()" style="width:44px;height:26px;border-radius:99px;background:rgba(255,255,255,0.1);position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0"><div id="notif-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,0.4);transition:left 0.2s"></div></div>
+      </div>
+      <div id="notif-time-row" style="display:none;align-items:center;gap:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:14px 16px">
+        <div style="font-size:13px;color:var(--dim);flex:1">Remind me at</div>
+        <input type="time" id="notif-time-input" value="09:00" onchange="saveNotifTime(this.value)" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:8px 12px;font-size:15px;color:var(--text);font-family:var(--mono);outline:none;cursor:pointer;width:auto">
+      </div>
+    </div>
+    <!-- Feedback -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:10px;letter-spacing:0.2em;color:rgba(242,237,228,0.5);text-transform:uppercase;font-family:var(--mono)">Share Your Feedback</div>
+      <div id="feedback-form" style="display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:13px;color:rgba(242,237,228,0.65)">How would you rate OneC🌻mpliment?</div>
+        <div style="display:flex;gap:8px">
+          <span class="star" data-val="1" onclick="setRating(1)" style="font-size:32px;cursor:pointer;opacity:0.25;transition:all 0.15s">⭐</span>
+          <span class="star" data-val="2" onclick="setRating(2)" style="font-size:32px;cursor:pointer;opacity:0.25;transition:all 0.15s">⭐</span>
+          <span class="star" data-val="3" onclick="setRating(3)" style="font-size:32px;cursor:pointer;opacity:0.25;transition:all 0.15s">⭐</span>
+          <span class="star" data-val="4" onclick="setRating(4)" style="font-size:32px;cursor:pointer;opacity:0.25;transition:all 0.15s">⭐</span>
+          <span class="star" data-val="5" onclick="setRating(5)" style="font-size:32px;cursor:pointer;opacity:0.25;transition:all 0.15s">⭐</span>
+        </div>
+        <div style="font-size:13px;color:rgba(242,237,228,0.65)">What's working? What could be better?</div>
+        <textarea id="feedback-comment" maxlength="500" rows="4" placeholder="Tell us what you think — we read everything." style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 16px;font-size:14px;color:#F2EDE4;font-family:var(--font);outline:none;width:100%;box-sizing:border-box;resize:none;line-height:1.6" oninput="updateCharCount()"></textarea>
+        <div style="font-size:11px;color:rgba(242,237,228,0.45);text-align:right;font-family:var(--mono)" id="char-count">0/500</div>
+        <button id="feedback-submit" onclick="submitFeedback()" style="background:rgba(255,255,255,0.08);color:rgba(245,240,232,0.3);border:none;border-radius:14px;padding:16px;font-size:15px;font-weight:700;font-family:var(--font);cursor:default;transition:all 0.2s">Send Feedback</button>
+      </div>
+      <div id="feedback-thanks" style="display:none;background:rgba(168,230,207,0.1);border:1px solid rgba(168,230,207,0.2);border-radius:14px;padding:18px;text-align:center">
+        <div style="font-size:28px;margin-bottom:8px">🌻</div>
+        <div style="font-size:15px;font-weight:700;color:#A8E6CF">Thank you!</div>
+        <div style="font-size:13px;color:var(--faint);margin-top:4px">Your feedback helps us grow.</div>
+      </div>
+    </div>
+    <button onclick="closeSettings()" style="background:none;border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:14px;font-size:14px;color:rgba(242,237,228,0.6);font-family:var(--font);cursor:pointer">Close</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+
+<div id="bottom-nav">
+  <button class="nav-btn" id="nav-home" onclick="goTo('screen-landing')" style="color:#F5C842">
+    <span style="font-size:26px;line-height:1">🏠</span>
+    <span style="color:#F5C842;font-weight:600">Home</span>
+  </button>
+  <button class="nav-btn" id="nav-groups" onclick="openGroups()" style="color:#C3B1E1">
+    <span style="font-size:26px;line-height:1">👥</span>
+    <span style="color:#C3B1E1">Groups</span>
+  </button>
+  <a class="nav-btn" id="nav-teams" href="onecompliment-org.html" onclick="if(window.gtag){gtag('event','click_teams_page')}" style="text-decoration:none;color:#FFB347">
+    <span style="font-size:26px;line-height:1">🏢</span>
+    <span style="color:#FFB347">For Teams</span>
+  </a>
+  <button class="nav-btn" id="nav-settings" onclick="openSettings()" style="color:#5C6BC0">
+    <span style="font-size:26px;line-height:1">⚙️</span>
+    <span style="color:#5C6BC0">Settings</span>
+  </button>
+</div>
+
+<div id="cookie-banner">
+  <div class="cookie-title">Privacy choices</div>
+  <div class="cookie-copy">
+    We use analytics to understand site traffic and improve OneC🌻mpliment.
+    By tapping "Accept," you agree to analytics cookies. See our
+    <a href="privacy.html" style="color:var(--gold);text-decoration:none;">Privacy Policy</a>.
+  </div>
+  <div class="cookie-actions">
+    <button class="cookie-btn reject" onclick="rejectCookies()">Not now</button>
+    <button class="cookie-btn accept" onclick="acceptCookies()">Accept</button>
+  </div>
+</div>
+
+<script>
+// ── Data ─────────────────────────────────────────────────────
+const ONBOARD_STEPS = [
+  {emoji:"🌅",headline:"When's the last time you made someone's day on purpose?",sub:"Not a like. Not a reaction. A real, specific, genuine compliment.",cta:"I want to do that"},
+  {emoji:"☀️",headline:"One challenge. Every day. Under 3 minutes.",sub:"Each day you get a new constraint — say it in 10 words, say it out loud, say something they've never been told. The challenge makes it real.",cta:"That sounds doable"},
+  {emoji:"🌻",headline:"Do it with people you care about.",sub:"Create a group with friends, family, or coworkers. Watch each other's streaks. Don't let the squad down.",cta:"Let's start"},
+];
+let onboardStep = 0;
+
+const CHALLENGES = [
+  {prompt:"Say it without using their name",rule:"Write your compliment without saying the person's name. Not once.",example:"The way you show up quietly and make everything better — I notice that more than you know.",why:"Removing the name forces you to be specific about what makes them unique."},
+  {prompt:"Say it in exactly 10 words",rule:"Your compliment must be exactly 10 words. Count every word.",example:"You make every room feel warmer just by walking in.",why:"Every word has to earn its place."},
+  {prompt:"Compliment what they do, not who they are",rule:"No 'you are' statements. Focus on a specific action.",example:"You always ask how someone is doing and actually wait to hear the answer.",why:"A specific action sticks with someone for years."},
+  {prompt:"Say it like you'd write it in a card",rule:"Warm, personal, meant to be kept.",example:"I'm so glad you're in my life. You make ordinary days worth remembering.",why:"Cards get saved. People reread them years later."},
+  {prompt:"Use a color somewhere in it",rule:"Your compliment must include at least one color.",example:"You bring this golden energy to everything you touch.",why:"A random constraint unlocks angles you'd never find otherwise."},
+  {prompt:"Say something they've probably never been told",rule:"Say the thing no one else has probably ever said to them.",example:"You have this rare ability to make people feel like the most interesting person in the room.",why:"Most compliments are things people have heard before. This one has to be new."},
+  {prompt:"Say it to yourself today",rule:"You are the recipient. Write a genuine compliment to yourself.",example:"I keep showing up even when it's hard, and I don't give myself enough credit for that.",why:"You can't pour from an empty cup."},
+  {prompt:"Write it without using the word 'you'",rule:"The word 'you' cannot appear anywhere. Not once.",example:"There's a kind of person who makes everyone around them feel seen — that's who I'm thinking about.",why:"Removing 'you' forces a completely different sentence structure."},
+  {prompt:"Say it out loud — don't text it",rule:"This compliment must be spoken. In person or on a call.",example:"Walk up to them. Pick up the phone. Just say it.",why:"Hearing a compliment is 10x more powerful than reading one."},
+  {prompt:"Start with 'I never told you...'",rule:"Begin with the words 'I never told you' — then finish honestly.",example:"I never told you how much that one thing you said two years ago still stays with me.",why:"Those four words signal that something real is coming."},
+  {prompt:"Make it about a moment, not a trait",rule:"Describe one specific moment you witnessed.",example:"That day you stayed late to help without being asked — I haven't forgotten that.",why:"Specific moments are unforgettable. Traits are forgettable."},
+  {prompt:"Say it in a question",rule:"Write your compliment as a genuine question.",example:"Do you know how rare it is to find someone who actually listens the way you do?",why:"A question lands differently — it invites them to sit with it."},
+  {prompt:"Write it like the opening line of a story",rule:"Start your compliment like the first sentence of a novel about this person.",example:"There's a person in my life who makes everyone around them feel like they matter — and they don't even realize it.",why:"A great opening line makes you want to keep reading."},
+  {prompt:"Compliment someone you haven't spoken to in a while",rule:"Think of someone you've drifted from. Say the thing you never got around to saying.",example:"I still think about the advice you gave me years ago. It changed something.",why:"The longer you've waited to say it, the more it means."},
+  {prompt:"Use a number in it",rule:"Your compliment must include a specific number.",example:"I've seen you handle hard things at least a dozen times. You never fold.",why:"Numbers make vague praise feel specific and earned."},
+  {prompt:"Start with 'Most people don't notice...'",rule:"Begin with those exact words and finish honestly.",example:"Most people don't notice how much work you put in before anyone else is watching.",why:"Noticing what others miss is the highest form of a compliment."},
+  {prompt:"Say it in exactly 5 words",rule:"Five words. Not four, not six.",example:"You make hard things beautiful.",why:"The tightest constraints produce the most surprising results."},
+  {prompt:"Compliment their consistency",rule:"Focus on something they show up for every single day, quietly.",example:"You do the same thing every day — show up fully — and most people never notice how hard that is.",why:"Consistency is the most underappreciated quality in people."},
+  {prompt:"Write it as if they'll read it in 10 years",rule:"Imagine they find this compliment a decade from now.",example:"I hope you remember this period of your life as the one where you figured out who you really were.",why:"The best compliments are time capsules."},
+  {prompt:"Say the thing you always think but never say",rule:"There's something you've thought about this person a hundred times. Say it today.",example:"Every time I see your name on my phone I smile before I even open it.",why:"The unsaid things are usually the truest things."},
+  {prompt:"Compliment how they make others feel",rule:"Don't describe them — describe what the room feels like when they're in it.",example:"Something shifts when you walk in. People stand a little taller.",why:"Impact on others is the most powerful thing you can recognize."},
+  {prompt:"Use a season or weather in it",rule:"Your compliment must reference a season, weather, or time of day.",example:"You're the kind of person that feels like the first warm day after a long winter.",why:"Sensory language makes compliments feel vivid and memorable."},
+  {prompt:"Compliment their courage",rule:"Think of something brave they did that maybe they don't see as brave.",example:"You said the true thing in the room when everyone else stayed quiet. That took more courage than you know.",why:"People rarely recognize their own bravery."},
+  {prompt:"Write it backwards — end with the setup",rule:"Say the compliment first, then explain what earned it.",example:"You're irreplaceable. Not because of what you do — because of how you make people feel seen while you're doing it.",why:"Leading with the punch lands harder."},
+  {prompt:"Say it in third person",rule:"Write your compliment as if you're telling someone else about this person.",example:"There's someone in my life who shows up for people without keeping score. That's genuinely rare.",why:"Third person creates a kind of awe that first person can't reach."},
+  {prompt:"Compliment something invisible",rule:"Pick something about them that no one can see.",example:"The quiet way you hold yourself together when everything is falling apart — I see that. It's extraordinary.",why:"Invisible qualities feel unseen. Until someone names them."},
+  {prompt:"Start with 'The world is better because...'",rule:"Begin with those exact words.",example:"The world is better because you ask questions that make people think about things differently.",why:"When it's earned, it's the truest thing you can say."},
+  {prompt:"Say it like a toast",rule:"Write your compliment as if you're raising a glass.",example:"To someone who makes hard work look effortless and kindness look natural — I'm lucky to know you.",why:"A toast format gives your words weight and ceremony."},
+  {prompt:"Compliment their timing",rule:"Think about a moment they showed up at exactly the right time.",example:"You appeared at one of the hardest points of my year. I don't know if you knew that, but it mattered.",why:"Being there at the right moment is a form of grace."},
+  {prompt:"Say it in a place they'd least expect",rule:"This one is about delivery. Say it somewhere unexpected.",example:"Don't overthink it. Just pick the moment and say it somewhere they won't expect it.",why:"The unexpected timing is half the gift."},
+];
+
+const MILESTONES = [
+  {days:7,emoji:"🌱",badge:"First Bloom",color:"#A8E6CF",title:"One week of lifting people up.",message:"You've built something most people never do — a habit of kindness. Seven people felt more seen because of you.",confetti:["🌻","🌱","✦","🌿","💚"]},
+  {days:14,emoji:"🌻",badge:"Two Weeks Strong",color:"#F5C842",title:"Two weeks. You're not stopping.",message:"Most people quit in the first week. You didn't.",confetti:["🌻","☀️","✦","🌸","⭐"]},
+  {days:30,emoji:"🏅",badge:"One Month",color:"#FFB347",title:"A whole month of lifting people.",message:"30 days. That's not a habit anymore — that's who you are.",confetti:["🏅","🌻","🎉","✨","🔥","⭐"]},
+  {days:60,emoji:"💫",badge:"Two Months",color:"#C3B1E1",title:"Two months. You're rare.",message:"Almost no one gets here. You've lifted 60 people in 60 days.",confetti:["💫","🌻","✨","🎊","⭐","🌟"]},
+  {days:100,emoji:"🌟",badge:"100 Days",color:"#F5C842",title:"100 days of lifting people up.",message:"One hundred. That's a legacy.",confetti:["🌟","🏆","🌻","🎉","✨","💫","🎊","⭐","🔥"]},
+];
+
+const LANGUAGES=[{code:"en",name:"English",native:"English",flag:"🇺🇸",dir:"ltr"},{code:"es",name:"Spanish",native:"Español",flag:"🇪🇸",dir:"ltr"},{code:"fr",name:"French",native:"Français",flag:"🇫🇷",dir:"ltr"},{code:"pt",name:"Portuguese",native:"Português",flag:"🇧🇷",dir:"ltr"},{code:"zh",name:"Mandarin",native:"中文",flag:"🇨🇳",dir:"ltr"},{code:"ar",name:"Arabic",native:"العربية",flag:"🇸🇦",dir:"rtl"},{code:"hi",name:"Hindi",native:"हिन्दी",flag:"🇮🇳",dir:"ltr"},{code:"de",name:"German",native:"Deutsch",flag:"🇩🇪",dir:"ltr"},{code:"ja",name:"Japanese",native:"日本語",flag:"🇯🇵",dir:"ltr"},{code:"ko",name:"Korean",native:"한국어",flag:"🇰🇷",dir:"ltr"},{code:"it",name:"Italian",native:"Italiano",flag:"🇮🇹",dir:"ltr"},{code:"ru",name:"Russian",native:"Русский",flag:"🇷🇺",dir:"ltr"},{code:"nl",name:"Dutch",native:"Nederlands",flag:"🇳🇱",dir:"ltr"},{code:"tr",name:"Turkish",native:"Türkçe",flag:"🇹🇷",dir:"ltr"},{code:"sw",name:"Swahili",native:"Kiswahili",flag:"🇰🇪",dir:"ltr"},{code:"pl",name:"Polish",native:"Polski",flag:"🇵🇱",dir:"ltr"},{code:"vi",name:"Vietnamese",native:"Tiếng Việt",flag:"🇻🇳",dir:"ltr"},{code:"th",name:"Thai",native:"ภาษาไทย",flag:"🇹🇭",dir:"ltr"},{code:"id",name:"Indonesian",native:"Bahasa Indonesia",flag:"🇮🇩",dir:"ltr"},{code:"fa",name:"Persian",native:"فارسی",flag:"🇮🇷",dir:"rtl"},{code:"he",name:"Hebrew",native:"עברית",flag:"🇮🇱",dir:"rtl"},{code:"bn",name:"Bengali",native:"বাংলা",flag:"🇧🇩",dir:"ltr"},{code:"uk",name:"Ukrainian",native:"Українська",flag:"🇺🇦",dir:"ltr"},{code:"ro",name:"Romanian",native:"Română",flag:"🇷🇴",dir:"ltr"},{code:"el",name:"Greek",native:"Ελληνικά",flag:"🇬🇷",dir:"ltr"},{code:"cs",name:"Czech",native:"Čeština",flag:"🇨🇿",dir:"ltr"},{code:"sv",name:"Swedish",native:"Svenska",flag:"🇸🇪",dir:"ltr"},{code:"hu",name:"Hungarian",native:"Magyar",flag:"🇭🇺",dir:"ltr"},{code:"fi",name:"Finnish",native:"Suomi",flag:"🇫🇮",dir:"ltr"},{code:"no",name:"Norwegian",native:"Norsk",flag:"🇳🇴",dir:"ltr"},{code:"da",name:"Danish",native:"Dansk",flag:"🇩🇰",dir:"ltr"},{code:"ms",name:"Malay",native:"Bahasa Melayu",flag:"🇲🇾",dir:"ltr"},{code:"fil",name:"Filipino",native:"Filipino",flag:"🇵🇭",dir:"ltr"},{code:"af",name:"Afrikaans",native:"Afrikaans",flag:"🇿🇦",dir:"ltr"},{code:"zu",name:"Zulu",native:"isiZulu",flag:"🇿🇦",dir:"ltr"},{code:"yo",name:"Yoruba",native:"Yorùbá",flag:"🇳🇬",dir:"ltr"},{code:"ha",name:"Hausa",native:"Hausa",flag:"🇳🇬",dir:"ltr"},{code:"am",name:"Amharic",native:"አማርኛ",flag:"🇪🇹",dir:"ltr"},{code:"ta",name:"Tamil",native:"தமிழ்",flag:"🇮🇳",dir:"ltr"},{code:"ur",name:"Urdu",native:"اردو",flag:"🇵🇰",dir:"rtl"}];
+
+// ── State ─────────────────────────────────────────────────────
+let currentLang = "en";
+let streak = parseInt(localStorage.getItem('oc_streak') || '0');
+let currentChallenge;
+let shareTextGlobal = "";
+let pendingMilestone = null;
+let currentRating = 0;
+
+// ── Helpers ───────────────────────────────────────────────────
+const getDayOfYear = () => Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+const getTodayKey = () => new Date().toISOString().slice(0, 10);
+const getChallenge = () => CHALLENGES[getDayOfYear() % CHALLENGES.length];
+const getMilestone = (n) => MILESTONES.find(m => m.days === n);
+const getNextMilestone = (n) => MILESTONES.find(m => m.days > n);
+const getLang = () => LANGUAGES.find(l => l.code === currentLang) || LANGUAGES[0];
+
+// ── Onboarding ────────────────────────────────────────────────
+function renderOnboard() {
+  const s = ONBOARD_STEPS[onboardStep];
+  document.getElementById('onboard-emoji').textContent = s.emoji;
+  document.getElementById('onboard-headline').textContent = s.headline;
+  document.getElementById('onboard-sub').textContent = s.sub;
+  document.getElementById('onboard-cta').textContent = s.cta + ' →';
+  document.getElementById('onboard-skip').style.display = onboardStep === ONBOARD_STEPS.length - 1 ? 'none' : 'block';
+  document.getElementById('onboard-dots').innerHTML = ONBOARD_STEPS.map((_, i) =>
+    `<div style="width:${i===onboardStep?24:8}px;height:8px;border-radius:99px;background:${i===onboardStep?'var(--gold)':'rgba(255,255,255,0.15)'};transition:all 0.3s"></div>`
+  ).join('');
+}
+function nextOnboard() {
+  if (onboardStep < ONBOARD_STEPS.length - 1) { onboardStep++; renderOnboard(); }
+  else finishOnboard();
+}
+function finishOnboard() {
+  localStorage.setItem('oc_onboarded', '1');
+  document.getElementById('screen-onboard').classList.remove('active');
+  document.getElementById('screen-landing').classList.add('active');
+  document.getElementById('bottom-nav').classList.add('active');
+}
+
+// ── Init ──────────────────────────────────────────────────────
+function init() {
+  resetGroupsForNewDay();
+  initCookieBanner();
+  currentChallenge = getChallenge();
+  const today = new Date().toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
+  document.getElementById('nav-date').textContent = today;
+  document.getElementById('landing-prompt').textContent = currentChallenge.prompt;
+  document.getElementById('brief-prompt').textContent = currentChallenge.prompt;
+  document.getElementById('brief-rule').textContent = currentChallenge.rule;
+  document.getElementById('brief-example').textContent = `"${currentChallenge.example}"`;
+  document.getElementById('brief-why').textContent = currentChallenge.why;
+  document.getElementById('write-prompt').textContent = currentChallenge.prompt;
+  document.getElementById('write-rule').textContent = currentChallenge.rule;
+  renderLangList('');
+  if (localStorage.getItem('oc_onboarded')) {
+    document.getElementById('screen-onboard').classList.remove('active');
+    document.getElementById('screen-landing').classList.add('active');
+    document.getElementById('bottom-nav').classList.add('active');
+  } else {
+    renderOnboard();
+  }
+  // Restore notification state without calling scheduleNotif on load — only toggle does that
+  if (localStorage.getItem('oc_notif_enabled') === '1') {
+    document.getElementById('notif-toggle').style.background = '#F5C842';
+    document.getElementById('notif-knob').style.left = '21px';
+    document.getElementById('notif-knob').style.background = '#0D0D0D';
+    document.getElementById('notif-time-row').style.display = 'flex';
+    const saved = localStorage.getItem('oc_notif_time') || '09:00';
+    document.getElementById('notif-time-input').value = saved;
+  }
+}
+
+// ── Navigation ────────────────────────────────────────────────
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.animation = 'none'; });
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  void el.offsetWidth; el.style.animation = '';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  document.getElementById('bottom-nav').classList.toggle('active',
+    ['screen-landing','screen-done','screen-groups','screen-feed'].includes(id));
+}
+
+// ── Language ──────────────────────────────────────────────────
+function openLang() { document.getElementById('lang-overlay').classList.add('active'); }
+function closeLang(e) { if (!e || e.target === document.getElementById('lang-overlay')) document.getElementById('lang-overlay').classList.remove('active'); }
+function filterLangs(val) { renderLangList(val); }
+function renderLangList(filter) {
+  const list = document.getElementById('lang-list');
+  const filtered = LANGUAGES.filter(l => l.name.toLowerCase().includes(filter.toLowerCase()) || l.native.toLowerCase().includes(filter.toLowerCase()));
+  list.innerHTML = filtered.map(l =>
+    `<button class="lang-btn ${l.code===currentLang?'selected':''}" onclick="selectLang('${l.code}')">
+      <span style="font-size:26px;flex-shrink:0;line-height:1">${l.flag}</span>
+      <div style="flex:1"><div style="font-size:15px;font-weight:600;color:#F2EDE4">${l.native}</div><div style="font-size:12px;color:rgba(242,237,228,0.55);margin-top:2px">${l.name}</div></div>
+      ${l.code===currentLang?'<div style="font-size:16px;color:#F5C842;font-weight:700">✓</div>':''}
+      ${l.dir==='rtl'?'<div style="font-size:9px;color:rgba(242,237,228,.4);background:rgba(255,255,255,.08);border-radius:4px;padding:2px 6px;font-family:monospace">RTL</div>':''}
+    </button>`
+  ).join('');
+}
+function selectLang(code) {
+  currentLang = code;
+  const lang = getLang();
+  document.documentElement.dir = lang.dir;
+  ['header-flag','brief-flag','write-flag'].forEach(id => document.getElementById(id).textContent = lang.flag);
+  document.getElementById('lang-search').value = '';
+  renderLangList('');
+  closeLang();
+}
+
+// ── Settings ──────────────────────────────────────────────────
+function openSettings() {
+  const el = document.getElementById('settings-overlay');
+  if (el) el.style.display = 'flex';
+}
+function closeSettings(e) {
+  const overlay = document.getElementById('settings-overlay');
+  if (!overlay) return;
+  if (!e || e.target === overlay) overlay.style.display = 'none';
+}
+
+// ── Notifications ─────────────────────────────────────────────
+function toggleNotif() {
+  const enabled = localStorage.getItem('oc_notif_enabled') === '1';
+  const next = !enabled;
+  localStorage.setItem('oc_notif_enabled', next ? '1' : '0');
+  const toggle = document.getElementById('notif-toggle');
+  const knob = document.getElementById('notif-knob');
+  const row = document.getElementById('notif-time-row');
+  if (next) {
+    toggle.style.background = '#F5C842';
+    knob.style.left = '21px';
+    knob.style.background = '#0D0D0D';
+    row.style.display = 'flex';
+    scheduleNotif();
+  } else {
+    toggle.style.background = 'rgba(255,255,255,0.1)';
+    knob.style.left = '3px';
+    knob.style.background = 'rgba(255,255,255,0.4)';
+    row.style.display = 'none';
+  }
+}
+function saveNotifTime(value) {
+  localStorage.setItem('oc_notif_time', value);
+  scheduleNotif();
+}
+function scheduleNotif() {
+  const time = localStorage.getItem('oc_notif_time') || '09:00';
+  console.log('Notification scheduled for', time);
+  // Browser notifications require service worker for true scheduling.
+  // This logs intent; a full PWA implementation would register here.
+}
+
+// ── Feedback ──────────────────────────────────────────────────
+function setRating(val) {
+  currentRating = val;
+  document.querySelectorAll('.star').forEach(star => {
+    const n = Number(star.dataset.val);
+    star.style.opacity = n <= val ? '1' : '0.25';
+    star.style.transform = n <= val ? 'scale(1.05)' : 'scale(1)';
+  });
+  updateFeedbackButton();
+}
+function updateCharCount() {
+  const el = document.getElementById('feedback-comment');
+  const count = document.getElementById('char-count');
+  if (!el || !count) return;
+  count.textContent = `${el.value.length}/500`;
+  updateFeedbackButton();
+}
+function updateFeedbackButton() {
+  const btn = document.getElementById('feedback-submit');
+  const comment = document.getElementById('feedback-comment').value.trim();
+  const ready = currentRating > 0 || comment.length > 0;
+  btn.style.cursor = ready ? 'pointer' : 'default';
+  btn.style.background = ready ? '#F5C842' : 'rgba(255,255,255,0.08)';
+  btn.style.color = ready ? '#0C0C0C' : 'rgba(245,240,232,0.3)';
+}
+function submitFeedback() {
+  const comment = document.getElementById('feedback-comment').value.trim();
+  if (currentRating === 0 && comment.length === 0) return;
+  localStorage.setItem('oc_feedback', JSON.stringify({
+    rating: currentRating,
+    comment,
+    date: new Date().toISOString()
+  }));
+  document.getElementById('feedback-form').style.display = 'none';
+  document.getElementById('feedback-thanks').style.display = 'block';
+}
+
+// ── Write / Submit ────────────────────────────────────────────
+function onWrite() {
+  const val = document.getElementById('response').value;
+  const words = val.trim() ? val.trim().split(/\s+/).length : 0;
+  document.getElementById('wcount').textContent = `${words} word${words !== 1 ? 's' : ''}`;
+  document.getElementById('ccount').textContent = `${val.length}/280`;
+  checkSubmit();
+}
+function checkSubmit() {
+  const r = document.getElementById('response').value.trim();
+  const p = document.getElementById('recipient').value.trim();
+  document.getElementById('submit-btn').disabled = !(r.length > 4 && p.length > 0);
+}
+
+async function submitChallenge() {
+  try {
+    const resp = document.getElementById('response').value.trim();
+    const recip = document.getElementById('recipient').value.trim();
+
+    console.log("submit clicked");
+    console.log({ resp, recip, currentPromptId: window.currentPromptId });
+
+    if (!resp || !recip) {
+      alert("Missing recipient or compliment.");
+      return;
+    }
+
+    if (!window.supabase) {
+      alert("Supabase not loaded.");
+      console.error("window.supabase is missing");
+      return;
+    }
+
+    goTo('screen-bloom');
+
+    const { data, error } = await window.supabase.rpc('complete_daily_prompt', {
+      p_body: resp,
+      p_prompt_id: window.currentPromptId ?? null,
+      p_recipient_id: null,
+      p_recipient_name: recip
+    });
+
+    console.log("RPC result:", { data, error });
+
+    if (error) {
+      alert("Submit error: " + error.message);
+      console.error(error);
+      goTo('screen-write');
+      return;
+    }
+
+    const streakData = await window.loadMyStreak();
+    if (streakData) {
+      streak = streakData.current_streak;
+    } else {
+      streak = streak + 1;
+    }
+
+    animateBloom(() => {
+      buildDone(recip, resp);
+      document.getElementById('done-streak').textContent = streak;
+      document.getElementById('done-streak-label').textContent = `day${streak !== 1 ? 's' : ''} streak`;
+      goTo('screen-done');
+    });
+  } catch (err) {
+    console.error("submitChallenge crashed:", err);
+    alert("submitChallenge crashed: " + err.message);
+    goTo('screen-write');
+  }
+}
+
+// ── Bloom animation ───────────────────────────────────────────
+function animateBloom(cb) {
+  const emoji = document.getElementById('bloom-emoji');
+  const msg = document.getElementById('bloom-msg');
+  emoji.textContent = '☀️'; emoji.style.transform = 'scale(1)'; emoji.style.filter = '';
+  msg.textContent = 'Take a breath.\nWrite something real.';
+  setTimeout(() => { emoji.style.transform = 'scale(1.3)'; }, 400);
+  setTimeout(() => { msg.textContent = 'Almost there...'; }, 800);
+  setTimeout(() => {
+    for (let i = 0; i < 8; i++) {
+      const ray = document.createElement('div'); ray.className = 'ray';
+      ray.style.cssText = `--r:${i * 45}deg;animation:rayShoot 0.6s ease forwards ${i * 0.05}s`;
+      emoji.parentNode.appendChild(ray); setTimeout(() => ray.remove(), 1000);
+    }
+  }, 1000);
+  setTimeout(() => { emoji.textContent = '🌻'; emoji.style.transform = 'scale(1.4)'; emoji.style.filter = 'drop-shadow(0 0 28px rgba(245,200,66,.6))'; }, 1400);
+  setTimeout(() => { emoji.style.transform = 'scale(1)'; emoji.style.animation = 'glowPulse 2s ease-in-out infinite'; }, 1750);
+  setTimeout(cb, 2600);
+}
+
+// ── Milestone ─────────────────────────────────────────────────
+function showMilestone(m, groupName) {
+  document.getElementById('ms-emoji').textContent = m.emoji;
+  document.getElementById('ms-emoji').style.filter = `drop-shadow(0 0 28px ${m.color}88)`;
+  const badge = document.getElementById('ms-badge');
+  badge.textContent = m.badge; badge.style.color = m.color; badge.style.background = `${m.color}18`; badge.style.border = `1px solid ${m.color}44`;
+  document.getElementById('ms-streak').textContent = streak; document.getElementById('ms-streak').style.color = m.color;
+  document.getElementById('ms-title').textContent = m.title;
+  document.getElementById('ms-message').textContent = m.message;
+  document.getElementById('ms-confetti-row').innerHTML = m.confetti.slice(0, 7).map(e => `<span style="font-size:20px">${e}</span>`).join('');
+  document.getElementById('ms-group').textContent = `with ${groupName || 'your squad'}`;
+  document.getElementById('ms-continue').style.background = m.color;
+  document.getElementById('ms-continue').onclick = () => {
+    document.getElementById('milestone-overlay').classList.remove('active');
+    document.getElementById('confetti-wrap').classList.remove('active');
+    document.getElementById('milestone-card').classList.remove('show');
+    pendingMilestone = null;
+    const resp = document.getElementById('response').value.trim();
+    const recip = document.getElementById('recipient').value.trim();
+    buildDone(recip, resp); goTo('screen-done');
+  };
+  document.getElementById('milestone-overlay').classList.add('active');
+  setTimeout(() => document.getElementById('milestone-card').classList.add('show'), 200);
+  setTimeout(() => spawnConfetti(m.confetti), 700);
+}
+
+function spawnConfetti(pieces) {
+  const wrap = document.getElementById('confetti-wrap');
+  wrap.innerHTML = ''; wrap.classList.add('active');
+  Array.from({length: 32}).forEach((_, i) => {
+    const p = document.createElement('div'); p.className = 'confetti-piece';
+    p.textContent = pieces[i % pieces.length]; p.style.left = `${Math.random() * 100}%`;
+    p.style.fontSize = `${14 + Math.random() * 16}px`;
+    p.style.animationDuration = `${2 + Math.random() * 2}s`;
+    p.style.animationDelay = `${Math.random() * 1.4}s`;
+    wrap.appendChild(p);
+  });
+  setTimeout(() => wrap.classList.remove('active'), 6000);
+}
+
+// ── Done screen ───────────────────────────────────────────────
+function buildDone(recipient, response) {
+  document.getElementById('done-sub').textContent = `${recipient} got a little more light today — that's on you.`;
+  document.getElementById('done-quote').textContent = `"${response}"`;
+  document.getElementById('done-to').textContent = `— to ${recipient}`;
+  document.getElementById('done-streak').textContent = streak;
+  document.getElementById('done-streak-label').textContent = `day${streak !== 1 ? 's' : ''} streak`;
+  const nm = getNextMilestone(streak);
+  const peek = document.getElementById('done-peek');
+  if (nm) {
+    const d = nm.days - streak;
+    document.getElementById('done-peek-emoji').textContent = nm.emoji;
+    document.getElementById('done-peek-title').textContent = `${d} more day${d !== 1 ? 's' : ''} to ${nm.badge}`;
+    peek.style.display = 'flex';
+  } else {
+    peek.style.display = 'none';
+  }
+  const day = getDayOfYear();
+  const perRow = 7; const total = Math.min(streak, 21);
+  const fullRows = Math.floor(total / perRow); const rem = total % perRow;
+  let grid = '';
+  for (let r = 0; r < fullRows; r++) grid += '🌻'.repeat(perRow) + '\n';
+  if (rem > 0) grid += '🌻'.repeat(rem) + '☀️\n'; else grid += '☀️\n';
+  shareTextGlobal = `OneC🌻mpliment — Day ${day} 🔥\n\nToday: ${currentChallenge.prompt}\n"${response}"\n\n${grid}\nonecompliment.app — what would you say?`;
+  document.getElementById('share-preview').textContent = shareTextGlobal;
+}
+
+function copyShare() {
+  navigator.clipboard?.writeText(shareTextGlobal).catch(() => {});
+  const badge = document.getElementById('copied-badge');
+  badge.style.display = 'block'; setTimeout(() => badge.style.display = 'none', 2200);
+}
+
+function playAgain() {
+  document.getElementById('recipient').value = '';
+  document.getElementById('response').value = '';
+  document.getElementById('wcount').textContent = '0 words';
+  document.getElementById('ccount').textContent = '0/280';
+  document.getElementById('submit-btn').disabled = true;
+  document.getElementById('milestone-card').classList.remove('show');
+  goTo('screen-landing');
+}
+
+// ── Groups ────────────────────────────────────────────────────
+const AVATAR_COLORS = ['#FF6B6B','#4ECDC4','#FFE66D','#C3B1E1','#FFB347','#A8E6CF','#FF8B94','#85C1E9'];
+let pendingEmails = [];
+let activeGroupId = null;
+
+function getGroups() { return JSON.parse(localStorage.getItem('oc_groups') || '[]'); }
+function saveGroups(g) { localStorage.setItem('oc_groups', JSON.stringify(g)); }
+
+function resetGroupsForNewDay() {
+  const todayKey = getTodayKey();
+  const groups = getGroups();
+  let changed = false;
+
+  groups.forEach(g => {
+    if (g.lastActiveDay !== todayKey) {
+      g.lastActiveDay = todayKey;
+
+      // Reset bloom status for all members
+      g.members.forEach(m => {
+        m.bloomed = false;
+      });
+
+      // Clear daily feed
+      g.feed = [];
+
+      changed = true;
+    }
+  });
+
+  if (changed) saveGroups(groups);
+}
+
+function openGroups() { renderGroupsList(); goTo('screen-groups'); }
+
+function renderGroupsList() {
+  const groups = getGroups();
+  const list = document.getElementById('groups-list');
+  if (!groups.length) {
+    list.innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--faint);font-size:14px"><div style="font-size:36px;margin-bottom:12px">👥</div><div style="font-size:15px;font-weight:700;color:var(--dim);margin-bottom:8px">No groups yet</div>Create a group and invite friends to do daily challenges together.</div>';
+    return;
+  }
+  list.innerHTML = groups.map(g => `
+    <div class="group-card" onclick="openFeed('${g.id}')" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--text)">${g.name}</div>
+          <div style="font-size:11px;color:var(--faint);margin-top:2px">${g.members.length} member${g.members.length!==1?'s':''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:26px;font-weight:700;color:var(--gold)">${g.streak||0}</div>
+          <div style="font-size:9px;color:var(--faint);letter-spacing:.1em">STREAK</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${g.members.slice(0,5).map(m=>`<div class="member-chip"><div class="avatar" style="background:${m.color}">${m.name.charAt(0).toUpperCase()}</div><span>${m.name.split('@')[0]}</span><span>${m.bloomed?'🌻':'☀️'}</span></div>`).join('')}
+        ${g.members.length>5?`<div class="member-chip">+${g.members.length-5} more</div>`:''}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="event.stopPropagation();copyGroupLink('${g.id}')" style="flex:1;background:none;border:1px solid var(--bord);border-radius:10px;padding:8px;font-size:12px;color:var(--dim);font-family:var(--font);cursor:pointer">📋 Copy invite link</button>
+        <button onclick="event.stopPropagation();deleteGroup('${g.id}')" style="background:none;border:1px solid rgba(255,80,80,.15);border-radius:10px;padding:8px 12px;font-size:12px;color:rgba(255,100,100,.5);font-family:var(--font);cursor:pointer">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function showCreateGroup() {
+  const code = 'G' + Date.now().toString(36).toUpperCase().slice(-6);
+  document.getElementById('invite-link-text').textContent = `onecompliment.app?join=${code}`;
+  document.getElementById('invite-link-text').dataset.code = code;
+  pendingEmails = []; renderEmailChips();
+  document.getElementById('new-group-name').value = '';
+  document.getElementById('invite-email').value = '';
+  document.getElementById('create-group-form').style.display = 'flex';
+}
+function hideCreateGroup() {
+  document.getElementById('create-group-form').style.display = 'none';
+  pendingEmails = []; renderEmailChips();
+}
+
+function addEmail() {
+  const input = document.getElementById('invite-email');
+  const email = input.value.trim().toLowerCase();
+  if (!email.includes('@')) { alert('Please enter a valid email address.'); return; }
+  if (pendingEmails.includes(email)) { alert('Already added.'); return; }
+  if (pendingEmails.length >= 7) { alert('Free groups support up to 8 members total.'); return; }
+  pendingEmails.push(email); input.value = ''; renderEmailChips();
+}
+function removeEmail(i) { pendingEmails.splice(i, 1); renderEmailChips(); }
+function renderEmailChips() {
+  document.getElementById('email-chips').innerHTML = pendingEmails.map((e, i) =>
+    `<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(168,230,207,.08);border:1px solid rgba(168,230,207,.2);border-radius:20px;padding:5px 10px">
+      <span style="font-size:12px;color:#A8E6CF">${e}</span>
+      <button onclick="removeEmail(${i})" style="background:none;border:none;color:rgba(168,230,207,.5);cursor:pointer;font-size:14px;padding:0;line-height:1">×</button>
+    </div>`).join('');
+}
+
+function copyInviteLink() {
+  const code = document.getElementById('invite-link-text').dataset.code || 'XXXXXX';
+  const link = `https://onecompliment.app?join=${code}`;
+  navigator.clipboard?.writeText(link).catch(() => {});
+  alert('✓ Invite link copied! Share it with anyone you want to join.');
+}
+
+function createGroup() {
+  const name = document.getElementById('new-group-name').value.trim();
+  if (!name) { alert('Please enter a group name.'); return; }
+  const code = document.getElementById('invite-link-text').dataset.code || ('G' + Date.now().toString(36).toUpperCase().slice(-6));
+  const groups = getGroups();
+  const newGroup = {
+    id: 'grp_' + Date.now(),
+    name, streak: 0, inviteCode: code,
+    created: new Date().toLocaleDateString(),
+    lastActiveDay: getTodayKey(),
+    members: [{id:'me', name:'You', color:'#F5C842', bloomed:false, isMe:true}],
+    feed: [],
+  };
+  pendingEmails.forEach((email, i) => {
+    newGroup.members.push({id:'inv_'+i, name:email, color:AVATAR_COLORS[i%AVATAR_COLORS.length], bloomed:false, pending:true});
+  });
+  groups.push(newGroup); saveGroups(groups); hideCreateGroup(); renderGroupsList();
+  const msg = pendingEmails.length > 0
+    ? `✅ Group "${name}" created!\n\nIn the full app, invites go out automatically. For now, share the invite link with your friends.`
+    : `✅ Group "${name}" created! Share the invite link to add members.`;
+  alert(msg);
+  pendingEmails = [];
+}
+
+function copyGroupLink(groupId) {
+  const g = getGroups().find(x => x.id === groupId); if (!g) return;
+  const link = `https://onecompliment.app?join=${g.inviteCode}`;
+  navigator.clipboard?.writeText(link).catch(() => {});
+  alert(`✓ Invite link copied!\n\nShare this with anyone:\n${link}`);
+}
+
+function deleteGroup(groupId) {
+  if (!confirm('Delete this group? This cannot be undone.')) return;
+  saveGroups(getGroups().filter(g => g.id !== groupId));
+  renderGroupsList();
+}
+
+function openFeed(groupId) {
+  const g = getGroups().find(x => x.id === groupId); if (!g) return;
+  activeGroupId = groupId;
+  document.getElementById('feed-group-name').textContent = g.name;
+  document.getElementById('feed-type-label').textContent = 'GROUP · ' + g.created;
+  document.getElementById('feed-streak').textContent = g.streak || 0;
+  document.getElementById('feed-members').textContent = g.members.length;
+  document.getElementById('feed-bloomed').textContent = g.members.filter(m => m.bloomed).length;
+  document.getElementById('feed-avatars').innerHTML = g.members.map(m =>
+    `<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div style="width:40px;height:40px;border-radius:50%;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#0D0D0D">${m.name.charAt(0).toUpperCase()}</div>
+      <div style="font-size:10px;color:var(--faint);max-width:44px;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${m.isMe?'You':m.name.split('@')[0]}</div>
+      <div>${m.bloomed?'🌻':'☀️'}</div>
+    </div>`).join('');
+  const feed = g.feed || [];
+  document.getElementById('feed-list').innerHTML = feed.length === 0
+    ? '<div style="text-align:center;padding:24px 0;color:var(--faint);font-size:14px">No compliments yet today. Be the first! 🌻</div>'
+    : feed.map(f =>
+      `<div style="background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:28px;height:28px;border-radius:50%;background:${f.color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#0D0D0D">${f.name.charAt(0)}</div>
+          <span style="font-size:13px;font-weight:600;color:var(--text)">${f.name}</span>
+          <span style="font-size:12px;color:var(--faint)">lifted ${f.recipient}</span>
+          <span style="margin-left:auto">🌻</span>
+        </div>
+        <div style="font-size:14px;color:var(--dim);font-style:italic;line-height:1.6;padding-left:12px;border-left:2px solid rgba(245,200,66,.3)">"${f.compliment}"</div>
+      </div>`).join('');
+  goTo('screen-feed');
+}
+
+function leaveGroup() {
+  if (!confirm('Leave this group?')) return;
+  saveGroups(getGroups().filter(g => g.id !== activeGroupId));
+  activeGroupId = null;
+  goTo('screen-groups');
+  renderGroupsList();
+}
+
+function markGroupsBloomed(compliment, recipient) {
+  const groups = getGroups();
+  groups.forEach(g => {
+    const me = g.members.find(m => m.isMe);
+    if (me && !me.bloomed) {
+      me.bloomed = true;
+      if (!g.feed) g.feed = [];
+      g.feed.unshift({name:'You', color:'#F5C842', recipient, compliment, time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
+      if (g.members.every(m => m.bloomed || m.pending)) g.streak = (g.streak || 0) + 1;
+    }
+  });
+  saveGroups(groups);
+}
+
+// ── Join link handler ─────────────────────────────────────────
+(function () {
+  const code = new URLSearchParams(window.location.search).get('join');
+  if (code) {
+    setTimeout(() => {
+      const yourName = prompt('You were invited to join a group on OneC🌻mpliment!\n\nWhat name would you like to use?');
+      if (yourName) alert(`Welcome, ${yourName}! 🌻\n\nThe group host will add you once they see you joined. Play today's challenge while you wait!`);
+      window.history.replaceState({}, '', window.location.pathname);
+    }, 800);
+  }
+})();
+
+let gaLoaded = false;
+
+function loadAnalytics() {
+  if (gaLoaded) return;
+  gaLoaded = true;
+
+  const s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://www.googletagmanager.com/gtag/js?id=G-L8YZC794GC';
+  document.head.appendChild(s);
+
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function(){ dataLayer.push(arguments); };
+  gtag('js', new Date());
+  gtag('config', 'G-L8YZC794GC');
+}
+
+function acceptCookies() {
+  localStorage.setItem('oc_cookie_choice', 'accepted');
+  document.getElementById('cookie-banner').classList.remove('show');
+  loadAnalytics();
+}
+
+function rejectCookies() {
+  localStorage.setItem('oc_cookie_choice', 'rejected');
+  document.getElementById('cookie-banner').classList.remove('show');
+}
+
+function initCookieBanner() {
+  const choice = localStorage.getItem('oc_cookie_choice');
+  if (choice === 'accepted') {
+    loadAnalytics();
+  } else if (!choice) {
+    document.getElementById('cookie-banner').classList.add('show');
+  }
+}
+
+init();
+</script>
+
+<!-- COOKIE BANNER -->
+
+<script type="module">
+  import { supabase } from "./supabase.js";
+  window.supabase = supabase;
+
+  console.log("supabase.js loaded");
+
+  async function ensureSession() {
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    console.log("session before:", sessionData, sessionError);
+
+    if (!sessionData.session) {
+      const { data, error } = await supabase.auth.signInAnonymously();
+      console.log("anonymous sign in:", data, error);
+
+      if (error) {
+        alert("Anonymous sign-in failed: " + error.message);
+        console.error("Anonymous sign-in failed:", error);
+      }
+    }
+  }
+
+  async function loadTodaysPrompt() {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data, error } = await supabase.rpc("get_daily_prompt", {
+      p_for_date: today
+    });
+
+    console.log("prompt load:", { data, error });
+
+    if (error) {
+      alert("Prompt load error: " + error.message);
+      console.error("Prompt load error:", error);
+      return;
+    }
+
+    window.currentPromptId = data.id;
+
+    if (document.getElementById("landing-prompt")) {
+      document.getElementById("landing-prompt").textContent = data.prompt_text;
+    }
+    if (document.getElementById("brief-prompt")) {
+      document.getElementById("brief-prompt").textContent = data.prompt_text;
+    }
+    if (document.getElementById("write-prompt")) {
+      document.getElementById("write-prompt").textContent = data.prompt_text;
+    }
+  }
+
+  async function loadMyStreak() {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    console.log("getUser:", { userData, userError });
+
+    const userId = userData.user?.id;
+    if (!userId) return null;
+
+    const { data, error } = await supabase
+      .from("user_streaks")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    console.log("streak load:", { data, error });
+
+    if (error) return null;
+    return data;
+  }
+
+  window.loadMyStreak = loadMyStreak;
+
+  await ensureSession();
+  await loadTodaysPrompt();
+  await loadMyStreak();
+</script>
+
+</body>
+</html>

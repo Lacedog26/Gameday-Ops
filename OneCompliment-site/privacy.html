@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover" />
+  <meta name="description" content="Privacy Policy for OneCompliment." />
+  <title>OneC🌻mpliment Privacy Policy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400&family=DM+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --gold: #F5C842;
+      --green: #A8E6CF;
+      --bg: #0C0C0C;
+      --text: #F2EDE4;
+      --dim: rgba(242,237,228,0.72);
+      --faint: rgba(242,237,228,0.48);
+      --surf: rgba(255,255,255,0.04);
+      --bord: rgba(255,255,255,0.08);
+      --font: 'Lora', Georgia, serif;
+      --mono: 'DM Mono', monospace;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #FEFDF8;
+        --text: #1A1A1A;
+        --dim: rgba(26,26,26,0.72);
+        --faint: rgba(26,26,26,0.50);
+        --surf: rgba(0,0,0,0.04);
+        --bord: rgba(0,0,0,0.10);
+      }
+      body::before { opacity: .08; }
+      .top-nav { background: rgba(254,253,248,0.94); border-bottom-color: rgba(0,0,0,0.08); }
+      .card { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); }
+      .highlight { background: rgba(245,200,66,0.08); border-color: rgba(245,200,66,0.22); }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: .45;
+    }
+
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(12,12,12,0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--bord);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-logo {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+
+    .nav-logo span { display: block; }
+
+    .nav-back {
+      text-decoration: none;
+      color: var(--faint);
+      border: 1px solid var(--bord);
+      border-radius: 20px;
+      padding: 7px 14px;
+      font-size: 13px;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 24px 72px;
+    }
+
+    .hero {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .label {
+      font-size: 10px;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-family: var(--mono);
+    }
+
+    h1 {
+      font-size: clamp(34px, 7vw, 48px);
+      line-height: 1.08;
+      font-weight: 700;
+    }
+
+    .hero-sub {
+      font-size: 16px;
+      line-height: 1.8;
+      color: var(--dim);
+      max-width: 620px;
+    }
+
+    .card {
+      background: var(--surf);
+      border: 1px solid var(--bord);
+      border-radius: 20px;
+      padding: 24px;
+      margin-top: 18px;
+    }
+
+    .highlight {
+      background: rgba(245,200,66,.06);
+      border: 1px solid rgba(245,200,66,.18);
+    }
+
+    .updated {
+      font-size: 12px;
+      color: var(--faint);
+      font-family: var(--mono);
+    }
+
+    .section {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    h2 {
+      font-size: 28px;
+      line-height: 1.2;
+      margin-top: 18px;
+    }
+
+    p {
+      font-size: 16px;
+      line-height: 1.85;
+      color: var(--dim);
+    }
+
+    ul {
+      padding-left: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    li {
+      font-size: 16px;
+      line-height: 1.8;
+      color: var(--dim);
+    }
+
+    strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--bord);
+      margin: 20px 0 8px;
+    }
+
+    a {
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    .footer {
+      margin-top: 34px;
+      padding-top: 22px;
+      border-top: 1px solid var(--bord);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .footer-note {
+      font-size: 13px;
+      color: var(--faint);
+      line-height: 1.7;
+    }
+
+    @media (max-width: 480px) {
+      .page { padding: 28px 18px 60px; }
+      .card { padding: 20px; }
+      p, li { font-size: 15px; }
+      h2 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="top-nav">
+    <div class="nav-logo">
+      <span>One</span>
+      <span>C🌻mpliment</span>
+    </div>
+    <a href="index.html" class="nav-back">← Back to app</a>
+  </nav>
+
+  <main class="page">
+    <div class="hero">
+      <div class="label">Privacy Policy</div>
+      <h1>Your privacy matters.</h1>
+      <p class="hero-sub">
+        OneC🌻mpliment respects your privacy. This page explains what information we collect,
+        how we use it, and how we handle contact information submitted through our site.
+      </p>
+      <div class="updated">Last updated: March 2026</div>
+    </div>
+
+    <div class="card highlight">
+      <p>
+        <strong>Simple version:</strong> if you submit the organization contact form, we may receive
+        your name, email address, organization details, and message so we can respond to you.
+        We do not sell your information.
+      </p>
+    </div>
+
+    <div class="card">
+      <section class="section">
+        <h2>Information We Collect</h2>
+        <p>When you use OneC🌻mpliment, we may collect:</p>
+        <ul>
+          <li>Your name</li>
+          <li>Your email address</li>
+          <li>Your organization or role</li>
+          <li>Your group size or inquiry details</li>
+          <li>Any message you submit through our contact form</li>
+          <li>Basic website analytics, such as page visits and clicks</li>
+        </ul>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section">
+        <h2>How We Use Your Information</h2>
+        <p>We use the information we collect to:</p>
+        <ul>
+          <li>Respond to your inquiry</li>
+          <li>Communicate with you about OneC🌻mpliment</li>
+          <li>Improve the website and product experience</li>
+          <li>Understand interest in our organization offering</li>
+        </ul>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section">
+        <h2>Contact Form Information</h2>
+        <p>
+          If you submit the team or organization inquiry form, your submission may be processed
+          through Netlify Forms and delivered to us by email notification.
+        </p>
+        <p>
+          We use that information only to review your inquiry and follow up with you. We do not
+          sell or rent that information to third parties.
+        </p>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section">
+        <h2>Analytics</h2>
+        <p>
+          We may use analytics tools, including Google Analytics, to understand how visitors use
+          the site. This may include page views, clicks, device information, and general usage data.
+        </p>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section">
+        <h2>Data Sharing</h2>
+        <p>
+          We do not sell your personal information. We may share limited information with trusted
+          service providers only when needed to operate the website, collect form submissions,
+          or review analytics.
+        </p>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section">
+        <h2>Data Retention</h2>
+        <p>
+          We keep contact form submissions only as long as reasonably necessary to review and respond
+          to inquiries or maintain basic business records.
+        </p>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section">
+        <h2>Your Choices</h2>
+        <p>
+          You can choose not to submit personal information through our forms. If you want us to
+          delete a prior inquiry or have questions about your information, contact us directly.
+        </p>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section">
+        <h2>Contact Us</h2>
+        <p>
+          If you have questions about this Privacy Policy, contact us at
+          <a href="/cdn-cgi/l/email-protection#08606d6464674867666d6b6765786461656d667c26697878"><span class="__cf_email__" data-cfemail="bfd7dad3d3d0ffd0d1dadcd0d2cfd3d6d2dad1cb91decfcf">[email&#160;protected]</span></a>.
+        </p>
+      </section>
+    </div>
+
+    <div class="footer">
+      <a href="i
