@@ -38,7 +38,7 @@
       .card { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.09); }
       .gold-card { background: rgba(245,200,66,0.08); border-color: rgba(245,200,66,0.25); }
       .green-card { background: rgba(168,230,207,0.08); border-color: rgba(168,230,207,0.22); }
-      .top-nav { border-bottom-color: rgba(0,0,0,0.07); }
+      .top-nav { background: rgba(254,253,248,0.95); border-bottom-color: rgba(0,0,0,0.07); }
       .use-case-card { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.09); }
       .step-num { color: var(--gold); }
       .divider { background: rgba(0,0,0,0.08); }
@@ -66,16 +66,15 @@
     }
 
     /* NAV */
-    html, body { background: var(--bg); }
     .top-nav {
       position: sticky;
       top: 0;
       z-index: 50;
-      background: var(--bg);
+      background: rgba(12,12,12,0.97);
       border-bottom: 1px solid var(--bord);
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      padding: calc(14px + env(safe-area-inset-top)) 24px 14px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 14px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -540,8 +539,8 @@
     <div style="text-align:center">
       <p style="font-size:13px;color:var(--faint);line-height:1.7">
         Or reach us directly at
-        <a href="/cdn-cgi/l/email-protection#f9919c959596b996979c9a9694899590949c978dd7988989" style="color:var(--gold);text-decoration:none">
-          <span class="__cf_email__" data-cfemail="365e535a5a597659585355595b465a5f5b53584218574646">[email&#160;protected]</span>
+        <a href="/cdn-cgi/l/email-protection#8be3eee7e7e4cbe4e5eee8e4e6fbe7e2e6eee5ffa5eafbfb" style="color:var(--gold);text-decoration:none">
+          <span class="__cf_email__" data-cfemail="c2aaa7aeaead82adaca7a1adafb2aeabafa7acb6eca3b2b2">[email&#160;protected]</span>
         </a>
       </p>
     </div>
@@ -561,7 +560,7 @@
 
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("timestamp").value = new Date().toISOString();
 });
@@ -579,4 +578,14 @@ function handleSubmit(e) {
     body: new URLSearchParams(data).toString()
   })
     .then(() => {
-      fo
+      form.style.display = 'none';
+      document.getElementById('contact-thanks').style.display = 'flex';
+    })
+    .catch(() => {
+      alert('Something went wrong. Please email us directly at hello@onecompliment.app');
+    });
+}
+</script>
+
+</body>
+</html>
