@@ -1,0 +1,98 @@
+/* ──────────────────────────────────────────────────────────────────
+   ANIMATIONS — preserved byte-for-byte from the legacy site.
+   Do NOT rewrite these as Tailwind utilities — the bloom flow and
+   milestone confetti depend on the exact timing/easings here.
+   ────────────────────────────────────────────────────────────────── */
+
+/* Screen fade-in (used by route screens in the main app) */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+.screen-fade {
+  animation: fadeUp .4s ease both;
+}
+
+/* Onboarding emoji bob + landing sun bob */
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.bob {
+  animation: bob 3s ease-in-out infinite;
+}
+
+/* Bloom rays — fired on submit. The component injects 8 .ray
+   elements with --r set to (i*45deg) and stagger via animation-delay. */
+.ray {
+  position: absolute;
+  width: 4px;
+  height: 40px;
+  background: linear-gradient(to top, #F5C842, transparent);
+  border-radius: 4px;
+  transform-origin: bottom center;
+  bottom: 50%;
+  left: calc(50% - 2px);
+  opacity: 0;
+}
+@keyframes rayShoot {
+  0%   { opacity: 0; transform: rotate(var(--r)) scaleY(0); }
+  40%  { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--r)) scaleY(1) translateY(-40px); }
+}
+
+/* Bloom emoji glow pulse — applied AFTER the ☀️→🌻 swap */
+@keyframes glowPulse {
+  0%, 100% { filter: drop-shadow(0 0 16px rgba(245, 200, 66, 0.4)); }
+  50%      { filter: drop-shadow(0 0 40px rgba(245, 200, 66, 0.75)); }
+}
+.glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+.bloom-emoji {
+  font-size: 96px;
+  line-height: 1;
+  position: relative;
+  z-index: 2;
+  transition: transform .35s cubic-bezier(.34, 1.56, .64, 1), filter .3s;
+}
+
+.bloom-wrap {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Milestone confetti pieces */
+.confetti-piece {
+  position: absolute;
+  top: -40px;
+  animation: cffall linear forwards;
+}
+@keyframes cffall {
+  0%   { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* Milestone card scale-in */
+.milestone-card {
+  opacity: 0;
+  transform: scale(.88);
+  transition: all .5s cubic-bezier(.34, 1.56, .64, 1);
+}
+.milestone-card.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Reduced-motion respect */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}

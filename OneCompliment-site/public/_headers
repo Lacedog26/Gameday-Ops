@@ -1,0 +1,10 @@
+# Universal Links / App Links verification files.
+# iOS rejects the AASA file unless it's served as application/json
+# (or has no Content-Type at all). Netlify infers text/html by default
+# for extensionless files, which is the #1 silent-fail mode for
+# Universal Links — set the right Content-Type explicitly.
+/.well-known/apple-app-site-association
+  Content-Type: application/json
+
+/.well-known/assetlinks.json
+  Content-Type: application/json

@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.onecompliment.app",
+      "sha256_cert_fingerprints": [
+        "6D:46:6D:34:5B:ED:2F:B2:3A:41:13:9B:71:F4:2C:65:80:FD:6F:2B:85:52:CF:85:42:E4:E9:6B:30:A1:1C:7D",
+        "5D:A2:94:C8:7E:0E:FE:5C:48:E2:2C:99:5E:CC:14:11:43:B7:61:EE:BC:F4:26:59:7C:70:3D:9A:BB:13:42:91"
+      ]
+    }
+  }
+]

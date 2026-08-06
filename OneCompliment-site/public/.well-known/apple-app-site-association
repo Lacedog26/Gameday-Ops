@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["7PGB3T4VZ5.com.onecompliment.app"],
+        "components": [
+          { "/": "/join/team/*",  "comment": "team invite" },
+          { "/": "/join/group/*", "comment": "group invite" },
+          { "/": "/c/*",          "comment": "compliment detail (future)" },
+          { "/": "/u/*",          "comment": "user profile (future)" },
+          { "/": "/invite/*",     "comment": "user invite for contact-linking (future)" }
+        ]
+      }
+    ]
+  }
+}
