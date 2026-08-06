@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "628021561951",
+    "project_id": "onecompliment-1a18f",
+    "storage_bucket": "onecompliment-1a18f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:628021561951:android:b10c0350cf47bbde19e9ea",
+        "android_client_info": {
+          "package_name": "com.onecompliment.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgxKmXwQkmVH0hKNOtLQ_bwG5JasVRmsQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
