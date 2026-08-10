@@ -52,8 +52,11 @@ export default function CulturePanel({ suppressed }: Props) {
         flexGrow: suppressed ? 0 : 1,
       }}
       transition={{ duration: 0.5, ease: 'easeInOut' }}
-      className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-navy-800/80 to-navy-900/90"
+      className="glass relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl"
     >
+      {/* brand corner glow */}
+      <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-bills-royal/25 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-bills-red/15 blur-3xl" />
       <div className="flex items-center justify-between px-6 pt-4">
         <span className="font-display text-[18px] font-extrabold tracking-[0.4em] text-sky-300/80">
           BILLS CULTURE

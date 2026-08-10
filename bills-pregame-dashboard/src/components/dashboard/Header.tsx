@@ -25,10 +25,10 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
       <div className="flex items-center gap-5">
         <BillsMark className="h-[92px] w-[92px] shrink-0 drop-shadow-[0_4px_18px_rgba(0,51,141,0.6)]" />
         <div className="leading-none">
-          <div className="font-display text-[26px] font-bold tracking-[0.32em] text-sky-300/90">
+          <div className="bg-gradient-to-r from-sky-300 to-bills-red bg-clip-text font-display text-[26px] font-bold tracking-[0.32em] text-transparent">
             BUFFALO BILLS
           </div>
-          <div className="font-display text-[46px] font-extrabold uppercase tracking-[0.06em] text-white">
+          <div className="font-display text-[46px] font-extrabold uppercase tracking-[0.06em] text-white drop-shadow-[0_2px_16px_rgba(56,140,255,0.25)]">
             Pre-Game Operations
           </div>
         </div>
@@ -36,7 +36,7 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
 
       {/* Middle: game info strip */}
       <div className="flex flex-1 items-center justify-center">
-        <div className="grid grid-cols-4 divide-x divide-white/10 rounded-2xl border border-white/10 bg-navy-900/60 px-2 py-3">
+        <div className="glass grid grid-cols-4 divide-x divide-white/10 rounded-2xl px-2 py-3">
           <InfoCell label="MATCHUP" value={`${game.homeAway === 'HOME' ? 'vs' : '@'} ${game.opponent}`} />
           <InfoCell label="WEEK" value={game.week} />
           <InfoCell label="KICKOFF" value={kickClock} />
@@ -45,17 +45,21 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
       </div>
 
       {/* Right: giant kickoff countdown */}
-      <div className="flex flex-col items-end justify-center">
-        <div className="font-display text-[22px] font-bold uppercase tracking-[0.4em] text-bills-red">
+      <div className="relative flex flex-col items-end justify-center rounded-2xl px-6 py-1">
+        <div className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(120%_120%_at_80%_20%,rgba(30,92,214,0.22),transparent_70%)]" />
+        <div className="relative flex items-center gap-2 font-display text-[22px] font-bold uppercase tracking-[0.4em] text-bills-red">
+          <span className="inline-block h-2 w-2 animate-pulse-soft rounded-full bg-bills-red shadow-[0_0_10px_rgba(198,12,48,0.9)]" />
           {preKick ? 'Kickoff In' : 'Kickoff'}
         </div>
         <motion.div
           key={preKick ? 'pre' : 'post'}
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`tnum font-mono font-bold leading-none ${
-            preKick ? 'text-white' : 'text-alert-go'
-          } text-[86px]`}
+          className={`tnum relative bg-clip-text font-mono font-bold leading-none text-transparent text-[92px] ${
+            preKick
+              ? 'bg-gradient-to-b from-white via-sky-100 to-sky-300 drop-shadow-[0_4px_24px_rgba(56,140,255,0.45)]'
+              : 'bg-gradient-to-b from-emerald-200 to-emerald-400 drop-shadow-[0_4px_24px_rgba(34,197,94,0.45)]'
+          }`}
         >
           {preKick ? formatHMS(secondsToKickoff) : 'LIVE'}
         </motion.div>
