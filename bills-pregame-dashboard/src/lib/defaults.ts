@@ -120,7 +120,8 @@ export function defaultGraphics(): CultureGraphic[] {
     {
       id: uid('gfx'),
       name: 'They Have To Play Us',
-      src: '/culture/they-have-to-play-us.svg',
+      // Official team artwork (transparent PNG, trimmed to the logo bounds).
+      src: '/culture/they-have-to-play-us.png',
       enabled: true,
       order: 0,
     },
