@@ -1,0 +1,17 @@
+# Netlify build config for the Bills Pre-Game Operations Dashboard.
+# In the Netlify UI, set the site's "Base directory" to: bills-pregame-dashboard
+# (Netlify then reads this file, builds, and serves the static bundle.)
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# The app uses hash-based routing, so no SPA rewrite is required, but this
+# keeps any direct path load falling back to the app shell just in case.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
