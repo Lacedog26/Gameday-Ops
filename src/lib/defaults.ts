@@ -148,11 +148,11 @@ export function defaultGraphics(): CultureGraphic[] {
 }
 
 export function defaultQuotes(): Quote[] {
+  // Text quotes only — these do NOT duplicate the image logos (Put The Ball
+  // Down / They Have To Play Us) which already show as graphics.
   return [
-    { id: uid('qt'), text: 'PUT THE BALL DOWN.', enabled: true, order: 0, accent: 'royal' },
-    { id: uid('qt'), text: 'THEY HAVE TO PLAY US.', enabled: true, order: 1, accent: 'red' },
-    { id: uid('qt'), text: 'PROTECT THE ROCK.', enabled: true, order: 2, accent: 'white' },
-    { id: uid('qt'), text: 'EARN IT TODAY.', enabled: true, order: 3, accent: 'royal' },
+    { id: uid('qt'), text: 'PROTECT THE ROCK.', enabled: true, order: 0, accent: 'white' },
+    { id: uid('qt'), text: 'EARN IT TODAY.', enabled: true, order: 1, accent: 'royal' },
   ]
 }
 
@@ -176,7 +176,7 @@ export function makeDefaultState(now = Date.now()): AppState {
   const templates = defaultTemplates()
   const regular = templates[0]
   return {
-    version: 1,
+    version: 2,
     game: {
       opponent: 'New York Jets',
       week: 'Week 1',

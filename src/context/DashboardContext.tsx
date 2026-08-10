@@ -239,8 +239,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     storage.load().then((loaded) => {
       if (cancelled) return
       if (loaded) {
+        const migrated = migrate(loaded)
         skipPersistRef.current = true
-        dispatch({ type: 'HYDRATE', state: migrate(loaded), external: true })
+        dispatch({ type: 'HYDRATE', state: migrated, external: true })
+        // Persist the migrated result so version bumps and one-time cleanups
+        // (e.g. removing the seeded duplicate quotes) stick without an edit.
+        if (migrated.version !== loaded.version) storage.save(migrated)
       } else {
         // First run on this machine: persist the seeded default immediately so
         // every TV/tab shares one schedule from the very first load. `state`
@@ -321,15 +325,24 @@ function migrate(loaded: AppState): AppState {
   const graphics = (loaded.graphics ?? base.graphics).map((g) =>
     assetRemap[g.src] ? { ...g, ...assetRemap[g.src] } : g,
   )
+
+  let quotes = loaded.quotes ?? base.quotes
+  // One-time (v1 -> v2): the first release seeded text quotes that duplicated
+  // the image logos. Strip those exact seeded duplicates once. Gated on version
+  // so quotes the user types later (even the same text) are never touched.
+  if ((loaded.version ?? 1) < 2) {
+    const dupes = new Set(['PUT THE BALL DOWN.', 'THEY HAVE TO PLAY US.'])
+    quotes = quotes.filter((q) => !dupes.has(q.text.trim().toUpperCase()))
+  }
+
   return {
     ...base,
     ...loaded,
-    version: 1,
+    version: 2,
     game: { ...base.game, ...loaded.game },
     settings: { ...base.settings, ...loaded.settings },
     graphics,
-    // Older saved boards predate quotes — seed them so the feature appears.
-    quotes: loaded.quotes ?? base.quotes,
+    quotes,
   }
 }
 
