@@ -278,12 +278,21 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 /** Forward-compatible migration hook for older persisted documents. */
 function migrate(loaded: AppState): AppState {
   const base = makeDefaultState()
+  // Heal older bundled-asset paths that have since been replaced with the
+  // official team artwork, so boards saved before the swap update themselves.
+  const assetRemap: Record<string, string> = {
+    '/culture/they-have-to-play-us.svg': '/culture/they-have-to-play-us.png',
+  }
+  const graphics = (loaded.graphics ?? base.graphics).map((g) =>
+    assetRemap[g.src] ? { ...g, src: assetRemap[g.src] } : g,
+  )
   return {
     ...base,
     ...loaded,
     version: 1,
     game: { ...base.game, ...loaded.game },
     settings: { ...base.settings, ...loaded.settings },
+    graphics,
   }
 }
 
