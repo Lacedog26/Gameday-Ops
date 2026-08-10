@@ -1,12 +1,13 @@
 import { useDashboard } from '../../context/DashboardContext'
-import { formatClock } from '../../lib/time'
+import { formatClock, kickoffMs } from '../../lib/time'
 import { Section, Field, TextInput, Select } from './ui'
 
 /** Edit the game-day header info: opponent, week, home/away, kickoff time. */
 export default function GameSetupSection() {
   const { state, actions } = useDashboard()
   const { game } = state
-  const kickoffValid = !Number.isNaN(new Date(game.kickoffISO).getTime())
+  const kickoffAt = kickoffMs(game)
+  const kickoffValid = !Number.isNaN(kickoffAt)
 
   return (
     <Section title="Game Setup" subtitle="Header info & kickoff time" accent="red">
@@ -37,7 +38,7 @@ export default function GameSetupSection() {
           </Select>
         </Field>
 
-        <Field label="Kickoff (stadium local time)">
+        <Field label="Kickoff — Eastern Time (ET)">
           <TextInput
             type="datetime-local"
             value={game.kickoffISO.slice(0, 16)}
@@ -50,11 +51,8 @@ export default function GameSetupSection() {
         {kickoffValid ? (
           <>
             Kickoff set for{' '}
-            <span className="font-bold text-white">
-              {new Date(game.kickoffISO).toLocaleString()}
-            </span>{' '}
-            ({formatClock(new Date(game.kickoffISO).getTime())}). All event countdowns update
-            automatically.
+            <span className="font-bold text-white">{formatClock(kickoffAt, false)} ET</span>. Enter
+            times in Eastern; every clock and countdown updates automatically.
           </>
         ) : (
           <span className="text-bills-red">⚠ Invalid kickoff time — please re-enter.</span>

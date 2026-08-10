@@ -30,27 +30,28 @@ export function rowStyle(level: AlertLevel, cb: boolean): RowStyle {
         statusPill: 'bg-sky-400/25 text-white border border-sky-300/50',
       }
     case 'warn':
+      // 5-minute "on deck" window: clean WHITE background until 2 minutes out.
       return {
         row: cb
-          ? 'bg-gradient-to-r from-amber-300 to-amber-400 text-navy-950 border-amber-200 shadow-glow-yellow animate-pulse-soft'
-          : 'bg-gradient-to-r from-yellow-300 via-alert-warn to-amber-400 text-navy-950 border-yellow-100 shadow-glow-yellow animate-pulse-soft',
-        timer: 'text-navy-950',
+          ? 'bg-white text-navy-950 border-amber-300 ring-2 ring-amber-300 shadow-[0_0_26px_rgba(255,255,255,0.35)]'
+          : 'bg-white text-navy-950 border-white shadow-[0_0_30px_rgba(255,255,255,0.4)]',
+        timer: 'text-redbright',
         statusLabel: 'STANDBY',
-        statusPill: 'bg-navy-950/25 text-navy-950 border border-navy-950/40',
+        statusPill: 'bg-navy-900 text-white border border-navy-900',
       }
     case 'imminent':
       return {
-        row: 'text-white border-red-300/70 animate-flash-red shadow-glow-red',
+        row: 'text-white border-redbright animate-flash-red shadow-glow-red',
         timer: 'text-white',
         statusLabel: 'ON DECK',
-        statusPill: 'bg-white text-bills-red border border-white',
+        statusPill: 'bg-white text-redbright border border-white',
       }
     case 'critical':
       return {
-        row: 'text-white border-red-200 animate-flash-red-fast shadow-glow-red',
+        row: 'text-white border-redbright animate-flash-red-fast shadow-glow-red',
         timer: 'text-white',
         statusLabel: 'ON DECK',
-        statusPill: 'bg-white text-bills-red border border-white',
+        statusPill: 'bg-white text-redbright border border-white',
       }
     case 'go':
       return {

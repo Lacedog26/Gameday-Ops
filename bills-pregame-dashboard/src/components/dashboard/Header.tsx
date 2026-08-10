@@ -24,9 +24,9 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
   const kickoffColor = !preKick
     ? 'text-alert-go drop-shadow-[0_4px_24px_rgba(34,197,94,0.5)]'
     : secondsToKickoff <= 120
-      ? 'text-bills-red animate-pulse-soft drop-shadow-[0_0_26px_rgba(198,12,48,0.75)]'
+      ? 'text-redbright animate-pulse-soft drop-shadow-[0_0_30px_rgba(255,31,62,0.9)]'
       : secondsToKickoff <= 300
-        ? 'text-bills-red drop-shadow-[0_0_22px_rgba(198,12,48,0.6)]'
+        ? 'text-redbright drop-shadow-[0_0_26px_rgba(255,31,62,0.75)]'
         : 'text-white drop-shadow-[0_3px_18px_rgba(255,255,255,0.25)]'
 
   return (
@@ -50,7 +50,7 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
           <InfoCell label="MATCHUP" value={`${game.homeAway === 'HOME' ? 'vs' : '@'} ${game.opponent}`} />
           <InfoCell label="WEEK" value={game.week} />
           <InfoCell label="KICKOFF" value={kickClock} />
-          <InfoCell label="LOCAL TIME" value={formatClock(nowMs, true)} live />
+          <InfoCell label="EASTERN (ET)" value={formatClock(nowMs, true)} live />
         </div>
       </div>
 
