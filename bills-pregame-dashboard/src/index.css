@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background-color: #04070f;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden; /* TV mode: never scroll */
+}
+
+/* Tabular figures keep countdown digits from shifting width every tick. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: 0.01em;
+}
+
+/* Hide scrollbars inside internally-scrolling panels while keeping scroll. */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Subtle field-turf / broadcast texture behind the whole board. */
+.field-bg {
+  background-image:
+    radial-gradient(1200px 600px at 80% -10%, rgba(0, 51, 141, 0.28), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(198, 12, 48, 0.16), transparent 55%),
+    linear-gradient(180deg, #060b16 0%, #04070f 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
