@@ -19,6 +19,16 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
   const preKick = secondsToKickoff > 0
   const kickClock = formatClock(kickoffAt)
 
+  // The big kickoff clock stays clean white, then turns red as kickoff nears —
+  // solid red under 5 min, red + pulse under 2 min, green once we're LIVE.
+  const kickoffColor = !preKick
+    ? 'text-alert-go drop-shadow-[0_4px_24px_rgba(34,197,94,0.5)]'
+    : secondsToKickoff <= 120
+      ? 'text-bills-red animate-pulse-soft drop-shadow-[0_0_26px_rgba(198,12,48,0.75)]'
+      : secondsToKickoff <= 300
+        ? 'text-bills-red drop-shadow-[0_0_22px_rgba(198,12,48,0.6)]'
+        : 'text-white drop-shadow-[0_3px_18px_rgba(255,255,255,0.25)]'
+
   return (
     <header className="relative flex items-stretch gap-6 px-8 pt-6 pb-4">
       {/* Left: identity */}
@@ -55,11 +65,7 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
           key={preKick ? 'pre' : 'post'}
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`tnum relative bg-clip-text font-mono font-bold leading-none text-transparent text-[92px] ${
-            preKick
-              ? 'bg-gradient-to-b from-white via-sky-100 to-sky-300 drop-shadow-[0_4px_24px_rgba(56,140,255,0.45)]'
-              : 'bg-gradient-to-b from-emerald-200 to-emerald-400 drop-shadow-[0_4px_24px_rgba(34,197,94,0.45)]'
-          }`}
+          className={`tnum relative font-mono font-bold leading-none text-[92px] ${kickoffColor}`}
         >
           {preKick ? formatHMS(secondsToKickoff) : 'LIVE'}
         </motion.div>
