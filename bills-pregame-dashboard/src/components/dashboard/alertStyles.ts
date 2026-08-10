@@ -17,17 +17,17 @@ export function rowStyle(level: AlertLevel, cb: boolean): RowStyle {
   switch (level) {
     case 'completed':
       return {
-        row: 'bg-gradient-to-r from-navy-900/80 to-navy-950/70 text-slate-500 border-white/5',
-        timer: 'text-slate-600 line-through decoration-slate-600/60',
+        row: 'bg-gradient-to-r from-emerald-900/35 to-navy-800/50 text-slate-400 border-emerald-400/15',
+        timer: 'text-slate-500 line-through decoration-slate-500/60',
         statusLabel: 'DONE',
-        statusPill: 'bg-alert-go/15 text-alert-go border border-alert-go/30',
+        statusPill: 'bg-alert-go/20 text-emerald-300 border border-alert-go/40',
       }
     case 'upcoming':
       return {
-        row: 'bg-gradient-to-r from-navy-700/60 via-navy-800/70 to-navy-850/70 text-white border-sky-300/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-sky-300/25',
-        timer: 'text-sky-300',
+        row: 'bg-gradient-to-r from-[#1b47a6]/70 via-[#173b8c]/70 to-[#12306e]/65 text-white border-sky-300/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-sky-300/45',
+        timer: 'text-cyan-300',
         statusLabel: 'READY',
-        statusPill: 'bg-bills-royal/30 text-sky-100 border border-sky-300/30',
+        statusPill: 'bg-sky-400/25 text-white border border-sky-300/50',
       }
     case 'warn':
       return {
