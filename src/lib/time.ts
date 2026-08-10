@@ -1,5 +1,64 @@
 import type { AlertLevel, GameInfo, PregameEvent, TimedEvent } from '../types'
 
+// ---------------------------------------------------------------------------
+// Timezone: every wall-clock the board shows (current time, kickoff, each
+// event's scheduled time) is rendered in US Eastern Time, and the kickoff
+// input is interpreted as Eastern — so the board is correct on any TV/player
+// regardless of that machine's own clock zone. Durations/countdowns are pure
+// epoch math and are timezone-independent.
+// ---------------------------------------------------------------------------
+export const TEAM_TZ = 'America/New_York'
+
+/** Extract wall-clock parts for an instant, evaluated in the team timezone. */
+function partsInTZ(epochMs: number) {
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone: TEAM_TZ,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+  const p = dtf.formatToParts(new Date(epochMs)).reduce<Record<string, number>>((acc, part) => {
+    if (part.type !== 'literal') acc[part.type] = Number(part.value)
+    return acc
+  }, {})
+  // Intl returns hour 24 for midnight in some engines; normalise to 0.
+  if (p.hour === 24) p.hour = 0
+  return p as { year: number; month: number; day: number; hour: number; minute: number; second: number }
+}
+
+/** Offset (ms) of the team timezone from UTC at a given instant (handles DST). */
+function tzOffsetMs(epochMs: number): number {
+  const p = partsInTZ(epochMs)
+  const asUTC = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second)
+  return asUTC - epochMs
+}
+
+/**
+ * Convert an Eastern-Time wall clock ("YYYY-MM-DDTHH:mm") to a UTC epoch.
+ * Interpreting the kickoff field as Eastern keeps the board correct even if the
+ * TV/admin device is set to another timezone.
+ */
+export function etWallTimeToEpoch(iso: string): number {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/)
+  if (!m) return new Date(iso).getTime()
+  const [, y, mo, d, h, mi, s] = m
+  const naiveUTC = Date.UTC(+y, +mo - 1, +d, +h, +mi, s ? +s : 0)
+  // Offset at the naive instant is a close-enough anchor for DST correctness.
+  const offset = tzOffsetMs(naiveUTC)
+  return naiveUTC - offset
+}
+
+/** Format an epoch as "YYYY-MM-DDTHH:mm" in Eastern Time (for the admin input). */
+export function epochToEtWallISO(epochMs: number): string {
+  const p = partsInTZ(epochMs)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${p.year}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}`
+}
+
 // Alert thresholds (seconds). Centralised so the whole app agrees on when a
 // row escalates. Ordered from calm -> urgent.
 export const THRESHOLDS = {
@@ -59,35 +118,29 @@ export function parseTMinus(input: string): number | null {
   return null
 }
 
-/** Format an epoch-ms timestamp as a wall-clock time, e.g. "11:45" or "1:00". */
+/** Format an epoch-ms timestamp as an Eastern wall-clock, e.g. "11:45" / "1:00". */
 export function formatClock(epochMs: number, withSeconds = false): string {
-  const d = new Date(epochMs)
-  let h = d.getHours()
-  const m = d.getMinutes()
-  const s = d.getSeconds()
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  h = h % 12
+  const p = partsInTZ(epochMs)
+  const ampm = p.hour >= 12 ? 'PM' : 'AM'
+  let h = p.hour % 12
   if (h === 0) h = 12
-  const base = withSeconds ? `${h}:${p2(m)}:${p2(s)}` : `${h}:${p2(m)}`
+  const base = withSeconds ? `${h}:${p2(p.minute)}:${p2(p.second)}` : `${h}:${p2(p.minute)}`
   return `${base} ${ampm}`
 }
 
-/** Compact clock (no AM/PM) that mirrors the printed card, e.g. "12:26:30". */
+/** Compact Eastern clock (no AM/PM) mirroring the printed card, e.g. "12:26:30". */
 export function formatCardClock(epochMs: number, tMinusSeconds: number): string {
-  const d = new Date(epochMs)
-  let h = d.getHours()
-  const m = d.getMinutes()
-  const s = d.getSeconds()
-  h = h % 12
+  const p = partsInTZ(epochMs)
+  let h = p.hour % 12
   if (h === 0) h = 12
   // Only show seconds when the offset itself carries seconds (matches source card).
   const showSeconds = tMinusSeconds % 60 !== 0
-  return showSeconds ? `${h}:${p2(m)}:${p2(s)}` : `${h}:${p2(m)}`
+  return showSeconds ? `${h}:${p2(p.minute)}:${p2(p.second)}` : `${h}:${p2(p.minute)}`
 }
 
-/** Kickoff timestamp (ms) from game info. Returns NaN on bad input. */
+/** Kickoff timestamp (ms) from game info, interpreting the field as Eastern. */
 export function kickoffMs(game: GameInfo): number {
-  return new Date(game.kickoffISO).getTime()
+  return etWallTimeToEpoch(game.kickoffISO)
 }
 
 /** Absolute scheduled time (ms) for an event given kickoff. */

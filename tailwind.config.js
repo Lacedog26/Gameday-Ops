@@ -9,6 +9,8 @@ export default {
           royal: '#00338D', // Bills Royal Blue
           red: '#C60C30', // Bills Red
         },
+        // Brighter, high-energy alert red for TV-visible urgency states.
+        redbright: '#FF1F3E',
         // Dark navy surface ramp used for backgrounds / cards
         navy: {
           950: '#04070F',
@@ -29,7 +31,7 @@ export default {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        'glow-red': '0 0 0 3px rgba(198,12,48,0.9), 0 0 30px 6px rgba(198,12,48,0.65), 0 0 70px 14px rgba(198,12,48,0.35)',
+        'glow-red': '0 0 0 3px rgba(255,31,62,0.95), 0 0 34px 8px rgba(255,31,62,0.7), 0 0 80px 16px rgba(255,31,62,0.4)',
         'glow-yellow': '0 0 0 2px rgba(255,199,44,0.85), 0 0 24px 4px rgba(255,199,44,0.45)',
         'glow-blue': '0 0 40px rgba(0,51,141,0.55)',
       },
@@ -40,22 +42,22 @@ export default {
         },
         'flash-red': {
           '0%, 100%': {
-            backgroundColor: 'rgba(198,12,48,0.95)',
-            boxShadow: '0 0 0 3px rgba(198,12,48,0.9), 0 0 34px 8px rgba(198,12,48,0.6)',
+            backgroundColor: 'rgba(255,31,62,1)',
+            boxShadow: '0 0 0 3px rgba(255,70,95,1), 0 0 40px 10px rgba(255,31,62,0.7)',
           },
           '50%': {
-            backgroundColor: 'rgba(120,6,26,0.85)',
-            boxShadow: '0 0 0 2px rgba(198,12,48,0.5), 0 0 12px 2px rgba(198,12,48,0.25)',
+            backgroundColor: 'rgba(190,10,38,0.9)',
+            boxShadow: '0 0 0 2px rgba(255,31,62,0.55), 0 0 14px 3px rgba(255,31,62,0.3)',
           },
         },
         'flash-red-fast': {
           '0%, 100%': {
-            backgroundColor: 'rgba(220,20,60,1)',
-            boxShadow: '0 0 0 4px rgba(255,60,90,0.95), 0 0 46px 12px rgba(198,12,48,0.8)',
+            backgroundColor: 'rgba(255,45,75,1)',
+            boxShadow: '0 0 0 4px rgba(255,90,115,1), 0 0 52px 14px rgba(255,31,62,0.85)',
           },
           '50%': {
-            backgroundColor: 'rgba(90,4,18,0.9)',
-            boxShadow: '0 0 0 2px rgba(198,12,48,0.4), 0 0 10px 2px rgba(198,12,48,0.2)',
+            backgroundColor: 'rgba(150,8,30,0.92)',
+            boxShadow: '0 0 0 2px rgba(255,31,62,0.5), 0 0 12px 3px rgba(255,31,62,0.25)',
           },
         },
         'flash-go': {

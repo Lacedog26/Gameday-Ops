@@ -5,6 +5,7 @@ import type {
   ScheduleTemplate,
   Settings,
 } from '../types'
+import { epochToEtWallISO } from './time'
 
 // ---------------------------------------------------------------------------
 // Shipped defaults: the standard Bills pre-game routine (from the printed card)
@@ -164,13 +165,14 @@ export function defaultSettings(): Settings {
 export function makeDefaultState(now = Date.now()): AppState {
   const templates = defaultTemplates()
   const regular = templates[0]
-  const kickoff = new Date(now + 80 * 60 * 1000)
   return {
     version: 1,
     game: {
       opponent: 'New York Jets',
       week: 'Week 1',
-      kickoffISO: toLocalISO(kickoff),
+      // Seed kickoff ~80 min out, expressed in Eastern wall time so it
+      // round-trips through the ET-aware parser regardless of device zone.
+      kickoffISO: epochToEtWallISO(now + 80 * 60 * 1000),
       homeAway: 'HOME',
     },
     // Deep-copy the regular template's events so editing the active schedule
@@ -180,18 +182,6 @@ export function makeDefaultState(now = Date.now()): AppState {
     graphics: defaultGraphics(),
     settings: defaultSettings(),
   }
-}
-
-/**
- * Produce a `YYYY-MM-DDTHH:mm` string in LOCAL time (what <input type=datetime-local>
- * expects and what the header shows as stadium wall-clock time).
- */
-export function toLocalISO(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return (
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
-    `T${pad(d.getHours())}:${pad(d.getMinutes())}`
-  )
 }
 
 export { uid }

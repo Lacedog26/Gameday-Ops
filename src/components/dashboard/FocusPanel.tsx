@@ -14,11 +14,12 @@ function nowSkin(level: AlertLevel): { wrap: string; timer: string; badge: strin
     case 'go':
       return { wrap: 'bg-alert-go text-white animate-flash-go', timer: 'text-white', badge: 'bg-white text-emerald-700' }
     case 'critical':
-      return { wrap: 'bg-bills-red text-white animate-flash-red-fast shadow-glow-red', timer: 'text-white', badge: 'bg-white text-bills-red' }
+      return { wrap: 'bg-redbright text-white animate-flash-red-fast shadow-glow-red', timer: 'text-white', badge: 'bg-white text-redbright' }
     case 'imminent':
-      return { wrap: 'bg-bills-red text-white animate-flash-red shadow-glow-red', timer: 'text-white', badge: 'bg-white text-bills-red' }
+      return { wrap: 'bg-redbright text-white animate-flash-red shadow-glow-red', timer: 'text-white', badge: 'bg-white text-redbright' }
     case 'warn':
-      return { wrap: 'bg-alert-warn text-navy-950 animate-pulse-soft', timer: 'text-navy-950', badge: 'bg-navy-950 text-alert-warn' }
+      // White "on deck" backdrop until 2 minutes out, matching the schedule row.
+      return { wrap: 'bg-white text-navy-950 shadow-[0_0_40px_rgba(255,255,255,0.4)]', timer: 'text-redbright', badge: 'bg-navy-900 text-white' }
     default:
       return {
         wrap: 'bg-gradient-to-br from-[#1e4fbf] via-[#173b93] to-[#102a63] text-white border border-sky-300/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_18px_50px_rgba(10,30,90,0.55)]',
