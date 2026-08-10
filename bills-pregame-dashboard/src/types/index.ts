@@ -76,6 +76,13 @@ export interface CultureGraphic {
   order: number
   /** Per-graphic display duration override in seconds (falls back to global). */
   durationSec?: number
+  /**
+   * Backdrop behind the artwork. Some official graphics are drawn in dark
+   * colors meant for a light background (e.g. "Put The Ball Down"); a 'light'
+   * matte shows them on a clean white plaque so they stay legible on the dark
+   * board. 'none' (default) renders straight onto the transparent panel.
+   */
+  matte?: 'none' | 'light'
 }
 
 export type TransitionStyle = 'fade' | 'slide'

@@ -79,6 +79,7 @@ export default function CulturePanel({ suppressed }: Props) {
               src={current.src}
               alt={current.name}
               transition={settings.cultureTransition}
+              matte={current.matte ?? 'none'}
             />
           ) : (
             <motion.div
@@ -100,10 +101,12 @@ function GraphicSlide({
   src,
   alt,
   transition,
+  matte,
 }: {
   src: string
   alt: string
   transition: TransitionStyle
+  matte: 'none' | 'light'
 }) {
   const variants =
     transition === 'slide'
@@ -118,17 +121,29 @@ function GraphicSlide({
           exit: { opacity: 0, scale: 0.98 },
         }
 
-  return (
-    <motion.img
+  const img = (
+    // object-contain guarantees the artwork is never stretched/distorted.
+    <img
       src={src}
       alt={alt}
+      className="max-h-full max-w-full object-contain drop-shadow-[0_8px_30px_rgba(0,0,0,0.35)]"
+    />
+  )
+
+  return (
+    <motion.div
       variants={variants}
       initial="initial"
       animate="animate"
       exit="exit"
       transition={{ duration: 0.6, ease: 'easeInOut' }}
-      // object-contain guarantees the artwork is never stretched/distorted.
-      className="max-h-full max-w-full object-contain drop-shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
-    />
+      className={
+        matte === 'light'
+          ? 'flex max-h-full max-w-full items-center justify-center rounded-2xl bg-white px-8 py-6 shadow-[0_10px_40px_rgba(0,0,0,0.45)]'
+          : 'flex max-h-full max-w-full items-center justify-center'
+      }
+    >
+      {img}
+    </motion.div>
   )
 }

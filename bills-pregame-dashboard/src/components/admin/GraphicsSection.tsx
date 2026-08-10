@@ -145,6 +145,17 @@ function GraphicCard({
             className="w-16 py-1 text-sm"
           />
         </label>
+        <button
+          title="Background behind the artwork"
+          onClick={() => onChange({ matte: graphic.matte === 'light' ? 'none' : 'light' })}
+          className={`rounded-lg px-2.5 py-1.5 text-xs font-bold ${
+            graphic.matte === 'light'
+              ? 'bg-white text-navy-950'
+              : 'bg-white/10 text-slate-300'
+          }`}
+        >
+          {graphic.matte === 'light' ? 'WHITE BG' : 'CLEAR BG'}
+        </button>
         <div className="ml-auto flex items-center gap-1">
           <IconButton title="Move up" disabled={isFirst} onClick={onUp}>
             ↑
