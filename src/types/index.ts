@@ -85,6 +85,20 @@ export interface CultureGraphic {
   matte?: 'none' | 'light'
 }
 
+/** A text-based motivational quote shown in the rotating culture panel. */
+export interface Quote {
+  id: string
+  /** The headline line, shown large (e.g. "PUT THE BALL DOWN."). */
+  text: string
+  /** Optional smaller attribution / subtext (e.g. "— Coach"). */
+  author?: string
+  enabled: boolean
+  /** Manual ordering index (lower shows first). */
+  order: number
+  /** Accent color for the quote text: team blue, red, or white. */
+  accent?: 'royal' | 'red' | 'white'
+}
+
 export type TransitionStyle = 'fade' | 'slide'
 
 /** User-tunable settings that persist across sessions. */
@@ -111,6 +125,7 @@ export interface AppState {
   activeEvents: PregameEvent[]
   templates: ScheduleTemplate[]
   graphics: CultureGraphic[]
+  quotes: Quote[]
   settings: Settings
 }
 

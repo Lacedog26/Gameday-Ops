@@ -12,6 +12,7 @@ import type {
   CultureGraphic,
   GameInfo,
   PregameEvent,
+  Quote,
   ScheduleTemplate,
   Settings,
   TemplateKind,
@@ -41,6 +42,10 @@ type Action =
   | { type: 'UPDATE_GRAPHIC'; id: string; patch: Partial<CultureGraphic> }
   | { type: 'DELETE_GRAPHIC'; id: string }
   | { type: 'REORDER_GRAPHICS'; from: number; to: number }
+  | { type: 'ADD_QUOTE'; quote: Quote }
+  | { type: 'UPDATE_QUOTE'; id: string; patch: Partial<Quote> }
+  | { type: 'DELETE_QUOTE'; id: string }
+  | { type: 'REORDER_QUOTES'; from: number; to: number }
   | { type: 'SET_SETTINGS'; patch: Partial<Settings> }
   | { type: 'RESET' }
 
@@ -157,6 +162,27 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, graphics: reordered }
     }
 
+    case 'ADD_QUOTE':
+      return { ...state, quotes: [...state.quotes, action.quote] }
+
+    case 'UPDATE_QUOTE':
+      return {
+        ...state,
+        quotes: state.quotes.map((q) => (q.id === action.id ? { ...q, ...action.patch } : q)),
+      }
+
+    case 'DELETE_QUOTE':
+      return { ...state, quotes: state.quotes.filter((q) => q.id !== action.id) }
+
+    case 'REORDER_QUOTES': {
+      const reordered = move(
+        [...state.quotes].sort((a, b) => a.order - b.order),
+        action.from,
+        action.to,
+      ).map((q, i) => ({ ...q, order: i }))
+      return { ...state, quotes: reordered }
+    }
+
     case 'SET_SETTINGS':
       return { ...state, settings: { ...state.settings, ...action.patch } }
 
@@ -190,6 +216,10 @@ interface DashboardContextValue {
     updateGraphic: (id: string, patch: Partial<CultureGraphic>) => void
     deleteGraphic: (id: string) => void
     reorderGraphics: (from: number, to: number) => void
+    addQuote: (quote: Omit<Quote, 'id'>) => void
+    updateQuote: (id: string, patch: Partial<Quote>) => void
+    deleteQuote: (id: string) => void
+    reorderQuotes: (from: number, to: number) => void
     setSettings: (patch: Partial<Settings>) => void
     reset: () => void
   }
@@ -261,6 +291,10 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       updateGraphic: (id, patch) => dispatch({ type: 'UPDATE_GRAPHIC', id, patch }),
       deleteGraphic: (id) => dispatch({ type: 'DELETE_GRAPHIC', id }),
       reorderGraphics: (from, to) => dispatch({ type: 'REORDER_GRAPHICS', from, to }),
+      addQuote: (quote) => dispatch({ type: 'ADD_QUOTE', quote: { ...quote, id: uid('qt') } }),
+      updateQuote: (id, patch) => dispatch({ type: 'UPDATE_QUOTE', id, patch }),
+      deleteQuote: (id) => dispatch({ type: 'DELETE_QUOTE', id }),
+      reorderQuotes: (from, to) => dispatch({ type: 'REORDER_QUOTES', from, to }),
       setSettings: (patch) => dispatch({ type: 'SET_SETTINGS', patch }),
       reset: () => dispatch({ type: 'RESET' }),
     }),
@@ -294,6 +328,8 @@ function migrate(loaded: AppState): AppState {
     game: { ...base.game, ...loaded.game },
     settings: { ...base.settings, ...loaded.settings },
     graphics,
+    // Older saved boards predate quotes — seed them so the feature appears.
+    quotes: loaded.quotes ?? base.quotes,
   }
 }
 

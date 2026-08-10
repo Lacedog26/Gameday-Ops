@@ -2,6 +2,7 @@ import type {
   AppState,
   CultureGraphic,
   PregameEvent,
+  Quote,
   ScheduleTemplate,
   Settings,
 } from '../types'
@@ -146,6 +147,15 @@ export function defaultGraphics(): CultureGraphic[] {
   ]
 }
 
+export function defaultQuotes(): Quote[] {
+  return [
+    { id: uid('qt'), text: 'PUT THE BALL DOWN.', enabled: true, order: 0, accent: 'royal' },
+    { id: uid('qt'), text: 'THEY HAVE TO PLAY US.', enabled: true, order: 1, accent: 'red' },
+    { id: uid('qt'), text: 'PROTECT THE ROCK.', enabled: true, order: 2, accent: 'white' },
+    { id: uid('qt'), text: 'EARN IT TODAY.', enabled: true, order: 3, accent: 'royal' },
+  ]
+}
+
 export function defaultSettings(): Settings {
   return {
     soundEnabled: true,
@@ -180,6 +190,7 @@ export function makeDefaultState(now = Date.now()): AppState {
     activeEvents: regular.events.map((e) => ({ ...e })),
     templates,
     graphics: defaultGraphics(),
+    quotes: defaultQuotes(),
     settings: defaultSettings(),
   }
 }
