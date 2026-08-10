@@ -65,7 +65,8 @@ export const THRESHOLDS = {
   warn: 5 * 60, // 5 minutes
   imminent: 2 * 60, // 2 minutes
   critical: 30, // 30 seconds
-  goWindow: 60, // "GO NOW" stays lit for 60s after scheduled time
+  goWindow: 20, // "GO NOW" stays lit for 20s, then the row completes and the
+  // focus panel returns to the calm blue "next up" state
 } as const
 
 /** Pad a number to 2 digits. */

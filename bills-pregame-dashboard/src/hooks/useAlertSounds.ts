@@ -1,45 +1,41 @@
 import { useEffect, useRef } from 'react'
-import type { AlertLevel, TimedEvent } from '../types'
+import type { TimedEvent } from '../types'
 
-// Synthesised alert tones via WebAudio — no audio files to ship or fail to load.
-// Different cues for each escalation so staff recognise urgency without looking.
-
-type Cue = 'warn' | 'imminent' | 'critical' | 'go'
-
-const CUE_FOR_LEVEL: Partial<Record<AlertLevel, Cue>> = {
-  warn: 'warn',
-  imminent: 'imminent',
-  critical: 'critical',
-  go: 'go',
-}
-
-// Rank so we only fire a cue when an event ESCALATES (never on de-escalation).
-const RANK: Record<AlertLevel, number> = {
-  completed: 0,
-  upcoming: 1,
-  warn: 2,
-  imminent: 3,
-  critical: 4,
-  go: 5,
-}
+// ---------------------------------------------------------------------------
+// Countdown alert tones (WebAudio — no audio files to ship or fail to load).
+//
+// For each group about to go out:
+//   • 10 seconds left  -> one beep
+//   • 5, 4, 3, 2       -> a beep each (rising urgency)
+//   • 1 second left    -> one LOUD beep (meant to carry over TV speakers)
+//   • 0 (GO NOW)       -> a rising "go" horn
+// ---------------------------------------------------------------------------
 
 interface Options {
   enabled: boolean
   volume: number
 }
 
+// Seconds-remaining marks that trigger a beep, largest first.
+const MARKS = [10, 5, 4, 3, 2, 1] as const
+
 export function useAlertSounds(timeline: TimedEvent[], { enabled, volume }: Options): void {
   const ctxRef = useRef<AudioContext | null>(null)
-  const lastLevel = useRef<Map<string, AlertLevel>>(new Map())
   const primed = useRef(false)
+  // Per-event: the smallest countdown mark already beeped (so each fires once).
+  const lastMark = useRef<Map<string, number>>(new Map())
+  // Per-event: whether the GO tone has fired for this pass.
+  const goFired = useRef<Set<string>>(new Set())
 
-  // Lazily create + resume the AudioContext on the first user gesture (browsers
-  // block autoplay audio until then). TV kiosks: a single click/keypress arms it.
+  // Arm the AudioContext on the first user interaction (browsers block audio
+  // until then). On a TV kiosk, one click/keypress after load enables sound.
   useEffect(() => {
     const prime = () => {
       if (primed.current) return
       try {
-        const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+        const Ctor =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
         ctxRef.current = new Ctor()
         ctxRef.current.resume().catch(() => {})
         primed.current = true
@@ -55,57 +51,80 @@ export function useAlertSounds(timeline: TimedEvent[], { enabled, volume }: Opti
     }
   }, [])
 
-  const play = (cue: Cue) => {
+  // Play a short tone. `loud` boosts gain + length for the final "1" and GO.
+  const tone = (freq: number, when: number, dur: number, gain: number, type: OscillatorType) => {
     const ctx = ctxRef.current
-    if (!ctx || !enabled) return
+    if (!ctx) return
+    const osc = ctx.createOscillator()
+    const g = ctx.createGain()
+    osc.type = type
+    osc.frequency.value = freq
+    g.gain.setValueAtTime(0, when)
+    g.gain.linearRampToValueAtTime(gain, when + 0.008)
+    g.gain.exponentialRampToValueAtTime(0.0001, when + dur)
+    osc.connect(g).connect(ctx.destination)
+    osc.start(when)
+    osc.stop(when + dur + 0.02)
+  }
+
+  const vol = () => Math.max(0, Math.min(1, volume))
+
+  const beepForMark = (mark: number) => {
+    const ctx = ctxRef.current
+    if (!ctx) return
     const now = ctx.currentTime
-    // Each cue = a short sequence of tones (freq, startOffset, duration).
-    const patterns: Record<Cue, Array<[number, number, number]>> = {
-      warn: [[660, 0, 0.14]],
-      imminent: [
-        [740, 0, 0.12],
-        [740, 0.2, 0.12],
-      ],
-      critical: [
-        [880, 0, 0.1],
-        [880, 0.16, 0.1],
-        [880, 0.32, 0.1],
-      ],
-      go: [
-        [523, 0, 0.14],
-        [784, 0.14, 0.14],
-        [1046, 0.28, 0.26],
-      ],
-    }
-    for (const [freq, offset, dur] of patterns[cue]) {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = cue === 'go' ? 'sawtooth' : 'square'
-      osc.frequency.value = freq
-      const start = now + offset
-      const vol = Math.max(0, Math.min(1, volume)) * 0.35
-      gain.gain.setValueAtTime(0, start)
-      gain.gain.linearRampToValueAtTime(vol, start + 0.01)
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + dur)
-      osc.connect(gain).connect(ctx.destination)
-      osc.start(start)
-      osc.stop(start + dur + 0.02)
+    if (mark === 10) {
+      tone(880, now, 0.16, vol() * 0.5, 'square')
+    } else if (mark === 1) {
+      // Really loud final beep — layered for punch over TV speakers.
+      tone(1319, now, 0.55, Math.min(1, vol() * 1.0), 'sawtooth')
+      tone(660, now, 0.55, Math.min(1, vol() * 0.7), 'square')
+    } else {
+      // 5, 4, 3, 2 — rising pitch as it gets closer.
+      const freq = 900 + (5 - mark) * 60
+      tone(freq, now, 0.13, vol() * 0.6, 'square')
     }
   }
 
+  const playGo = () => {
+    const ctx = ctxRef.current
+    if (!ctx) return
+    const now = ctx.currentTime
+    tone(523, now, 0.16, vol() * 0.8, 'sawtooth')
+    tone(784, now + 0.16, 0.16, vol() * 0.85, 'sawtooth')
+    tone(1046, now + 0.32, 0.32, Math.min(1, vol() * 0.95), 'sawtooth')
+  }
+
   useEffect(() => {
-    if (!enabled) {
-      // Keep levels current so re-enabling doesn't retro-fire a backlog.
-      for (const t of timeline) lastLevel.current.set(t.event.id, t.level)
-      return
-    }
+    if (!enabled || !ctxRef.current) return
+
     for (const t of timeline) {
-      const prev = lastLevel.current.get(t.event.id)
-      lastLevel.current.set(t.event.id, t.level)
-      if (prev === undefined) continue // first observation — don't fire
-      if (RANK[t.level] > RANK[prev]) {
-        const cue = CUE_FOR_LEVEL[t.level]
-        if (cue) play(cue)
+      const id = t.event.id
+      const s = t.secondsUntil
+
+      // Reset a group's countdown state once it's comfortably in the future
+      // again (e.g. kickoff time was edited), so it can beep on a fresh pass.
+      if (s > 11) {
+        if (lastMark.current.has(id)) lastMark.current.delete(id)
+        goFired.current.delete(id)
+        continue
+      }
+
+      // GO tone at (or just past) the scheduled moment.
+      if (s <= 0) {
+        if (!goFired.current.has(id) && s > -3) {
+          goFired.current.add(id)
+          playGo()
+        }
+        continue
+      }
+
+      // Countdown beeps: fire the largest not-yet-fired mark at/under `s`.
+      const already = lastMark.current.get(id) ?? Infinity
+      const due = MARKS.find((m) => s <= m && m < already)
+      if (due !== undefined) {
+        lastMark.current.set(id, due)
+        beepForMark(due)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
