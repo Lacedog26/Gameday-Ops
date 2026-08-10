@@ -20,7 +20,11 @@ function nowSkin(level: AlertLevel): { wrap: string; timer: string; badge: strin
     case 'warn':
       return { wrap: 'bg-alert-warn text-navy-950 animate-pulse-soft', timer: 'text-navy-950', badge: 'bg-navy-950 text-alert-warn' }
     default:
-      return { wrap: 'bg-navy-800 text-white border border-white/10', timer: 'text-sky-300', badge: 'bg-bills-royal text-white' }
+      return {
+        wrap: 'bg-gradient-to-br from-navy-700/90 via-navy-800/90 to-navy-900 text-white border border-sky-300/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_18px_50px_rgba(0,0,0,0.5)]',
+        timer: 'text-sky-200',
+        badge: 'bg-bills-royal text-white',
+      }
   }
 }
 
@@ -88,7 +92,7 @@ export default function FocusPanel({ now, next, onAcknowledge }: Props) {
       </motion.div>
 
       {/* NEXT */}
-      <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-navy-900/70 px-6 py-4">
+      <div className="glass flex items-center justify-between rounded-2xl px-6 py-4">
         <div className="min-w-0">
           <div className="font-display text-[20px] font-extrabold tracking-[0.4em] text-bills-red">NEXT</div>
           <div className="truncate font-display text-[36px] font-black uppercase leading-none text-white">

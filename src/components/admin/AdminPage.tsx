@@ -14,7 +14,7 @@ import DangerSection from './DangerSection'
  */
 export default function AdminPage() {
   return (
-    <div className="h-full w-full overflow-y-auto bg-navy-950 text-white">
+    <div className="field-bg h-full w-full overflow-y-auto text-white">
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-navy-950/95 px-5 py-3 backdrop-blur">
         <div className="flex items-center gap-3">
           <BillsMark className="h-10 w-10" />
