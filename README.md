@@ -348,11 +348,14 @@ On the board:
 
 ### Note on branding assets
 
-The three bundled culture graphics (`public/culture/*.svg`) and the header mark
-are **original, team-styled recreations** in the Bills palette — not the
-official trademarked logo or artwork. Upload your real transparent PNGs through
-**Admin → Team Culture Graphics** to replace them; transparency and original
-artwork are preserved exactly.
+The **"They Have To Play Us"** and **"Put The Ball Down"** graphics in
+`public/culture/` are the team's own transparent PNGs (trimmed to the artwork
+bounds; "Put The Ball Down" uses a white plaque backdrop since its artwork is
+drawn for a light background — toggle per graphic in admin via the
+`WHITE BG` / `CLEAR BG` button). The header mark and the "Bills Mafia" slide are
+original, team-styled placeholders, not official trademarked artwork. Upload
+more transparent PNGs/GIFs through **Admin → Team Culture Graphics**;
+transparency and original artwork are preserved exactly (never distorted).
 ```
 
 Bills palette used throughout: Royal `#00338D`, Red `#C60C30`, White, dark navy backgrounds.

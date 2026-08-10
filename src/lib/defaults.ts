@@ -128,9 +128,12 @@ export function defaultGraphics(): CultureGraphic[] {
     {
       id: uid('gfx'),
       name: 'Put The Ball Down',
-      src: '/culture/put-the-ball-down.svg',
+      // Official team artwork (transparent PNG). Drawn in dark blue for a light
+      // background, so it shows on a white plaque to stay legible on the board.
+      src: '/culture/put-the-ball-down.png',
       enabled: true,
       order: 1,
+      matte: 'light',
     },
     {
       id: uid('gfx'),
