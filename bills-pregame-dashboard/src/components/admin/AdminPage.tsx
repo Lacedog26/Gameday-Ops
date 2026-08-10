@@ -4,6 +4,7 @@ import GameSetupSection from './GameSetupSection'
 import TemplatesSection from './TemplatesSection'
 import ScheduleEditorSection from './ScheduleEditorSection'
 import GraphicsSection from './GraphicsSection'
+import QuotesSection from './QuotesSection'
 import SettingsSection from './SettingsSection'
 import DangerSection from './DangerSection'
 
@@ -38,6 +39,7 @@ export default function AdminPage() {
         <TemplatesSection />
         <ScheduleEditorSection />
         <GraphicsSection />
+        <QuotesSection />
         <SettingsSection />
         <DangerSection />
         <footer className="py-6 text-center text-xs text-slate-500">

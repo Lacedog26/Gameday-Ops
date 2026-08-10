@@ -1,47 +1,62 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useDashboard } from '../../context/DashboardContext'
-import type { TransitionStyle } from '../../types'
+import type { CultureGraphic, Quote, TransitionStyle } from '../../types'
 
 interface Props {
   /** When true (2-min / GO NOW active), the panel steps aside for the alert. */
   suppressed: boolean
 }
 
+// A rotation slide is either an uploaded image or a text quote.
+type Slide =
+  | { kind: 'image'; id: string; graphic: CultureGraphic; durationSec?: number }
+  | { kind: 'quote'; id: string; quote: Quote }
+
 /**
- * Rotating team-culture / motivation panel. Cycles enabled graphics on a timer
- * with fade or slide transitions, always object-contain (never distorts), on a
- * transparent stage that preserves PNG/SVG/GIF alpha. Yields to urgent alerts.
+ * Rotating team-culture / motivation panel. Cycles enabled graphics AND text
+ * quotes on a timer with fade or slide transitions. Images are object-contain
+ * (never distorted) with alpha preserved; quotes render as large typography.
+ * Yields to urgent alerts.
  */
 export default function CulturePanel({ suppressed }: Props) {
   const { state } = useDashboard()
-  const { graphics, settings } = state
+  const { graphics, quotes, settings } = state
 
-  const active = useMemo(
-    () => graphics.filter((g) => g.enabled).sort((a, b) => a.order - b.order),
-    [graphics],
-  )
+  // Combined rotation: enabled graphics first, then enabled text quotes.
+  const slides = useMemo<Slide[]>(() => {
+    const g: Slide[] = graphics
+      .filter((x) => x.enabled)
+      .sort((a, b) => a.order - b.order)
+      .map((graphic) => ({ kind: 'image', id: graphic.id, graphic, durationSec: graphic.durationSec }))
+    const q: Slide[] = quotes
+      .filter((x) => x.enabled)
+      .sort((a, b) => a.order - b.order)
+      .map((quote) => ({ kind: 'quote', id: quote.id, quote }))
+    return [...g, ...q]
+  }, [graphics, quotes])
 
   const [index, setIndex] = useState(0)
 
-  // Keep index valid if the graphics list shrinks.
+  // Keep index valid if the slide list shrinks.
   useEffect(() => {
-    if (index >= active.length) setIndex(0)
-  }, [active.length, index])
+    if (index >= slides.length) setIndex(0)
+  }, [slides.length, index])
 
-  // Rotation timer — paused while suppressed so the same graphic resumes after.
+  // Rotation timer — paused while suppressed so the same slide resumes after.
   useEffect(() => {
-    if (suppressed || active.length <= 1) return
-    const current = active[index]
-    const durationSec = current?.durationSec ?? settings.cultureRotationSec
+    if (suppressed || slides.length <= 1) return
+    const current = slides[index]
+    const durationSec =
+      (current?.kind === 'image' ? current.durationSec : undefined) ?? settings.cultureRotationSec
     const id = window.setTimeout(
-      () => setIndex((i) => (i + 1) % active.length),
+      () => setIndex((i) => (i + 1) % slides.length),
       Math.max(5, durationSec) * 1000,
     )
     return () => window.clearTimeout(id)
-  }, [index, active, suppressed, settings.cultureRotationSec])
+  }, [index, slides, suppressed, settings.cultureRotationSec])
 
-  const current = active[index]
+  const current = slides[index]
 
   return (
     <motion.div
@@ -62,7 +77,7 @@ export default function CulturePanel({ suppressed }: Props) {
           BILLS CULTURE
         </span>
         <div className="flex gap-1.5">
-          {active.map((_, i) => (
+          {slides.map((_, i) => (
             <span
               key={i}
               className={`h-2 w-2 rounded-full ${i === index ? 'bg-bills-red' : 'bg-white/25'}`}
@@ -74,13 +89,21 @@ export default function CulturePanel({ suppressed }: Props) {
       <div className="relative flex flex-1 items-center justify-center p-6">
         <AnimatePresence mode="wait">
           {current ? (
-            <GraphicSlide
-              key={current.id}
-              src={current.src}
-              alt={current.name}
-              transition={settings.cultureTransition}
-              matte={current.matte ?? 'none'}
-            />
+            current.kind === 'image' ? (
+              <GraphicSlide
+                key={current.id}
+                src={current.graphic.src}
+                alt={current.graphic.name}
+                transition={settings.cultureTransition}
+                matte={current.graphic.matte ?? 'none'}
+              />
+            ) : (
+              <QuoteSlide
+                key={current.id}
+                quote={current.quote}
+                transition={settings.cultureTransition}
+              />
+            )
           ) : (
             <motion.div
               key="empty"
@@ -88,7 +111,7 @@ export default function CulturePanel({ suppressed }: Props) {
               animate={{ opacity: 1 }}
               className="text-center font-display text-[28px] font-bold text-slate-500"
             >
-              Add culture graphics in Admin
+              Add graphics or quotes in Admin
             </motion.div>
           )}
         </AnimatePresence>
@@ -144,6 +167,57 @@ function GraphicSlide({
       }
     >
       {img}
+    </motion.div>
+  )
+}
+
+const QUOTE_ACCENT: Record<NonNullable<Quote['accent']>, string> = {
+  royal: 'text-sky-300',
+  red: 'text-redbright',
+  white: 'text-white',
+}
+
+function QuoteSlide({ quote, transition }: { quote: Quote; transition: TransitionStyle }) {
+  const variants =
+    transition === 'slide'
+      ? {
+          initial: { opacity: 0, x: 60 },
+          animate: { opacity: 1, x: 0 },
+          exit: { opacity: 0, x: -60 },
+        }
+      : {
+          initial: { opacity: 0, scale: 1.03 },
+          animate: { opacity: 1, scale: 1 },
+          exit: { opacity: 0, scale: 0.97 },
+        }
+
+  // Scale text down as the quote gets longer so it always fills without clipping.
+  const len = quote.text.length
+  const sizeClass = len > 48 ? 'text-[40px]' : len > 26 ? 'text-[54px]' : 'text-[72px]'
+  const accent = QUOTE_ACCENT[quote.accent ?? 'white']
+
+  return (
+    <motion.div
+      variants={variants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={{ duration: 0.6, ease: 'easeInOut' }}
+      className="flex max-h-full w-full flex-col items-center justify-center px-6 text-center"
+    >
+      <span aria-hidden className="mb-2 font-display text-[64px] leading-none text-bills-red/60">
+        &ldquo;
+      </span>
+      <span
+        className={`font-display font-black uppercase leading-[0.98] tracking-tight drop-shadow-[0_6px_24px_rgba(0,0,0,0.45)] ${sizeClass} ${accent}`}
+      >
+        {quote.text}
+      </span>
+      {quote.author && (
+        <span className="mt-4 font-display text-[22px] font-bold uppercase tracking-[0.2em] text-slate-300">
+          {quote.author}
+        </span>
+      )}
     </motion.div>
   )
 }

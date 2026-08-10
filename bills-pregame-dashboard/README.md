@@ -57,6 +57,8 @@ State persists to **localStorage** today and is structured to migrate to
 - Save / load / update / delete **schedule templates** (Regular, Preseason, Primetime/Playoffs presets included).
 - Upload culture graphics (PNG/GIF/SVG/JPG/WEBP → stored as data URLs, no re-encoding), enable/disable,
   reorder, set per-graphic duration.
+- Add **text motivational quotes** (type your own) that rotate in the culture panel alongside the
+  graphics — editable text, optional attribution, accent color (blue/red/white), enable/disable, reorder.
 - Settings: sound, volume, colorblind mode, rotation interval, transition style, keep-awake, weather.
 - Export / import full config as JSON; reset to defaults.
 
