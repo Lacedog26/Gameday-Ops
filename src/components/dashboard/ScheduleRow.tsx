@@ -25,17 +25,17 @@ export default function ScheduleRow({ item, colorblind, onAcknowledge }: Props) 
       exit={{ opacity: 0 }}
       transition={{ layout: { duration: 0.4, ease: 'easeInOut' } }}
       onClick={() => isGo && onAcknowledge(event.id)}
-      className={`grid grid-cols-[130px_92px_1fr_150px_210px] items-center gap-3 rounded-xl border px-5 py-3 ${style.row} ${
+      className={`grid min-h-0 flex-1 grid-cols-[130px_92px_1fr_150px_210px] items-center gap-3 overflow-hidden rounded-xl border px-5 py-1 ${style.row} ${
         isGo ? 'cursor-pointer' : ''
       } ${isKick && !done ? 'ring-1 ring-alert-go/40' : ''}`}
     >
       {/* Scheduled clock time */}
-      <div className="tnum font-mono text-[30px] font-bold leading-none">
+      <div className="tnum whitespace-nowrap font-mono text-[27px] font-bold leading-none">
         {formatCardClock(scheduledAt, event.tMinusSeconds)}
       </div>
 
       {/* T-minus */}
-      <div className="font-display text-[24px] font-bold tracking-wide opacity-90">
+      <div className="whitespace-nowrap font-display text-[22px] font-bold tracking-wide opacity-90">
         {formatTMinus(event.tMinusSeconds)}
       </div>
 
