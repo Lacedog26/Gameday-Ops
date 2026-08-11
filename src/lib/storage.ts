@@ -91,8 +91,15 @@ export class SupabaseAdapter implements StorageAdapter {
         .maybeSingle()
       if (error) throw error
       const state = (data?.state as AppState | undefined) ?? null
-      if (state) this.cache.save(state) // refresh offline cache
-      return state ?? (await this.cache.load())
+      if (state) {
+        this.cache.save(state) // refresh offline cache
+        return state
+      }
+      // No cloud board yet: seed it from this device's local state so every TV
+      // converges on the same board (open admin here first after activation).
+      const cached = await this.cache.load()
+      if (cached) this.save(cached)
+      return cached
     } catch (err) {
       console.warn('[storage] cloud load failed, using cache', err)
       return this.cache.load()
