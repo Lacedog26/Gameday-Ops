@@ -8,8 +8,9 @@ import Constants from 'expo-constants';
 import { OneSignal, LogLevel, NotificationWillDisplayEvent, type NotificationClickEvent } from 'react-native-onesignal';
 import './src/theme/unistyles';
 import { store, loadPersistedState } from './src/store';
-import { hydrateState, resetGroupsForNewDay, setUserId, setUsername, setEmail, setEmailVerified, restoreStreak, setCloudGroups, setTeams, setComplimentHistory, setPro, setTodayChallenge, setUnreadReceived } from './src/store/appSlice';
+import { hydrateState, resetGroupsForNewDay, setUserId, setUsername, setEmail, setEmailVerified, restoreStreak, setCloudGroups, setTeams, setComplimentHistory, setKindnessHistory, setPro, setTodayChallenge, setUnreadReceived } from './src/store/appSlice';
 import { ensureSession, loadTodaysPrompt, loadExistingUserData, loadUnreadReceivedCount, loadServerProStatus } from './src/utils/supabase';
+import { loadMyKindness, mergeKindness } from './src/utils/kindnessApi';
 import { todayLocal, daysAgoLocal } from './src/utils/dates';
 import { initRevenueCat, checkProStatus, combineProStatus } from './src/utils/revenuecat';
 import { scheduleDailyReminder, scheduleStreakAtRiskReminder, hasNotificationPermission, registerPushToken } from './src/utils/notifications';
@@ -197,6 +198,19 @@ function AppLoader() {
           store.dispatch(setUnreadReceived(unread));
         } catch (e) {
           console.warn('Unread count load failed:', e);
+        }
+
+        // Kindness journal: merge server rows into the local-first list.
+        // A server [] (offline / migration not yet applied) must never
+        // wipe local history — mergeKindness handles that.
+        try {
+          const serverKindness = await loadMyKindness();
+          if (serverKindness.length > 0) {
+            const local = store.getState().app.kindnessHistory;
+            store.dispatch(setKindnessHistory(mergeKindness(local, serverKindness)));
+          }
+        } catch (e) {
+          console.warn('Kindness history load failed:', e);
         }
       }
 

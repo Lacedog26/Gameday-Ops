@@ -11,7 +11,10 @@ import { loadUnreadReceivedCount } from '../utils/supabase';
 import { useReceivedComplimentsRealtime } from '../utils/realtimeHooks';
 
 import OnboardingScreen from '../screens/OnboardingScreen';
-import LandingScreen from '../screens/LandingScreen';
+import TodayScreen from '../screens/TodayScreen';
+import ExploreScreen from '../screens/ExploreScreen';
+import RandomActScreen from '../screens/RandomActScreen';
+import KindnessDoneScreen from '../screens/KindnessDoneScreen';
 import BriefScreen from '../screens/BriefScreen';
 import WriteScreen from '../screens/WriteScreen';
 import BloomScreen from '../screens/BloomScreen';
@@ -38,7 +41,13 @@ const Tab = createBottomTabNavigator();
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Landing" component={LandingScreen} />
+      {/* Today replaced Landing (2026-08-11 kindness redesign): the tab's
+          root is now the daily-kindness dashboard. Brief/Write/Bloom are
+          unchanged — they're the "compliment" branch of the kindness loop. */}
+      <Stack.Screen name="Today" component={TodayScreen} />
+      <Stack.Screen name="Explore" component={ExploreScreen} />
+      <Stack.Screen name="RandomAct" component={RandomActScreen} />
+      <Stack.Screen name="KindnessDone" component={KindnessDoneScreen} />
       <Stack.Screen name="Brief" component={BriefScreen} />
       <Stack.Screen name="Write" component={WriteScreen} />
       <Stack.Screen name="Bloom" component={BloomScreen} />
@@ -152,7 +161,7 @@ function MainTabs() {
         component={HomeStack}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon={<HomeIcon size={22} color={focused ? '#F5C842' : theme.colors.faint} />} label="Home" color={focused ? '#F5C842' : theme.colors.faint} />
+            <TabIcon icon={<HomeIcon size={22} color={focused ? '#F5C842' : theme.colors.faint} />} label="Today" color={focused ? '#F5C842' : theme.colors.faint} />
           ),
         }}
       />
@@ -174,7 +183,7 @@ function MainTabs() {
             marginTop: 4,
           },
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon={<RecapIcon size={22} color={focused ? '#FFB347' : theme.colors.faint} />} label="Recap" color={focused ? '#FFB347' : theme.colors.faint} />
+            <TabIcon icon={<RecapIcon size={22} color={focused ? '#FFB347' : theme.colors.faint} />} label="Kindness" color={focused ? '#FFB347' : theme.colors.faint} />
           ),
         }}
       />

@@ -19,7 +19,7 @@ type Props = {
 
 export default function WriteScreen({ navigation }: Props) {
   const { styles, theme } = useStyles(stylesheet);
-  const { lastChallengeDate } = useSelector((s: RootState) => s.app);
+  const complimentHistory = useSelector((s: RootState) => s.app.complimentHistory);
   const username = useSelector((s: RootState) => s.app.username);
 
   // Setup modal: shown when there's no username AND the user hasn't already
@@ -37,17 +37,28 @@ export default function WriteScreen({ navigation }: Props) {
     }, [username]),
   );
 
-  // Guard: if already bloomed today, go back. Gated on isFocused so a
-  // returning-user email verify (which dispatches lastChallengeDate = today
-  // while LinkEmail is on top) can't pop Write out from underneath the
-  // modal sheet — without this gate, both Brief and Write's bloomed-today
-  // useEffects fire DURING verify and cascade-pop the stack down to Brief.
+  // Guard: if a COMPLIMENT was already sent today, go back. (Kindness
+  // redesign: lastChallengeDate now flips for ANY act of kindness, so
+  // gating on it would lock users who logged a non-compliment act out of
+  // the compliment flow. complimentHistory is the compliment-specific
+  // signal.) Gated on isFocused so a returning-user email verify (which
+  // lands today's compliment while LinkEmail is on top) can't pop Write
+  // out from underneath the modal sheet — without this gate, both Brief
+  // and Write's guards fire DURING verify and cascade-pop the stack.
   const isFocused = useIsFocused();
+  const complimentedToday = complimentHistory.some(c => c.date === todayLocal());
+  // Never yank a non-empty draft out from under the user: a background
+  // history refresh (Recap's realtime hook fires even while this tab is
+  // focused) can land a today-dated entry from another device mid-typing.
+  // With text in the box we stay put — the server's one-per-day trigger is
+  // the real dupe gate, and BloomScreen already treats "already completed
+  // today" as success.
+  const draftRef = useRef('');
   useEffect(() => {
-    if (isFocused && lastChallengeDate === todayLocal()) {
+    if (isFocused && complimentedToday && draftRef.current.trim().length === 0) {
       navigation.goBack();
     }
-  }, [isFocused, lastChallengeDate]);
+  }, [isFocused, complimentedToday]);
 
   // Clear the submitting lock whenever Write regains focus. When the
   // server submit fails inside BloomScreen, it routes back here so the
@@ -73,6 +84,9 @@ export default function WriteScreen({ navigation }: Props) {
   const [searching, setSearching] = useState(false);
   const [response, setResponse] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // Mirror of `response` for the bounce-guard above (ref keeps that
+  // effect's deps stable — no re-run per keystroke).
+  useEffect(() => { draftRef.current = response; }, [response]);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Device contacts: surface real people in the picker so the empty state

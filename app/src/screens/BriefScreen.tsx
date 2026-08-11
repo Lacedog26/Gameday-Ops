@@ -3,7 +3,7 @@ import { View, Text, Pressable, ScrollView } from 'react-native';
 import { createStyleSheet, useStyles } from 'react-native-unistyles';
 import { useSelector, useDispatch } from 'react-redux';
 import { useIsFocused } from '@react-navigation/native';
-import { RootState } from '../store';
+import { RootState, store } from '../store';
 import { restoreStreak } from '../store/appSlice';
 import { resolveChallenge } from '../data/challenges';
 import { todayLocal } from '../utils/dates';
@@ -18,19 +18,25 @@ type Props = {
 export default function BriefScreen({ navigation }: Props) {
   const { styles } = useStyles(stylesheet);
   const dispatch = useDispatch();
-  const { lastChallengeDate, todayChallenge } = useSelector((s: RootState) => s.app);
+  const { todayChallenge, complimentHistory } = useSelector((s: RootState) => s.app);
   const challenge = resolveChallenge(todayChallenge);
   const isFocused = useIsFocused();
 
-  // Guard: if already bloomed today, go back. Gated on isFocused so a
-  // returning-user email verify (which dispatches lastChallengeDate = today
-  // while LinkEmail is on top) can't trigger goBack on a covered Brief and
-  // pop the modal sheet from underneath the user.
+  // Guard: if a COMPLIMENT was already sent today, go back. Since the
+  // kindness redesign, lastChallengeDate flips for ANY act of kindness —
+  // so it can no longer gate the compliment flow, or a user who logged
+  // "helped a neighbor" would be locked out of also sending a compliment
+  // (the "give a compliment too" path on Today). complimentHistory is the
+  // compliment-specific local signal; the server pre-flight below stays
+  // the authoritative cross-device check. Gated on isFocused so a
+  // returning-user email verify can't trigger goBack on a covered Brief
+  // and pop the modal sheet from underneath the user.
+  const complimentedToday = complimentHistory.some(c => c.date === todayLocal());
   useEffect(() => {
-    if (isFocused && lastChallengeDate === todayLocal()) {
+    if (isFocused && complimentedToday) {
       navigation.goBack();
     }
-  }, [isFocused, lastChallengeDate]);
+  }, [isFocused, complimentedToday]);
 
   // Server pre-flight: Redux can be stale across devices (user bloomed
   // on web, opens mobile — local lastChallengeDate is yesterday/null).
@@ -54,17 +60,28 @@ export default function BriefScreen({ navigation }: Props) {
       if (cancelled) return;
       if (todayRow) {
         // compliments row exists for today — authoritative. Force Redux
-        // lastChallengeDate to today even if user_streaks lags.
+        // lastChallengeDate to today even if user_streaks lags. Kindness
+        // guard: if a kindness act already advanced the LOCAL streak today
+        // (server may not know about it pre-migration/offline), keep the
+        // larger number rather than stomping it with the server's.
         const today = todayLocal();
+        const s = store.getState().app;
+        const kindToday = s.kindnessHistory.some(k => k.date === today);
+        const serverStreak = streakRow?.current_streak ?? 0;
         dispatch(restoreStreak({
-          streak: streakRow?.current_streak ?? 0,
+          streak: kindToday ? Math.max(serverStreak, s.streak) : serverStreak,
           lastChallengeDate: today,
         }));
         navigation.goBack();
         return;
       }
-      // No today row → just sync streak (no bounce).
-      if (streakRow) {
+      // No today row → just sync streak (no bounce). Skip the sync when a
+      // kindness act already advanced the LOCAL streak today: until the
+      // kindness migration is applied server-side, user_streaks lags local
+      // state and this dispatch would regress it (and un-set today's
+      // done-state on the Today tab).
+      const kindnessLoggedToday = store.getState().app.kindnessHistory.some(k => k.date === todayLocal());
+      if (streakRow && !kindnessLoggedToday) {
         dispatch(restoreStreak({
           streak: streakRow.current_streak ?? 0,
           lastChallengeDate: streakRow.last_completed_on ?? null,
@@ -78,7 +95,7 @@ export default function BriefScreen({ navigation }: Props) {
   // tap can fire in the gap before navigation resolves — disable the CTA
   // defensively. We do NOT gate on !todayChallenge: resolveChallenge already
   // provides a valid local fallback, so the prompt is always "available".
-  const writeDisabled = lastChallengeDate === todayLocal();
+  const writeDisabled = complimentedToday;
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
@@ -118,7 +135,7 @@ export default function BriefScreen({ navigation }: Props) {
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Text style={styles.btnText}>
-            {writeDisabled ? 'Already bloomed today' : 'I get it — let me write it'}
+            {writeDisabled ? 'Compliment already sent today' : 'I get it — let me write it'}
           </Text>
           {!writeDisabled && <SunIcon size={20} />}
         </View>

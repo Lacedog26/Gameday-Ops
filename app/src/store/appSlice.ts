@@ -45,6 +45,23 @@ export interface Group {
   feed: FeedEntry[];
 }
 
+/** One logged act of kindness — the unit of the My Kindness journal.
+ *  Compliments are NOT duplicated here; they live in complimentHistory
+ *  and the journal merges the two lists at render time. */
+export interface KindnessEntry {
+  id: string;           // server uuid, or `local_<ts>` before/without sync
+  date: string;         // local YYYY-MM-DD the act was done
+  actionId: string;     // slug from the kindness library ('' for custom)
+  title: string;        // denormalized so history survives library edits
+  emoji: string;
+  category: string;
+  note?: string;        // optional user reflection
+  createdAt: string;    // ISO datetime
+  source: 'daily' | 'random' | 'explore' | 'custom';
+  /** True once the row exists server-side (kindness_acts table). */
+  synced?: boolean;
+}
+
 // Cloud-backed group (from Supabase)
 export interface CloudGroup {
   id: string;
@@ -77,6 +94,8 @@ interface AppState {
   emailVerified: boolean;
   // Compliment history
   complimentHistory: ComplimentEntry[];
+  // Kindness journal (non-compliment acts)
+  kindnessHistory: KindnessEntry[];
   // Subscription
   isPro: boolean;
   // Cloud groups cache
@@ -106,6 +125,7 @@ const initialState: AppState = {
   email: null,
   emailVerified: false,
   complimentHistory: [],
+  kindnessHistory: [],
   isPro: false,
   cloudGroups: [],
   teams: [],
@@ -208,6 +228,21 @@ const appSlice = createSlice({
     setComplimentHistory(state, action: PayloadAction<ComplimentEntry[]>) {
       state.complimentHistory = action.payload;
     },
+    addKindness(state, action: PayloadAction<KindnessEntry>) {
+      if (!state.kindnessHistory.some(k => k.id === action.payload.id)) {
+        state.kindnessHistory.unshift(action.payload);
+      }
+    },
+    /** Replace a local_* entry once the server confirms (or attach a note). */
+    updateKindness(state, action: PayloadAction<{ id: string; changes: Partial<KindnessEntry> }>) {
+      const i = state.kindnessHistory.findIndex(k => k.id === action.payload.id);
+      if (i >= 0) {
+        state.kindnessHistory[i] = { ...state.kindnessHistory[i], ...action.payload.changes };
+      }
+    },
+    setKindnessHistory(state, action: PayloadAction<KindnessEntry[]>) {
+      state.kindnessHistory = action.payload;
+    },
     setPro(state, action: PayloadAction<boolean>) {
       state.isPro = action.payload;
     },
@@ -255,6 +290,9 @@ export const {
   setEmailVerified,
   addCompliment,
   setComplimentHistory,
+  addKindness,
+  updateKindness,
+  setKindnessHistory,
   setPro,
   setCloudGroups,
   setTeams,

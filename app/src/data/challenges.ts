@@ -41,11 +41,11 @@ export const CHALLENGES: Challenge[] = [
 ];
 
 export const MILESTONES = [
-  {days:7,emoji:"🌱",badge:"First Bloom",color:"#A8E6CF",title:"One week of lifting people up.",message:"You've built something most people never do — a habit of kindness. Seven people felt more seen because of you.",confetti:["🌻","🌱","✦","🌿","💚"]},
+  {days:7,emoji:"🌱",badge:"First Bloom",color:"#A8E6CF",title:"One week of daily kindness.",message:"You've built something most people never do — a habit of kindness. Seven days, seven better moments for someone.",confetti:["🌻","🌱","✦","🌿","💚"]},
   {days:14,emoji:"🌻",badge:"Two Weeks Strong",color:"#F5C842",title:"Two weeks. You're not stopping.",message:"Most people quit in the first week. You didn't.",confetti:["🌻","☀️","✦","🌸","⭐"]},
-  {days:30,emoji:"🏅",badge:"One Month",color:"#FFB347",title:"A whole month of lifting people.",message:"30 days. That's not a habit anymore — that's who you are.",confetti:["🏅","🌻","🎉","✨","🔥","⭐"]},
-  {days:60,emoji:"💫",badge:"Two Months",color:"#C3B1E1",title:"Two months. You're rare.",message:"Almost no one gets here. You've lifted 60 people in 60 days.",confetti:["💫","🌻","✨","🎊","⭐","🌟"]},
-  {days:100,emoji:"🌟",badge:"100 Days",color:"#F5C842",title:"100 days of lifting people up.",message:"One hundred. That's a legacy.",confetti:["🌟","🏆","🌻","🎉","✨","💫","🎊","⭐","🔥"]},
+  {days:30,emoji:"🏅",badge:"One Month",color:"#FFB347",title:"A whole month of kindness.",message:"30 days. That's not a habit anymore — that's who you are.",confetti:["🏅","🌻","🎉","✨","🔥","⭐"]},
+  {days:60,emoji:"💫",badge:"Two Months",color:"#C3B1E1",title:"Two months. You're rare.",message:"Almost no one gets here. 60 days of making days better.",confetti:["💫","🌻","✨","🎊","⭐","🌟"]},
+  {days:100,emoji:"🌟",badge:"100 Days",color:"#F5C842",title:"100 days of kindness.",message:"One hundred. That's a legacy.",confetti:["🌟","🏆","🌻","🎉","✨","💫","🎊","⭐","🔥"]},
 ];
 
 export type OnboardStepKey = 'intro' | 'challenge' | 'people' | 'notifications';
@@ -58,11 +58,15 @@ export interface OnboardStep {
   cta: string;
 }
 
+// Kindness-redesign onboarding (2026-08-11): three beats, then the
+// notification ask. The aha has to land in seconds — one small act, a
+// simple daily idea, do it → log it → it adds up. Groups/Teams get
+// discovered in-app; onboarding stays about the single-player loop.
 export const ONBOARD_STEPS: OnboardStep[] = [
-  {key:"intro",emoji:"🌅",headline:"When's the last time you gave someone a compliment?",sub:"Not a like. Not a reaction. A real, specific, genuine compliment — on purpose.",cta:"I want to do that"},
-  {key:"challenge",emoji:"☀️",headline:"Give one compliment. Every day.",sub:"Each day brings a fresh way to say it — out loud, something they'll feel. Small, but real.",cta:"That sounds doable"},
-  {key:"people",emoji:"🌻",headline:"A few words can make someone's whole day.",sub:"Create a group with friends, family, or coworkers. Watch each other's streaks. Don't let the squad down.",cta:"Get started"},
-  {key:"notifications",emoji:"🔔",headline:"One nudge a day. That's it.",sub:"Pick a time and we'll remind you to send today's compliment so the streak stays alive.",cta:"Turn on reminders"},
+  {key:"intro",emoji:"🌅",headline:"One small act can change someone's day.",sub:"A genuine compliment. A kind text. A coffee paid forward. Small things land bigger than you think.",cta:"I want to do that"},
+  {key:"challenge",emoji:"☀️",headline:"We'll give you one simple idea. Every day.",sub:"Takes a minute, usually less. Compliment someone, thank someone, help someone — you choose how.",cta:"That sounds doable"},
+  {key:"people",emoji:"🌻",headline:"Do it. Log it. Watch it add up.",sub:"Every act goes in your kindness journal. A few weeks in, you'll see the difference you've actually made.",cta:"Get started"},
+  {key:"notifications",emoji:"🔔",headline:"One nudge a day. That's it.",sub:"Pick a time and we'll remind you there's a small chance to make someone's day. No spam, ever.",cta:"Turn on reminders"},
 ];
 
 export const getDayOfYear = () => Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);

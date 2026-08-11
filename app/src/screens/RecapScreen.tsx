@@ -3,10 +3,11 @@ import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-nati
 import { createStyleSheet, useStyles } from 'react-native-unistyles';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { RootState } from '../store';
-import { setComplimentHistory, setUnreadReceived } from '../store/appSlice';
-import type { ComplimentEntry } from '../store/appSlice';
+import { RootState, store } from '../store';
+import { setComplimentHistory, setKindnessHistory, setUnreadReceived } from '../store/appSlice';
+import type { ComplimentEntry, KindnessEntry } from '../store/appSlice';
 import { resolveChallenge, getDayOfYear, getNextMilestone, MILESTONES } from '../data/challenges';
+import { loadMyKindness, mergeKindness } from '../utils/kindnessApi';
 import { loadComplimentHistory, loadReceivedCompliments, markReceivedRead, getHistoryGateInfo } from '../utils/supabase';
 import type { ReceivedCompliment, HistoryGateInfo } from '../utils/supabase';
 import { useReceivedComplimentsRealtime, useSentComplimentsRealtime } from '../utils/realtimeHooks';
@@ -50,7 +51,7 @@ export default function RecapScreen() {
   const { styles, theme } = useStyles(stylesheet);
   const dispatch = useDispatch();
   const navigation = useNavigation<any>();
-  const { streak, groups, lastChallengeDate, complimentHistory, todayChallenge, isPro } = useSelector((s: RootState) => s.app);
+  const { streak, groups, lastChallengeDate, complimentHistory, kindnessHistory, todayChallenge, isPro } = useSelector((s: RootState) => s.app);
   const username = useSelector((s: RootState) => s.app.username);
   const userId = useSelector((s: RootState) => s.app.userId);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -100,14 +101,29 @@ export default function RecapScreen() {
     async ({ showSpinner }: { showSpinner: boolean }) => {
       if (showSpinner) setLoadingHistory(true);
       try {
-        const [remote, received, gate] = await Promise.all([
+        const [remote, received, gate, serverKindness] = await Promise.all([
           loadComplimentHistory(PRO_LOOKBACK_DAYS),
           loadReceivedCompliments(PRO_LOOKBACK_DAYS),
           getHistoryGateInfo().catch(() => null),
+          loadMyKindness().catch(() => [] as KindnessEntry[]),
         ]);
         dispatch(setComplimentHistory(remote));
         setReceivedCompliments(received);
         setGateInfo(gate);
+        // Kindness journal: merge server rows with local ones. Unlike the
+        // compliment purge above, [] from the server must NOT wipe local
+        // history — the kindness table is local-first and may simply not
+        // exist server-side yet (migration not applied). Read the CURRENT
+        // list from the store (not the render closure) so this callback's
+        // identity stays stable and the focus-effect can't reload-loop.
+        if (serverKindness.length > 0) {
+          const currentLocal = store.getState().app.kindnessHistory;
+          const merged = mergeKindness(currentLocal, serverKindness);
+          const changed =
+            merged.length !== currentLocal.length ||
+            merged.some((m, i) => m.id !== currentLocal[i]?.id || m.note !== currentLocal[i]?.note);
+          if (changed) dispatch(setKindnessHistory(merged));
+        }
       } catch (_e) { /* offline — keep current */ }
       if (showSpinner) setLoadingHistory(false);
     },
@@ -153,7 +169,18 @@ export default function RecapScreen() {
   );
 
   const today = localDateString();
-  const bloomedToday = lastChallengeDate === today;
+  const kindnessToday = kindnessHistory.some(k => k.date === today);
+  const bloomedToday = lastChallengeDate === today || kindnessToday;
+
+  // ── Impact numbers — the emotional core of this screen ──
+  // Total acts = every kindness act + every sent compliment. Uses the FULL
+  // (ungated) lists on purpose: free users' old entries are hidden from the
+  // list below, but their impact COUNT is theirs forever.
+  const totalActs = kindnessHistory.length + complimentHistory.length;
+  const activeDays = new Set([
+    ...kindnessHistory.map(k => k.date),
+    ...complimentHistory.map(c => c.date),
+  ]).size;
 
   // Defensive render-time dedup. Two passes:
   //   1) Drop any `local_*` entry the bloom-state says shouldn't exist.
@@ -199,6 +226,22 @@ export default function RecapScreen() {
     ? gateInfo.hidden_sent + gateInfo.hidden_received
     : localHidden;
 
+  // ── Unified journal: kindness acts + sent compliments, newest first ──
+  // Kindness acts are never Pro-gated (they're the free core loop);
+  // compliments keep the existing 7-day free window.
+  type JournalItem =
+    | { kind: 'kindness'; id: string; date: string; k: KindnessEntry }
+    | { kind: 'compliment'; id: string; date: string; c: ComplimentEntry };
+  const journalItems: JournalItem[] = [
+    ...kindnessHistory.map((k): JournalItem => ({ kind: 'kindness', id: `k_${k.id}`, date: k.date, k })),
+    ...visibleHistory.map((c): JournalItem => ({ kind: 'compliment', id: `c_${c.id}`, date: c.date, c })),
+  ].sort((a, b) => {
+    if (a.date !== b.date) return b.date.localeCompare(a.date);
+    const at = a.kind === 'kindness' ? a.k.createdAt : a.c.createdAt;
+    const bt = b.kind === 'kindness' ? b.k.createdAt : b.c.createdAt;
+    return (bt ?? '').localeCompare(at ?? '');
+  });
+
   const challenge = resolveChallenge(todayChallenge);
   const nextMs = getNextMilestone(streak);
 
@@ -228,7 +271,24 @@ export default function RecapScreen() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <View style={styles.titleRow}>
         <RecapIcon size={22} />
-        <Text style={styles.title}> Recap</Text>
+        <Text style={styles.title}> My Kindness</Text>
+      </View>
+
+      {/* Impact hero — the number that matters most. */}
+      <View style={styles.impactCard}>
+        <Text style={styles.impactNumber}>{totalActs}</Text>
+        <Text style={styles.impactTitle}>
+          {totalActs === 0
+            ? 'Your first act of kindness is waiting.'
+            : totalActs === 1
+            ? 'You\'ve made a difference once. It counts.'
+            : `You've made a difference ${totalActs} times.`}
+        </Text>
+        {totalActs > 0 && (
+          <Text style={styles.impactSub}>
+            {activeDays === 1 ? 'Across 1 day' : `Across ${activeDays} days`} of showing up for people.
+          </Text>
+        )}
       </View>
 
       {/* Today's status */}
@@ -238,9 +298,11 @@ export default function RecapScreen() {
           {bloomedToday ? <SunflowerIcon size={36} /> : <SunIcon size={36} />}
           <View style={{ flex: 1 }}>
             <Text style={styles.todayTitle}>
-              {bloomedToday ? 'You bloomed today!' : 'You haven\'t bloomed yet'}
+              {bloomedToday ? 'You did a kindness today' : 'Ready for today\'s kindness?'}
             </Text>
-            <Text style={styles.todaySub}>{challenge.prompt}</Text>
+            <Text style={styles.todaySub}>
+              {bloomedToday ? 'Come back tomorrow for another.' : challenge.prompt}
+            </Text>
           </View>
         </View>
       </View>
@@ -343,7 +405,7 @@ export default function RecapScreen() {
             style={[styles.historyTab, historyTab === 'sent' && styles.historyTabActive]}
           >
             <Text style={[styles.historyTabText, historyTab === 'sent' && styles.historyTabTextActive]}>
-              Sent · {visibleHistory.length}
+              My kindness · {journalItems.length}
             </Text>
           </Pressable>
           <Pressable
@@ -357,14 +419,37 @@ export default function RecapScreen() {
         </View>
 
         {historyTab === 'sent' ? (
-          visibleHistory.length === 0 ? (
+          journalItems.length === 0 ? (
             <View style={styles.historyEmpty}>
               <Text style={styles.historyEmptyText}>
-                You haven't written a compliment yet. Today's compliment is one tap away.
+                Nothing here yet — and that's fine. Today's kindness is one tap away on the Today tab.
               </Text>
             </View>
           ) : (
-            visibleHistory.map(entry => {
+            journalItems.map(item => {
+              // ── Kindness act card ──
+              if (item.kind === 'kindness') {
+                const k = item.k;
+                return (
+                  <View key={item.id} style={styles.historyCard}>
+                    <View style={styles.historyHeader}>
+                      <View style={styles.historyDateBadge}>
+                        <Text style={styles.historyDateText}>{formatDate(k.date)}</Text>
+                      </View>
+                      <Text style={styles.historyRecipient} numberOfLines={1}>
+                        {k.emoji} {k.title}
+                      </Text>
+                    </View>
+                    {k.note ? (
+                      <View style={styles.historyQuoteWrap}>
+                        <Text style={styles.historyQuote}>"{k.note}"</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                );
+              }
+              // ── Sent compliment card (unchanged) ──
+              const entry = item.c;
               const isExpanded = expandedId === entry.id;
               const dateStr = formatDate(entry.date);
               // Read receipt: Read (recipient viewed it via Recap or the
@@ -491,12 +576,12 @@ export default function RecapScreen() {
       )}
 
       {/* Empty state */}
-      {streak === 0 && dedupedHistory.length === 0 && (
+      {streak === 0 && dedupedHistory.length === 0 && kindnessHistory.length === 0 && (
         <View style={styles.emptyState}>
           <SunIcon size={56} />
-          <Text style={styles.emptyTitle}>Your recap starts here</Text>
+          <Text style={styles.emptyTitle}>Your kindness story starts here</Text>
           <Text style={styles.emptySub}>
-            Complete your first challenge to start tracking your journey.
+            Do one small act of kindness today and it becomes the first entry in your journal.
           </Text>
         </View>
       )}
@@ -531,6 +616,34 @@ const stylesheet = createStyleSheet(theme => ({
     borderRadius: 16,
     padding: 18,
     gap: 14,
+  },
+  // ── Impact hero ──
+  impactCard: {
+    backgroundColor: theme.colors.goldCardBg,
+    borderWidth: 1,
+    borderColor: theme.colors.goldCardBord,
+    borderRadius: 16,
+    padding: 22,
+    alignItems: 'center',
+    gap: 6,
+  },
+  impactNumber: {
+    fontSize: 44,
+    fontWeight: '700',
+    color: theme.colors.gold,
+    letterSpacing: -1,
+  },
+  impactTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.text,
+    textAlign: 'center',
+    lineHeight: 23,
+  },
+  impactSub: {
+    fontSize: 12,
+    color: theme.colors.faint,
+    textAlign: 'center',
   },
   label: {
     fontSize: 10,
