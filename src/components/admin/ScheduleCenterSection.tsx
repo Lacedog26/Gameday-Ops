@@ -9,7 +9,7 @@ import {
 } from '../../data/nflSchedule'
 import type { GameInfo, GameOverride, NflGame } from '../../types'
 import { etWallTimeToEpoch, formatClock } from '../../lib/time'
-import { Section, Field, TextInput, Select, Button, IconButton } from './ui'
+import { Section, Field, TextInput, Select, Button } from './ui'
 
 // --- date/time helpers (ET) -------------------------------------------------
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -57,8 +57,21 @@ export default function ScheduleCenterSection() {
       })
   }, [viewTeamId, state.season, state.customGames, state.gameOverrides])
 
-  const preseason = games.filter((g) => g.current.phase === 'preseason')
-  const regular = games.filter((g) => g.current.phase === 'regular')
+  // Mark games that are over (kickoff + ~4h in the past) as completed, and find
+  // the next upcoming game so the list "moves on" automatically.
+  const now = Date.now()
+  const enriched = games.map((g) => {
+    const c = g.current
+    const ko = c.date ? etWallTimeToEpoch(`${c.date}T${c.time || '23:59'}`) : NaN
+    const completed = c.status !== 'bye' && !Number.isNaN(ko) && now > ko + 4 * 3600 * 1000
+    return { ...g, completed }
+  })
+  const nextId =
+    enriched.find((g) => !g.completed && g.current.status !== 'bye' && g.current.date)?.base.id ??
+    null
+
+  const preseason = enriched.filter((g) => g.current.phase === 'preseason')
+  const regular = enriched.filter((g) => g.current.phase === 'regular')
 
   const tbdCount = games.filter(
     (g) => g.current.status === 'time_tbd' || g.current.status === 'date_tbd',
@@ -134,7 +147,7 @@ export default function ScheduleCenterSection() {
             title="Preseason"
             rows={preseason}
             overrides={state.gameOverrides}
-            editId={editId}
+            nextId={nextId}
             onEdit={(id) => setEditId(editId === id ? null : id)}
             onLoad={(g) => setConfirmGame(g)}
           />
@@ -142,7 +155,7 @@ export default function ScheduleCenterSection() {
             title="Regular Season"
             rows={regular}
             overrides={state.gameOverrides}
-            editId={editId}
+            nextId={nextId}
             onEdit={(id) => setEditId(editId === id ? null : id)}
             onLoad={(g) => setConfirmGame(g)}
           />
@@ -196,20 +209,21 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
 interface RowData {
   base: NflGame
   current: NflGame
+  completed: boolean
 }
 
 function PhaseGroup({
   title,
   rows,
   overrides,
-  editId,
+  nextId,
   onEdit,
   onLoad,
 }: {
   title: string
   rows: RowData[]
   overrides: Record<string, GameOverride>
-  editId: string | null
+  nextId: string | null
   onEdit: (id: string) => void
   onLoad: (g: NflGame) => void
 }) {
@@ -220,12 +234,13 @@ function PhaseGroup({
         {title}
       </div>
       <div className="flex flex-col gap-1.5">
-        {rows.map(({ base, current }) => (
+        {rows.map(({ base, current, completed }) => (
           <GameRow
             key={base.id}
             current={current}
             modified={Boolean(overrides[base.id])}
-            expanded={editId === base.id}
+            completed={completed}
+            isNext={base.id === nextId}
             onEdit={() => onEdit(base.id)}
             onLoad={() => onLoad(current)}
           />
@@ -238,12 +253,15 @@ function PhaseGroup({
 function GameRow({
   current,
   modified,
+  completed,
+  isNext,
   onEdit,
   onLoad,
 }: {
   current: NflGame
   modified: boolean
-  expanded: boolean
+  completed: boolean
+  isNext: boolean
   onEdit: () => void
   onLoad: () => void
 }) {
@@ -253,10 +271,25 @@ function GameRow({
   const loadable = !isBye && Boolean(current.date && current.time)
 
   return (
-    <div className="rounded-xl border border-white/10 bg-navy-950/50 px-4 py-2.5">
+    <div
+      className={`rounded-xl border px-4 py-2.5 transition ${
+        completed
+          ? 'border-white/5 bg-navy-950/40 opacity-45'
+          : isNext
+            ? 'border-alert-go/60 bg-navy-950/60 ring-2 ring-alert-go/50'
+            : 'border-white/10 bg-navy-950/50'
+      }`}
+    >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <div className="w-[92px] shrink-0 font-display text-sm font-bold text-slate-300">
-          {current.weekLabel.replace('Preseason ', 'Pre ')}
+        <div className="flex w-[92px] shrink-0 flex-col">
+          <span className="font-display text-sm font-bold text-slate-300">
+            {current.weekLabel.replace('Preseason ', 'Pre ')}
+          </span>
+          {isNext && (
+            <span className="mt-0.5 w-fit rounded bg-alert-go/20 px-1.5 text-[9px] font-bold tracking-widest text-alert-go">
+              NEXT UP
+            </span>
+          )}
         </div>
         {isBye ? (
           <div className="flex-1 font-display text-lg font-bold text-slate-500">BYE WEEK</div>
@@ -265,21 +298,25 @@ function GameRow({
             <div className="w-[120px] shrink-0 text-sm font-semibold text-slate-300">
               {fmtDate(current.date)}
             </div>
-            <div className="min-w-[180px] flex-1 font-display text-lg font-bold">
+            <div
+              className={`min-w-[180px] flex-1 font-display text-lg font-bold ${
+                completed ? 'line-through decoration-slate-600' : ''
+              }`}
+            >
               <span className="text-slate-400">{current.homeAway === 'HOME' ? 'vs ' : 'at '}</span>
               <span className="text-white">{oppName}</span>
             </div>
             <div className="w-[110px] shrink-0 tnum font-mono text-base font-bold text-sky-300">
               {fmtTime(current.time)}
             </div>
-            <StatusBadge modified={modified} status={current.status} />
+            <StatusBadge modified={modified} completed={completed} status={current.status} />
           </>
         )}
         <div className="flex items-center gap-1.5">
-          <IconButton title="Edit game" onClick={onEdit}>
-            ✎
-          </IconButton>
-          {loadable && (
+          <Button variant="ghost" onClick={onEdit} className="py-1.5">
+            Edit
+          </Button>
+          {loadable && !completed && (
             <Button variant="success" onClick={onLoad} className="py-1.5">
               Load
             </Button>
@@ -296,7 +333,22 @@ function GameRow({
   )
 }
 
-function StatusBadge({ modified, status }: { modified: boolean; status: NflGame['status'] }) {
+function StatusBadge({
+  modified,
+  completed,
+  status,
+}: {
+  modified: boolean
+  completed: boolean
+  status: NflGame['status']
+}) {
+  if (completed) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/20 px-2.5 py-0.5 text-[11px] font-bold tracking-wide text-slate-400">
+        ✓ COMPLETED
+      </span>
+    )
+  }
   if (modified) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-alert-warn/20 px-2.5 py-0.5 text-[11px] font-bold tracking-wide text-alert-warn">
@@ -360,8 +412,12 @@ function EditGame({ gameId, onClose }: { gameId: string; onClose: () => void }) 
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-alert-warn/40 bg-navy-900/80 p-4">
-      <div className="mb-3 font-display text-sm font-bold uppercase tracking-widest text-alert-warn">
+    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/70 p-4" onClick={onClose}>
+    <div
+      className="my-auto w-full max-w-2xl rounded-xl border border-alert-warn/40 bg-navy-900 p-5 shadow-2xl"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="mb-3 font-display text-base font-bold uppercase tracking-widest text-alert-warn">
         Edit Game — {master.weekLabel}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -429,6 +485,7 @@ function EditGame({ gameId, onClose }: { gameId: string; onClose: () => void }) 
           Cancel
         </Button>
       </div>
+    </div>
     </div>
   )
 }
