@@ -21,7 +21,7 @@ export default function ScheduleTable({ timeline, colorblind, onAcknowledge }: P
         <Head className="text-right">COUNTDOWN</Head>
       </div>
 
-      <div className="no-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-hidden pr-1">
+      <div className="no-scrollbar flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden pr-1">
         <AnimatePresence initial={false}>
           {timeline.map((item) => (
             <ScheduleRow
