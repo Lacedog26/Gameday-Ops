@@ -13,6 +13,65 @@ export type TemplateId = string
 export type GraphicId = string
 export type TeamId = string
 export type OrgId = string
+export type GameId = string
+
+// --- NFL schedule library ---------------------------------------------------
+
+export type GamePhase = 'preseason' | 'regular' | 'postseason'
+
+export type GameStatus =
+  | 'scheduled'
+  | 'time_tbd'
+  | 'date_tbd'
+  | 'postponed'
+  | 'rescheduled'
+  | 'cancelled'
+  | 'completed'
+  | 'bye'
+
+/** A single game in a team's season schedule (the "NFL master schedule"). */
+export interface NflGame {
+  id: GameId // stable, e.g. "BUF-2026-reg-2"
+  season: number
+  teamId: TeamId
+  phase: GamePhase
+  /** Week number within the phase (1..). 0 for one-off/postseason rounds. */
+  week: number
+  /** Display label, e.g. "Week 2", "Preseason Week 1", "Wild Card". */
+  weekLabel: string
+  /** ET date "YYYY-MM-DD" ("" when date is TBD). */
+  date: string
+  /** ET 24h time "HH:MM" ("" when time is TBD). */
+  time: string
+  opponentId?: TeamId
+  opponentName?: string // fallback when opponent isn't an NFL team id
+  homeAway: 'HOME' | 'AWAY'
+  venue?: string
+  network?: string
+  status: GameStatus
+  notes?: string
+}
+
+/**
+ * An organization's edits to a master game. Stored separately so the master
+ * schedule is never overwritten (audit trail + one org can't affect others).
+ * Any present field overrides the master; `modifiedAt`/`modifiedBy` record who.
+ */
+export interface GameOverride {
+  date?: string
+  time?: string
+  opponentId?: TeamId
+  opponentName?: string
+  homeAway?: 'HOME' | 'AWAY'
+  venue?: string
+  weekLabel?: string
+  status?: GameStatus
+  notes?: string
+  /** Original kickoff before edits, for the "kickoff updated" audit display. */
+  originalKickoffISO?: string
+  modifiedAt: number
+  modifiedBy?: string
+}
 
 // --- Multi-tenant / white-label identity ----------------------------------
 
@@ -110,6 +169,12 @@ export interface GameInfo {
   kickoffISO: string
   /** Home/away — affects a small header accent only. */
   homeAway: 'HOME' | 'AWAY'
+  /** Stadium / location (optional). */
+  venue?: string
+  /** The schedule-library game this was loaded from (if any). */
+  sourceGameId?: GameId
+  /** Original kickoff (ISO) when this game's time was changed from the schedule. */
+  originalKickoffISO?: string
 }
 
 /** A team-culture graphic shown in the rotating motivation panel. */
@@ -177,6 +242,12 @@ export interface AppState {
   graphics: CultureGraphic[]
   quotes: Quote[]
   settings: Settings
+  /** Selected season for the Schedule Center. */
+  season: number
+  /** Per-game edits, keyed by master game id (preserves the master schedule). */
+  gameOverrides: Record<GameId, GameOverride>
+  /** Imported / manually-added games not in the bundled master schedule. */
+  customGames: NflGame[]
 }
 
 // --- Derived (runtime-only) types -----------------------------------------

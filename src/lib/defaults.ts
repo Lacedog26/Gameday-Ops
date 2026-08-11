@@ -194,6 +194,9 @@ export function makeDefaultState(now = Date.now()): AppState {
     graphics: defaultGraphics(),
     quotes: defaultQuotes(),
     settings: defaultSettings(),
+    season: 2026,
+    gameOverrides: {},
+    customGames: [],
   }
 }
 
