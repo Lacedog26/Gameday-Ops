@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { View, Text } from 'react-native';
 import { createStyleSheet, useStyles } from 'react-native-unistyles';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store';
+import { RootState, store } from '../store';
 import { setStreak, markGroupsBloomed, addCompliment } from '../store/appSlice';
 import { submitCompliment, loadMyStreak, loadTodayCompletion } from '../utils/supabase';
 import { loadMyGroups, postGroupCompliment } from '../utils/supabaseGroups';
@@ -82,6 +82,19 @@ export default function BloomScreen({ navigation, route }: Props) {
     });
   }, [navigation]);
 
+  // Kindness-redesign guard: the server's user_streaks only knows about
+  // compliments until the kindness migration is applied (and about
+  // offline-logged acts, never) — so a kindness act logged today may have
+  // advanced the LOCAL streak past the server's number. Taking the raw
+  // server value here would stomp it (the bug: log kindness → streak 10,
+  // send a compliment too → server says 1 → streak drops to 1). When a
+  // kindness act is already logged today, keep whichever is larger.
+  const effectiveStreak = (serverStreak: number): number => {
+    const s = store.getState().app;
+    const kindnessToday = s.kindnessHistory.some(k => k.date === todayLocal());
+    return kindnessToday ? Math.max(serverStreak, s.streak) : serverStreak;
+  };
+
   useEffect(() => {
     // Hard timeout — if submit hasn't resolved in 15 s the request is
     // stuck (dead network, RPC unresponsive). Surface a clear error
@@ -110,7 +123,7 @@ export default function BloomScreen({ navigation, route }: Props) {
         completionIdRef.current = completionId;
         const streakData = await loadMyStreak();
         if (streakData) {
-          dispatch(setStreak(streakData.current_streak));
+          dispatch(setStreak(effectiveStreak(streakData.current_streak)));
         }
         submitOkRef.current = true;
       } catch (e) {
@@ -124,7 +137,7 @@ export default function BloomScreen({ navigation, route }: Props) {
           const existing = await loadTodayCompletion();
           if (existing) completionIdRef.current = existing.id;
           const streakData = await loadMyStreak();
-          if (streakData) dispatch(setStreak(streakData.current_streak));
+          if (streakData) dispatch(setStreak(effectiveStreak(streakData.current_streak)));
           submitOkRef.current = true;
         } else {
           // Real failure (network, RLS, FK violation, schema drift, …).

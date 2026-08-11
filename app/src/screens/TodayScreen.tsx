@@ -1,3 +1,16 @@
+// ── Today — the daily kindness dashboard ─────────────────────────
+//
+// The evolution of LandingScreen (One compliment. Every day.) into the
+// heart of the "small acts of kindness" product:
+//
+//   OPEN → GET INSPIRED → DO SOMETHING KIND → LOG IT → SEE YOUR IMPACT
+//
+// Everything that made Landing work is preserved: the privacy banner,
+// the streak + freeze system, the server focus-sync, and the post-
+// compliment SEND IT TO X share card. What changed is the center of
+// gravity: the primary question is now "What kindness will you do
+// today?" — and a compliment is one (great) answer, not the only one.
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, Linking, Share } from 'react-native';
 import { showAlert } from '../components/CustomAlert';
@@ -5,9 +18,10 @@ import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withSequence, w
 import { createStyleSheet, useStyles } from 'react-native-unistyles';
 import { useSelector, useDispatch } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
-import { RootState } from '../store';
+import { RootState, store } from '../store';
 import { restoreStreak, setCookieChoice } from '../store/appSlice';
 import { resolveChallenge } from '../data/challenges';
+import { getDailyKindness, getCompletionLine } from '../data/kindness';
 import { todayLocal, daysAgoLocal } from '../utils/dates';
 import {
   loadTodayCompletion,
@@ -23,19 +37,15 @@ type Props = {
   navigation: NativeStackNavigationProp<any>;
 };
 
-export default function LandingScreen({ navigation }: Props) {
+export default function TodayScreen({ navigation }: Props) {
   const { styles } = useStyles(stylesheet);
   const dispatch = useDispatch();
   const { streak, lastChallengeDate, todayChallenge, isPro } = useSelector((s: RootState) => s.app);
+  const kindnessHistory = useSelector((s: RootState) => s.app.kindnessHistory);
+  const complimentHistory = useSelector((s: RootState) => s.app.complimentHistory);
   const cookieChoice = useSelector((s: RootState) => s.app.cookieChoice);
 
-  // Privacy banner moved off the first onboarding screen per design
-  // feedback (2026-05-20): the banner used to live on the first
-  // onboarding step but its yellow Accept button competed with the
-  // primary CTA. It now surfaces on Landing the first time a returning
-  // user lands here without a recorded choice, and its Accept button is
-  // styled in the green "lift" palette so it never competes with the
-  // gold "Give Today's Compliment" button below.
+  // ── Privacy banner (ported from Landing, unchanged behavior) ──
   const [showPrivacyBanner, setShowPrivacyBanner] = useState(!cookieChoice);
   const bannerTranslateY = useSharedValue(120);
   const bannerOpacity = useSharedValue(0);
@@ -60,16 +70,34 @@ export default function LandingScreen({ navigation }: Props) {
     dispatch(setCookieChoice('rejected'));
     setShowPrivacyBanner(false);
   };
-  const challenge = resolveChallenge(todayChallenge);
-  const today = todayLocal();
-  const bloomedToday = lastChallengeDate === today;
 
-  // Today's compliment row from `compliments`. Drives the "SEND IT TO X"
-  // card below: when the user lifted someone who isn't on OneCompliment
-  // yet, recipientId is null and we surface a share card so the sender
-  // can text them the link themselves. Mirrors the card that used to
-  // live on the Done screen — per client feedback (2026-05-14) the Send
-  // card belongs on Home, not buried in a separate celebration page.
+  const today = todayLocal();
+  const challenge = resolveChallenge(todayChallenge);
+  const dailyAct = getDailyKindness(today);
+  const complimentDay = !!dailyAct.isCompliment;
+
+  // "Done today" has TWO signals now:
+  //   - lastChallengeDate === today → a compliment was sent (server-truth)
+  //     or a kindness act advanced the streak.
+  //   - a kindness journal entry dated today → covers the window where a
+  //     server focus-sync (compliments-only until the migration is run)
+  //     rolls lastChallengeDate back while a local act exists.
+  const kindnessToday = kindnessHistory.filter(k => k.date === today);
+  // Compliment-specific signal (NOT lastChallengeDate, which now flips for
+  // any kindness act) — gates the share card and "give a compliment too."
+  const complimentedToday = complimentHistory.some(c => c.date === today);
+  const doneToday = lastChallengeDate === today || complimentedToday || kindnessToday.length > 0;
+  const actsToday =
+    kindnessToday.length + complimentHistory.filter(c => c.date === today).length;
+
+  // Total impact — the number that matters most.
+  const totalActs = kindnessHistory.length + complimentHistory.length;
+  const activeDays = new Set([
+    ...kindnessHistory.map(k => k.date),
+    ...complimentHistory.map(c => c.date),
+  ]).size;
+
+  // Today's compliment row (drives the SEND IT TO X share card).
   const [todayCompletion, setTodayCompletion] = useState<{
     id: string;
     body: string;
@@ -77,33 +105,23 @@ export default function LandingScreen({ navigation }: Props) {
     recipientId: string | null;
   } | null>(null);
 
-  // Server-backed streak-freeze state (streak_freezes table). Null until
-  // the focus-sync below fetches it, or when the RPC is unavailable —
-  // the freeze button stays hidden in that case so we never promise a
-  // freeze we can't persist.
   const [freezeStatus, setFreezeStatus] = useState<StreakFreezeStatus | null>(null);
 
-  // Cross-platform sync: ALWAYS fetch today's completion + streak on
-  // focus and write the result into Redux. Without this, a user who
-  // submits on web and then opens mobile sees stale Redux state
-  // (lastChallengeDate = yesterday/null), Brief/Write let them try to
-  // submit a second time, and only the server-side trigger stops the
-  // dupe. Pulling the truth from the server on every focus keeps
-  // Brief's bloomed-today guard, Recap's "Sent" count, and the
-  // bloomed/not-bloomed UI on Landing itself all correct.
-  //
-  // We intentionally do NOT auto-navigate to Done when bloomedToday is
-  // true. The Done page is a transient celebration shown right after a
-  // submit (via BloomScreen → Done); the Home tab should always land on
-  // Landing — the "where to send" entry point — so the user can browse
-  // their streak, jump to Recap/Groups/etc, or admire today's
-  // bloomed-state card without being yanked into a full-screen share
-  // sheet on every Home tap.
+  // ── Server focus-sync (ported from Landing) ──
+  // One added guard: never let a compliments-only server snapshot REGRESS
+  // a streak the user just advanced with a kindness act. Until the
+  // kindness migration runs server-side, user_streaks doesn't know about
+  // kindness acts — so if a local act already logged today, we keep the
+  // local streak when the server's number is behind.
   useFocusEffect(
     React.useCallback(() => {
       let cancelled = false;
       (async () => {
         try {
+          // Compute the day INSIDE the closure — an app left open across
+          // local midnight refocuses with a fresh date, not the render-time
+          // one (which would mislabel yesterday's act as today's).
+          const today = todayLocal();
           const [today_row, streakRow, freeze] = await Promise.all([
             loadTodayCompletion().catch(() => null),
             loadMyStreak().catch(() => null),
@@ -112,77 +130,64 @@ export default function LandingScreen({ navigation }: Props) {
           if (cancelled) return;
           setFreezeStatus(freeze);
 
-          // Sync Redux to server. `today_row` (compliments table) is the
-          // authoritative "already bloomed" signal — user_streaks may
-          // lag (or be missing for users whose row never got created),
-          // so trusting only its `last_completed_on` field can leave
-          // Landing showing the Play button even when the server has
-          // today's compliment. That mismatch produced an infinite
-          // Landing → Brief → bounce loop on the previous version.
+          // Read CURRENT state from the store (not the render closure) —
+          // this callback deliberately has a stable identity, so closed-over
+          // values could be stale by the time the fetches resolve.
+          const current = store.getState().app;
+          const localStreak = current.streak;
+          const kindnessLoggedToday = current.kindnessHistory.some(k => k.date === today);
+
           if (today_row) {
-            const today = todayLocal();
+            const serverStreak = streakRow?.current_streak ?? 0;
             dispatch(restoreStreak({
-              streak: streakRow?.current_streak ?? 0,
+              streak: kindnessLoggedToday ? Math.max(serverStreak, localStreak) : serverStreak,
               lastChallengeDate: today,
             }));
           } else if (streakRow) {
-            dispatch(restoreStreak({
-              streak: streakRow.current_streak ?? 0,
-              lastChallengeDate: streakRow.last_completed_on ?? null,
-            }));
+            const serverStreak = streakRow.current_streak ?? 0;
+            if (kindnessLoggedToday) {
+              // Local kindness already counted today. Only adopt the server
+              // number when the server has ACTUALLY seen today's act
+              // (last_completed_on === today — i.e. the kindness migration
+              // is live and the RPC landed). A merely-bigger stale number
+              // is NOT fresher: user_streaks never decays on missed days,
+              // so an old broken streak can be numerically ahead of the
+              // honest local reset. And never roll lastChallengeDate back
+              // before today while a today-dated act exists.
+              if (serverStreak > localStreak && streakRow.last_completed_on === today) {
+                dispatch(restoreStreak({
+                  streak: serverStreak,
+                  lastChallengeDate: today,
+                }));
+              }
+            } else {
+              dispatch(restoreStreak({
+                streak: serverStreak,
+                lastChallengeDate: streakRow.last_completed_on ?? null,
+              }));
+            }
           }
-          // Stash today's row for the SEND IT TO X / SHARE YOUR BLOOM
-          // cards. Recipient_id null → unregistered → show send card.
           setTodayCompletion(today_row);
         } catch (err) {
-          // Network/RLS/schema-drift — never let it bubble up and tank
-          // the whole Landing screen (the offline UX is "Landing still
-          // renders, just with stale Redux state").
-          console.warn('[Landing focus sync] failed:', err);
+          console.warn('[Today focus sync] failed:', err);
         }
       })();
       return () => { cancelled = true; };
-    }, [dispatch]),
+    }, [dispatch, today]),
   );
 
-  // Streak at risk: missed yesterday, haven't bloomed today, streak > 0
+  // ── Streak-at-risk / freeze logic (ported verbatim from Landing) ──
   const yesterdayStr = daysAgoLocal(1);
-  const streakAtRisk = !bloomedToday && streak > 0 && lastChallengeDate !== null && lastChallengeDate < yesterdayStr;
-
-  // A freeze covers exactly one calendar day, and the weekly limit means
-  // gap days can never be covered by two freezes — so a broken streak is
-  // rescuable only when precisely one day (yesterday) was missed. The
-  // freeze is recorded against that missed day; the user still has to
-  // bloom today for the bridge to hold.
+  const streakAtRisk = !doneToday && streak > 0 && lastChallengeDate !== null && lastChallengeDate < yesterdayStr;
   const freezeCanRescue = streakAtRisk && lastChallengeDate === daysAgoLocal(2);
-  // The missed day is already frozen (e.g. froze, then reopened the app):
-  // reassure instead of re-offering.
   const gapAlreadyFrozen = freezeCanRescue && freezeStatus?.last_used === yesterdayStr;
   const showFreezeButton = !isPro
-    ? true // upsell — Pro pitch routes to the paywall
+    ? true
     : freezeCanRescue && !gapAlreadyFrozen && freezeStatus?.available === true;
-
-  // ── Effective streak ────────────────────────────────────────────
-  // The stored `streak` is only recomputed server-side when the user
-  // completes a prompt, so on a missed day it stays frozen at its old
-  // value — the bug behind "the warning says I'll lose my streak but the
-  // number never drops." Derive the honest number here, mirroring the
-  // server's effective_current_streak (streak_gap_bridged): a full day
-  // missed and not covered by a freeze means the streak is gone.
-  // gapAlreadyFrozen ⇒ the single missed day is frozen ⇒ it survives.
   const streakBroken = streakAtRisk && !gapAlreadyFrozen;
-  // Keep showing the real number while the streak is still rescuable —
-  // exactly one day missed and a freeze can still save it (Pro), or the
-  // Pro upsell. If freeze status hasn't loaded we err toward rescuable so
-  // we never flash a 0 we'd have to take back. Only once the streak is
-  // genuinely unrecoverable does the pill drop to 0, finally matching the
-  // "you'll lose your streak" warning.
   const streakRescuable =
     freezeCanRescue && (!isPro || freezeStatus === null || freezeStatus.available === true);
   const displayStreak = streakBroken && !streakRescuable ? 0 : streak;
-  // The at-risk card only has something to say in the rescuable window
-  // (or to reassure when the gap is already frozen). Outside it the streak
-  // is simply gone — the pill shows 0 and the normal CTA stands alone.
   const showRiskCard = gapAlreadyFrozen || streakRescuable;
 
   const handleStreakFreeze = () => {
@@ -192,20 +197,18 @@ export default function LandingScreen({ navigation }: Props) {
     }
     showAlert(
       'Use Streak Freeze?',
-      `This freezes yesterday — the day you missed — and protects your ${streak}-day streak. Give today's compliment and the streak keeps going. You get 1 freeze per week.`,
+      `This freezes yesterday — the day you missed — and protects your ${streak}-day streak. Do one kindness today and the streak keeps going. You get 1 freeze per week.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Freeze My Streak',
           onPress: async () => {
             const result = await useStreakFreezeRpc(yesterdayStr);
-            // Re-pull server truth either way — covers the race where a
-            // freeze was consumed on another device in the meantime.
             getStreakFreezeStatus().then(setFreezeStatus).catch(() => {});
             if (result.ok) {
               showAlert(
                 '❄️ Streak frozen',
-                `Yesterday is covered. Give today's compliment to keep your ${streak}-day streak alive.`,
+                `Yesterday is covered. Do one act of kindness today to keep your ${streak}-day streak alive.`,
               );
             } else if (result.error === 'weekly_limit') {
               showAlert(
@@ -225,7 +228,7 @@ export default function LandingScreen({ navigation }: Props) {
     );
   };
 
-  // Bob animation matching website: @keyframes bob{0%,100%{translateY(0)}50%{translateY(-6px)}}
+  // Bob animation (unchanged brand moment).
   const bobY = useSharedValue(0);
   useEffect(() => {
     bobY.value = withRepeat(
@@ -247,6 +250,10 @@ export default function LandingScreen({ navigation }: Props) {
     day: 'numeric',
   });
 
+  const completion = getCompletionLine(today);
+  const effortHint =
+    dailyAct.minutes <= 2 ? 'takes a minute' : `~${dailyAct.minutes} min`;
+
   return (
     <View style={styles.root}>
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
@@ -266,41 +273,39 @@ export default function LandingScreen({ navigation }: Props) {
       {/* Hero */}
       <View style={styles.hero}>
         <Animated.View style={bobStyle}>
-          {bloomedToday ? <SunflowerIcon size={80} /> : <SunIcon size={80} />}
+          {doneToday ? <SunflowerIcon size={80} /> : <SunIcon size={80} />}
         </Animated.View>
         <Text style={styles.heroTitle}>
-          {bloomedToday ? 'You bloomed today.' : 'One compliment.\nEvery day.'}
+          {doneToday ? completion.title : 'Make someone’s day.'}
         </Text>
         <Text style={styles.heroSub}>
-          {bloomedToday
-            ? 'Come back tomorrow for a new topic.'
-            : 'A daily topic that makes the people around you feel seen.'}
+          {doneToday
+            ? completion.sub
+            : 'One small act of kindness is all it takes.'}
         </Text>
       </View>
 
-      {/* Stats */}
+      {/* Stats — impact first, streak quiet. Hidden until there's at least
+          one act: a brand-new user should meet an invitation, not a row of
+          zeros. */}
+      {(totalActs > 0 || displayStreak > 0) && (
       <View style={styles.statRow}>
         <View style={styles.statPill}>
-          <Text style={styles.statValue}>1</Text>
-          <Text style={styles.statLabel}>topic/day</Text>
+          <Text style={styles.statValue}>{totalActs}</Text>
+          <Text style={styles.statLabel}>{totalActs === 1 ? 'act of kindness' : 'acts of kindness'}</Text>
         </View>
         <View style={styles.statPill}>
-          <View style={styles.bloomFlow}>
-            <SunIcon size={20} />
-            <Text style={styles.arrow}>→</Text>
-            <SunflowerIcon size={20} />
-          </View>
-          <Text style={styles.statLabel}>your daily bloom</Text>
+          <Text style={styles.statValue}>{activeDays}</Text>
+          <Text style={styles.statLabel}>{activeDays === 1 ? 'day active' : 'days active'}</Text>
         </View>
         <View style={styles.statPill}>
           <Text style={styles.statValue}>{displayStreak}</Text>
           <Text style={styles.statLabel}>day streak</Text>
         </View>
       </View>
+      )}
 
-      {/* Streak at risk warning — only while the streak is still rescuable
-          (one day missed + a freeze can save it) or already frozen. Once
-          it's genuinely lost the pill above shows 0 and no card appears. */}
+      {/* Streak at risk — rescuable window only (ported from Landing). */}
       {showRiskCard && (
         <View style={styles.streakRiskCard}>
           <View style={styles.streakRiskRow}>
@@ -313,10 +318,10 @@ export default function LandingScreen({ navigation }: Props) {
                 {!isPro
                   ? 'Pro members get 1 streak freeze per week.'
                   : gapAlreadyFrozen
-                  ? '❄️ Yesterday is frozen. Give today\'s compliment and your streak keeps going.'
+                  ? '❄️ Yesterday is frozen. Do one kindness today and your streak keeps going.'
                   : freezeStatus === null
-                  ? 'Give today\'s compliment to keep your streak alive.'
-                  : 'Use your weekly streak freeze or give today\'s compliment.'}
+                  ? 'Do one act of kindness today to keep your streak alive.'
+                  : 'Use your weekly streak freeze or do one kindness today.'}
               </Text>
             </View>
           </View>
@@ -330,47 +335,103 @@ export default function LandingScreen({ navigation }: Props) {
         </View>
       )}
 
-      {/* Today's Topic — label + hint copy updated per design feedback
-          (the "Tap below to see the full rule…" line was filler and the
-          word "challenge" felt heavier than the experience warrants). */}
-      <View style={styles.goldCard}>
-        <Text style={styles.label}>{bloomedToday ? 'COMPLETED' : "TODAY'S TOPIC"}</Text>
-        <Text style={styles.challengePrompt}>{challenge.prompt}</Text>
-      </View>
+      {/* ── Today's Kindness ── */}
+      {!doneToday && (
+        <>
+          <View style={styles.goldCard}>
+            <View style={styles.cardLabelRow}>
+              <Text style={styles.label}>{'🌻 TODAY’S KINDNESS'}</Text>
+              <Text style={styles.effortHint}>{effortHint}</Text>
+            </View>
+            <Text style={styles.challengePrompt}>{dailyAct.title}</Text>
+            <Text style={styles.actDescription}>
+              {complimentDay
+                ? `Today’s topic: ${challenge.prompt}`
+                : dailyAct.description}
+            </Text>
+          </View>
 
-      {/* CTA */}
-      {bloomedToday ? (
-        <View style={styles.doneCard}>
-          <SunflowerIcon size={32} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.doneTitle}>You lifted someone today.</Text>
-            <Text style={styles.doneSub}>Come back tomorrow for a new topic.</Text>
+          {complimentDay ? (
+            <Pressable style={styles.btn} onPress={() => navigation.navigate('Brief')}>
+              <View style={styles.btnRow}>
+                <Text style={styles.btnText}>Give Today’s Compliment</Text>
+                <SunIcon size={20} color="#0C0C0C" />
+              </View>
+            </Pressable>
+          ) : (
+            <Pressable
+              style={styles.btn}
+              onPress={() => navigation.navigate('KindnessDone', { actionId: dailyAct.id, source: 'daily' })}
+            >
+              <View style={styles.btnRow}>
+                <Text style={styles.btnText}>I did it</Text>
+                <SunflowerIcon size={20} />
+              </View>
+            </Pressable>
+          )}
+
+          {/* Quiet alternatives — never compete with the primary CTA. */}
+          <View style={styles.altRow}>
+            <Pressable style={styles.altBtn} onPress={() => navigation.navigate('RandomAct')}>
+              <Text style={styles.altBtnText}>🎲 Different idea</Text>
+            </Pressable>
+            <Pressable style={styles.altBtn} onPress={() => navigation.navigate('Explore')}>
+              <Text style={styles.altBtnText}>🔎 Browse ideas</Text>
+            </Pressable>
+            {!complimentDay && (
+              <Pressable style={styles.altBtn} onPress={() => navigation.navigate('Brief')}>
+                <Text style={styles.altBtnText}>🌻 Compliment</Text>
+              </Pressable>
+            )}
+            <Pressable
+              style={styles.altBtn}
+              onPress={() => navigation.navigate('KindnessDone', { custom: true, source: 'custom' })}
+            >
+              <Text style={styles.altBtnText}>✍️ I did something else</Text>
+            </Pressable>
           </View>
-        </View>
-      ) : (
-        <Pressable style={styles.btn} onPress={() => navigation.navigate('Brief')}>
-          <View style={styles.btnRow}>
-            <Text style={styles.btnText}>Give Today's Compliment</Text>
-            <SunIcon size={20} color="#0C0C0C" />
-          </View>
-        </Pressable>
+        </>
       )}
 
-      {/* SEND IT TO X — post-submit share card. Shown for every
-          recipient (registered or not) so the sender always has a
-          single, consistent share surface on Home after they bloom. */}
-      {bloomedToday
+      {/* ── Done state ── */}
+      {doneToday && (
+        <>
+          <View style={styles.doneCard}>
+            <SunflowerIcon size={32} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.doneTitle}>
+                {actsToday <= 1 ? '1 act of kindness today' : `${actsToday} acts of kindness today`}
+              </Text>
+              <Text style={styles.doneSub}>Come back tomorrow for another.</Text>
+            </View>
+          </View>
+          <View style={styles.altRow}>
+            <Pressable style={styles.altBtn} onPress={() => navigation.navigate('RandomAct')}>
+              <Text style={styles.altBtnText}>🎲 One more idea</Text>
+            </Pressable>
+            {!complimentedToday && (
+              <Pressable style={styles.altBtn} onPress={() => navigation.navigate('Brief')}>
+                <Text style={styles.altBtnText}>🌻 Give a compliment too</Text>
+              </Pressable>
+            )}
+            <Pressable
+              style={styles.altBtn}
+              onPress={() => navigation.navigate('KindnessDone', { custom: true, source: 'custom' })}
+            >
+              <Text style={styles.altBtnText}>✍️ Log another kindness</Text>
+            </Pressable>
+          </View>
+        </>
+      )}
+
+      {/* SEND IT TO X — post-compliment share card (ported from Landing). */}
+      {complimentedToday
         && todayCompletion
         && todayCompletion.id
         && (() => {
           const recipient = todayCompletion.recipientName || 'them';
           const isRegistered = !!todayCompletion.recipientId;
           const publicUrl = `https://onecompliment.app/c/${todayCompletion.id}`;
-          // Share message intentionally does NOT include the compliment
-          // body — per design feedback, the curiosity hook ("someone
-          // wrote you a compliment, tap to see what they said") is the
-          // primary driver of sign-ups. Putting the text in the
-          // message itself removes that incentive entirely.
           const liftMessage =
             `${recipient}, you've been lifted on OneCompliment 🌻\n\n` +
             `Tap to see what was said — and send one back:\n${publicUrl}`;
@@ -405,18 +466,9 @@ export default function LandingScreen({ navigation }: Props) {
             </View>
           );
         })()}
-
-      {/* Footer note + Privacy/Terms links removed per design feedback
-          — they were filler below the CTA. The legal links now live in
-          Settings and on the Pro paywall, which satisfies the Apple
-          subscription disclosure requirement (Guideline 3.1.2(c)). */}
     </ScrollView>
 
-    {/* Privacy banner — floats over Landing on first run only, then
-        the user's choice is remembered in Redux/AsyncStorage. The
-        Accept CTA uses the green "lift" palette intentionally so it
-        does not compete with the gold "Give Today's Compliment"
-        button on the page itself. */}
+    {/* Privacy banner (ported from Landing). */}
     {showPrivacyBanner && (
       <View style={styles.bannerOverlay} pointerEvents="box-none">
         <Animated.View style={[styles.banner, bannerStyle]}>
@@ -495,16 +547,6 @@ const stylesheet = createStyleSheet(theme => ({
     gap: 16,
     paddingVertical: 16,
   },
-  bloomFlow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  arrow: {
-    fontSize: 14,
-    color: theme.colors.gold,
-    fontWeight: '700',
-  },
   heroTitle: {
     fontSize: 30,
     fontWeight: '700',
@@ -541,6 +583,7 @@ const stylesheet = createStyleSheet(theme => ({
     fontSize: 10,
     color: theme.colors.faint,
     marginTop: 5,
+    textAlign: 'center',
   },
   goldCard: {
     backgroundColor: theme.colors.goldCardBg,
@@ -548,6 +591,12 @@ const stylesheet = createStyleSheet(theme => ({
     borderColor: theme.colors.goldCardBord,
     borderRadius: theme.radius.lg,
     padding: 18,
+    gap: 8,
+  },
+  cardLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   label: {
     fontSize: 10,
@@ -556,12 +605,21 @@ const stylesheet = createStyleSheet(theme => ({
     color: theme.colors.gold,
     fontWeight: '600',
   },
+  effortHint: {
+    fontSize: 10,
+    color: theme.colors.faint,
+    letterSpacing: 0.5,
+  },
   challengePrompt: {
     fontSize: 20,
     fontWeight: '700',
     color: theme.colors.text,
     lineHeight: 26,
-    marginTop: 8,
+  },
+  actDescription: {
+    fontSize: 14,
+    color: theme.colors.dim,
+    lineHeight: 22,
   },
   btn: {
     backgroundColor: theme.colors.gold,
@@ -579,6 +637,25 @@ const stylesheet = createStyleSheet(theme => ({
     color: '#0C0C0C',
     fontSize: 16,
     fontWeight: '700',
+  },
+  altRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    justifyContent: 'center',
+  },
+  altBtn: {
+    backgroundColor: theme.colors.surf,
+    borderWidth: 1,
+    borderColor: theme.colors.bord,
+    borderRadius: theme.radius.full,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  altBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.colors.dim,
   },
   doneCard: {
     flexDirection: 'row',
@@ -600,8 +677,6 @@ const stylesheet = createStyleSheet(theme => ({
     color: theme.colors.faint,
     marginTop: 3,
   },
-  // (footerNote / legalLinks / privacyLink / privacyDot removed when
-  // the legal footer moved off Home → Settings per design feedback.)
   streakRiskCard: {
     backgroundColor: 'rgba(255,107,107,0.06)',
     borderWidth: 1,
@@ -639,11 +714,6 @@ const stylesheet = createStyleSheet(theme => ({
     fontWeight: '700',
     color: '#4ECDC4',
   },
-
-  // ── Send-to-X (unregistered recipient) share card ──
-  // Ported from DoneScreen.styles.lift* so the visual is identical to
-  // what the client circled in their feedback. Green palette stays
-  // distinct from the gold "today's challenge" card above.
   liftCard: {
     width: '100%',
     backgroundColor: 'rgba(168,230,207,0.10)',
@@ -695,8 +765,6 @@ const stylesheet = createStyleSheet(theme => ({
     alignItems: 'center',
     marginTop: 4,
   },
-
-  // ── Privacy banner (moved off the first onboarding screen) ──
   bannerOverlay: {
     position: 'absolute',
     left: 16,
@@ -745,8 +813,6 @@ const stylesheet = createStyleSheet(theme => ({
     color: theme.colors.dim,
     fontSize: 13,
   },
-  // Accept uses the green "lift" palette so the banner CTA never
-  // competes with the gold "Give Today's Compliment" button.
   acceptBtn: {
     flex: 1,
     backgroundColor: 'rgba(168,230,207,0.18)',
@@ -761,5 +827,4 @@ const stylesheet = createStyleSheet(theme => ({
     fontSize: 13,
     fontWeight: '700',
   },
-
 }));
