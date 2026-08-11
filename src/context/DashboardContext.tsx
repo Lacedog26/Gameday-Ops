@@ -11,6 +11,8 @@ import type {
   AppState,
   CultureGraphic,
   GameInfo,
+  GameOverride,
+  NflGame,
   PregameEvent,
   Quote,
   ScheduleTemplate,
@@ -47,6 +49,11 @@ type Action =
   | { type: 'DELETE_QUOTE'; id: string }
   | { type: 'REORDER_QUOTES'; from: number; to: number }
   | { type: 'SET_SETTINGS'; patch: Partial<Settings> }
+  | { type: 'SET_SEASON'; season: number }
+  | { type: 'SET_GAME_OVERRIDE'; gameId: string; override: GameOverride }
+  | { type: 'CLEAR_GAME_OVERRIDE'; gameId: string }
+  | { type: 'IMPORT_GAMES'; games: NflGame[] }
+  | { type: 'LOAD_GAME'; game: GameInfo }
   | { type: 'RESET' }
 
 function move<T>(arr: T[], from: number, to: number): T[] {
@@ -186,6 +193,37 @@ function reducer(state: AppState, action: Action): AppState {
     case 'SET_SETTINGS':
       return { ...state, settings: { ...state.settings, ...action.patch } }
 
+    case 'SET_SEASON':
+      return { ...state, season: action.season }
+
+    case 'SET_GAME_OVERRIDE':
+      return {
+        ...state,
+        gameOverrides: { ...state.gameOverrides, [action.gameId]: action.override },
+      }
+
+    case 'CLEAR_GAME_OVERRIDE': {
+      const next = { ...state.gameOverrides }
+      delete next[action.gameId]
+      return { ...state, gameOverrides: next }
+    }
+
+    case 'IMPORT_GAMES': {
+      // Replace custom games for the imported (team, season) pairs; keep others.
+      const affected = new Set(action.games.map((g) => `${g.teamId}:${g.season}`))
+      const kept = state.customGames.filter((g) => !affected.has(`${g.teamId}:${g.season}`))
+      return { ...state, customGames: [...kept, ...action.games] }
+    }
+
+    case 'LOAD_GAME':
+      // Loading a scheduled game sets the active board + clears prior acks so
+      // the new game starts fresh. Timing recalculates from the new kickoff.
+      return {
+        ...state,
+        game: { ...state.game, ...action.game },
+        activeEvents: state.activeEvents.map((e) => ({ ...e, acknowledgedAt: null })),
+      }
+
     case 'RESET':
       return makeDefaultState()
 
@@ -221,6 +259,11 @@ interface DashboardContextValue {
     deleteQuote: (id: string) => void
     reorderQuotes: (from: number, to: number) => void
     setSettings: (patch: Partial<Settings>) => void
+    setSeason: (season: number) => void
+    setGameOverride: (gameId: string, override: GameOverride) => void
+    clearGameOverride: (gameId: string) => void
+    importGames: (games: NflGame[]) => void
+    loadGame: (game: GameInfo) => void
     reset: () => void
   }
 }
@@ -300,6 +343,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       deleteQuote: (id) => dispatch({ type: 'DELETE_QUOTE', id }),
       reorderQuotes: (from, to) => dispatch({ type: 'REORDER_QUOTES', from, to }),
       setSettings: (patch) => dispatch({ type: 'SET_SETTINGS', patch }),
+      setSeason: (season) => dispatch({ type: 'SET_SEASON', season }),
+      setGameOverride: (gameId, override) => dispatch({ type: 'SET_GAME_OVERRIDE', gameId, override }),
+      clearGameOverride: (gameId) => dispatch({ type: 'CLEAR_GAME_OVERRIDE', gameId }),
+      importGames: (games) => dispatch({ type: 'IMPORT_GAMES', games }),
+      loadGame: (game) => dispatch({ type: 'LOAD_GAME', game }),
       reset: () => dispatch({ type: 'RESET' }),
     }),
     [],
@@ -343,6 +391,10 @@ function migrate(loaded: AppState): AppState {
     settings: { ...base.settings, ...loaded.settings },
     graphics,
     quotes,
+    // Schedule Center fields (added later) — seed on older saved boards.
+    season: loaded.season ?? base.season,
+    gameOverrides: loaded.gameOverrides ?? base.gameOverrides,
+    customGames: loaded.customGames ?? base.customGames,
   }
 }
 
