@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { isCloudMode } from '../../lib/supabaseConfig'
 
 /**
  * Subtle live connection indicator for TV mode.
@@ -32,7 +33,7 @@ export default function ConnectionStatus() {
         }`}
       />
       <span className="font-display text-[13px] font-bold tracking-[0.25em] text-white/70">
-        {online ? 'CONNECTED' : 'OFFLINE'}
+        {online ? (isCloudMode ? 'LIVE SYNC' : 'CONNECTED') : 'OFFLINE'}
       </span>
     </div>
   )
