@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useDashboard } from '../../context/DashboardContext'
+import { getTeam } from '../../data/nflTeams'
 import type { CultureGraphic, Quote, TransitionStyle } from '../../types'
 
 interface Props {
@@ -22,6 +23,7 @@ type Slide =
 export default function CulturePanel({ suppressed }: Props) {
   const { state } = useDashboard()
   const { graphics, quotes, settings } = state
+  const team = getTeam(state.game.teamId)
 
   // Combined rotation: enabled graphics first, then enabled text quotes.
   const slides = useMemo<Slide[]>(() => {
@@ -73,8 +75,8 @@ export default function CulturePanel({ suppressed }: Props) {
       <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-bills-royal/25 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-bills-red/15 blur-3xl" />
       <div className="flex items-center justify-between px-6 pt-4">
-        <span className="font-display text-[18px] font-extrabold tracking-[0.4em] text-sky-300/80">
-          BILLS CULTURE
+        <span className="font-display text-[18px] font-extrabold tracking-[0.4em] text-white/70">
+          {team.shortName.toUpperCase()} CULTURE
         </span>
         <div className="flex gap-1.5">
           {slides.map((_, i) => (

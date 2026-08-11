@@ -11,6 +11,51 @@
 export type EventId = string
 export type TemplateId = string
 export type GraphicId = string
+export type TeamId = string
+export type OrgId = string
+
+// --- Multi-tenant / white-label identity ----------------------------------
+
+/** Uploadable, licensed brand assets for a team (URLs, not bundled artwork). */
+export interface TeamAssets {
+  primaryLogoUrl?: string
+  secondaryLogoUrl?: string
+  wordmarkUrl?: string
+  backgroundAssetUrl?: string
+}
+
+/** A team's configurable colors. Drives the white-label theme. */
+export interface TeamColors {
+  primary: string
+  secondary: string
+  accent: string
+  text: string
+}
+
+/** A team's full brand configuration (identity + colors + assets). */
+export interface TeamBrand {
+  id: TeamId
+  name: string // "Buffalo Bills"
+  location: string // "Buffalo"
+  nickname: string // "Bills"
+  shortName: string // "Bills"
+  abbr: string // "BUF"
+  conference: 'AFC' | 'NFC'
+  division: 'East' | 'North' | 'South' | 'West'
+  colors: TeamColors
+  assets: TeamAssets
+}
+
+/**
+ * An organization = one commercial tenant (a club/customer). In the local build
+ * there is a single default org; the Supabase schema makes this multi-tenant.
+ */
+export interface Organization {
+  id: OrgId
+  name: string
+  /** The team this org operates as by default. */
+  teamId: TeamId
+}
 
 /** A single pre-game routine event (a row on the board). */
 export interface PregameEvent {
@@ -53,10 +98,15 @@ export interface ScheduleTemplate {
 
 /** Game-day metadata shown in the header. */
 export interface GameInfo {
+  /** The team this board is themed as. Defaults to Buffalo. */
+  teamId: TeamId
+  /** The opponent team id (preferred). Falls back to the free-text `opponent`. */
+  opponentId?: TeamId
+  /** Free-form opponent label, used when opponentId is not set. */
   opponent: string
   /** Free-form week label, e.g. "Week 1", "Wild Card", "Preseason Wk 2". */
   week: string
-  /** Kickoff as an ISO 8601 string (local wall time of the stadium). */
+  /** Kickoff as an ISO 8601 string (Eastern wall time by default). */
   kickoffISO: string
   /** Home/away — affects a small header accent only. */
   homeAway: 'HOME' | 'AWAY'

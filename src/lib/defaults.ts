@@ -178,6 +178,8 @@ export function makeDefaultState(now = Date.now()): AppState {
   return {
     version: 2,
     game: {
+      teamId: 'BUF',
+      opponentId: 'NYJ',
       opponent: 'New York Jets',
       week: 'Week 1',
       // Seed kickoff ~80 min out, expressed in Eastern wall time so it

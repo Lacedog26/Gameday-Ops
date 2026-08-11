@@ -13,6 +13,7 @@ import ProgressRail from './ProgressRail'
 import FocusPanel from './FocusPanel'
 import CulturePanel from './CulturePanel'
 import ControlBar from './ControlBar'
+import ConnectionStatus from './ConnectionStatus'
 
 /**
  * The full-screen TV dashboard. Composes the header, schedule board, progress
@@ -87,6 +88,8 @@ export default function Dashboard() {
           onToggleFullscreen={toggleFullscreen}
           visible={controlsVisible}
         />
+
+        <ConnectionStatus />
 
         <Header
           nowMs={nowMs}

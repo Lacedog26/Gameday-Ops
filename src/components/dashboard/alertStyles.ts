@@ -24,10 +24,10 @@ export function rowStyle(level: AlertLevel, cb: boolean): RowStyle {
       }
     case 'upcoming':
       return {
-        row: 'bg-gradient-to-r from-[#1b47a6]/70 via-[#173b8c]/70 to-[#12306e]/65 text-white border-sky-300/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-sky-300/45',
+        row: 'bg-gradient-to-r from-team-primary-light/60 via-team-primary/70 to-team-primary/50 text-white border-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-white/40',
         timer: 'text-cyan-300',
         statusLabel: 'READY',
-        statusPill: 'bg-sky-400/25 text-white border border-sky-300/50',
+        statusPill: 'bg-white/15 text-white border border-white/40',
       }
     case 'warn':
       // 5-minute "on deck" window: clean WHITE background until 2 minutes out.

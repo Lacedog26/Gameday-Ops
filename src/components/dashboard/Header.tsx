@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { useDashboard } from '../../context/DashboardContext'
 import { formatClock, formatHMS } from '../../lib/time'
+import { getTeam } from '../../data/nflTeams'
 import BillsMark from '../common/BillsMark'
 
 interface HeaderProps {
@@ -15,6 +16,8 @@ interface HeaderProps {
 export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderProps) {
   const { state } = useDashboard()
   const { game, settings } = state
+  const team = getTeam(game.teamId)
+  const opponentName = game.opponentId ? getTeam(game.opponentId).name : game.opponent
 
   const preKick = secondsToKickoff > 0
   const kickClock = formatClock(kickoffAt)
@@ -33,12 +36,20 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
     <header className="relative flex items-stretch gap-6 px-8 pt-6 pb-4">
       {/* Left: identity */}
       <div className="flex items-center gap-5">
-        <BillsMark className="h-[92px] w-[92px] shrink-0 drop-shadow-[0_4px_18px_rgba(0,51,141,0.6)]" />
+        {team.assets.primaryLogoUrl ? (
+          <img
+            src={team.assets.primaryLogoUrl}
+            alt={team.name}
+            className="h-[92px] w-[92px] shrink-0 object-contain drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]"
+          />
+        ) : (
+          <BillsMark className="h-[92px] w-[92px] shrink-0 drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]" />
+        )}
         <div className="leading-none">
-          <div className="bg-gradient-to-r from-sky-300 to-bills-red bg-clip-text font-display text-[26px] font-bold tracking-[0.32em] text-transparent">
-            BUFFALO BILLS
+          <div className="bg-gradient-to-r from-white to-team-secondary bg-clip-text font-display text-[26px] font-bold uppercase tracking-[0.28em] text-transparent">
+            {team.name}
           </div>
-          <div className="font-display text-[46px] font-extrabold uppercase tracking-[0.06em] text-white drop-shadow-[0_2px_16px_rgba(56,140,255,0.25)]">
+          <div className="font-display text-[46px] font-extrabold uppercase tracking-[0.06em] text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.35)]">
             Pre-Game Operations
           </div>
         </div>
@@ -47,7 +58,7 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
       {/* Middle: game info strip */}
       <div className="flex flex-1 items-center justify-center">
         <div className="glass grid grid-cols-4 divide-x divide-white/10 rounded-2xl px-2 py-3">
-          <InfoCell label="MATCHUP" value={`${game.homeAway === 'HOME' ? 'vs' : '@'} ${game.opponent}`} />
+          <InfoCell label="MATCHUP" value={`${game.homeAway === 'HOME' ? 'vs' : '@'} ${opponentName}`} />
           <InfoCell label="WEEK" value={game.week} />
           <InfoCell label="KICKOFF" value={kickClock} />
           <InfoCell label="EASTERN (ET)" value={formatClock(nowMs, true)} live />

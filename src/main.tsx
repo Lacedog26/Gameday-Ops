@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import App from './App'
 import { DashboardProvider } from './context/DashboardContext'
+import { ThemeProvider } from './context/ThemeProvider'
 import AdminPage from './components/admin/AdminPage'
 import Dashboard from './components/dashboard/Dashboard'
 import './index.css'
@@ -12,6 +13,7 @@ import './index.css'
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <DashboardProvider>
+      <ThemeProvider>
       <HashRouter>
         <Routes>
           <Route path="/" element={<App />}>
@@ -21,6 +23,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           </Route>
         </Routes>
       </HashRouter>
+      </ThemeProvider>
     </DashboardProvider>
   </React.StrictMode>,
 )

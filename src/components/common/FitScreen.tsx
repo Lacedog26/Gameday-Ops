@@ -38,7 +38,7 @@ export default function FitScreen({ children }: { children: ReactNode }) {
   return (
     // Outer bar color fills any letterbox on non-16:9 panels; the stage itself
     // carries the bright brand gradient so the whole board reads as lit.
-    <div className="fixed inset-0 grid place-items-center overflow-hidden bg-[#071431]">
+    <div className="fixed inset-0 grid place-items-center overflow-hidden bg-[rgb(var(--team-bg-3))]">
       <div
         className="field-bg"
         style={{

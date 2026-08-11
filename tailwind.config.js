@@ -4,12 +4,23 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Official Buffalo Bills palette
+        // Team-themed brand tokens. These resolve to CSS variables set per team
+        // by ThemeProvider, so every `bills-royal` / `bills-red` class re-themes
+        // automatically when a different team is selected. Buffalo is the
+        // default palette (defined in index.css :root).
         bills: {
-          royal: '#00338D', // Bills Royal Blue
-          red: '#C60C30', // Bills Red
+          royal: 'rgb(var(--team-primary) / <alpha-value>)',
+          'royal-light': 'rgb(var(--team-primary-light) / <alpha-value>)',
+          red: 'rgb(var(--team-secondary) / <alpha-value>)',
         },
-        // Brighter, high-energy alert red for TV-visible urgency states.
+        team: {
+          primary: 'rgb(var(--team-primary) / <alpha-value>)',
+          'primary-light': 'rgb(var(--team-primary-light) / <alpha-value>)',
+          secondary: 'rgb(var(--team-secondary) / <alpha-value>)',
+          accent: 'rgb(var(--team-accent) / <alpha-value>)',
+        },
+        // Alert red is intentionally NOT themed — urgency must read the same on
+        // every team's board (a red team's GO alert still looks like an alert).
         redbright: '#FF1F3E',
         // Dark navy surface ramp used for backgrounds / cards
         navy: {

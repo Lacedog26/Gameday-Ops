@@ -22,9 +22,9 @@ function nowSkin(level: AlertLevel): { wrap: string; timer: string; badge: strin
       return { wrap: 'bg-white text-navy-950 shadow-[0_0_40px_rgba(255,255,255,0.4)]', timer: 'text-redbright', badge: 'bg-navy-900 text-white' }
     default:
       return {
-        wrap: 'bg-gradient-to-br from-[#1e4fbf] via-[#173b93] to-[#102a63] text-white border border-sky-300/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_18px_50px_rgba(10,30,90,0.55)]',
+        wrap: 'bg-gradient-to-br from-team-primary-light via-team-primary to-team-primary/80 text-white border border-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_18px_50px_rgba(0,0,0,0.45)]',
         timer: 'text-cyan-200',
-        badge: 'bg-white text-bills-royal',
+        badge: 'bg-white text-team-primary',
       }
   }
 }
