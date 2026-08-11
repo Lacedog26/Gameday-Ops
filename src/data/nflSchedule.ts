@@ -1,4 +1,5 @@
 import type { GameOverride, NflGame } from '../types'
+import rawSchedule from './nflSchedule2026.json'
 
 // ---------------------------------------------------------------------------
 // NFL master schedule library.
@@ -86,9 +87,21 @@ function buildTeamSeason(teamId: string, season: number, rows: Row[]): NflGame[]
   })
 }
 
+// Full 2026 regular-season schedule for all 32 teams (real data compiled from
+// the authoritative nflverse dataset; verified internally consistent and
+// matching the hand-checked Buffalo schedule). Buffalo keeps its hand-authored
+// entries below because they also carry preseason games, venues, and networks.
+const JSON_GAMES = rawSchedule as unknown as NflGame[]
+
 // Master library keyed by `${teamId}:${season}`.
 const MASTER: Record<string, NflGame[]> = {
   [`BUF:${CURRENT_SEASON}`]: buildTeamSeason('BUF', CURRENT_SEASON, BUF_2026),
+}
+
+for (const g of JSON_GAMES) {
+  if (g.teamId === 'BUF') continue // keep the richer hand-authored Buffalo data
+  const key = `${g.teamId}:${g.season}`
+  ;(MASTER[key] ??= []).push(g)
 }
 
 /** Bundled master games for a team+season (empty if not yet imported). */
