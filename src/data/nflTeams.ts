@@ -83,6 +83,12 @@ export const NFL_TEAMS: TeamBrand[] = [
   t('SEA', 'Seattle', 'Seahawks', 'SEA', 'NFC', 'West', '#002244', '#69BE28', '#A5ACAF'),
 ]
 
+// Buffalo ships with the customer-provided charging-buffalo mark (wordmark
+// cropped out, background knocked to transparent). Other teams upload their own
+// licensed logo via Admin → Team Logo.
+const BUF_TEAM = NFL_TEAMS.find((x) => x.id === 'BUF')
+if (BUF_TEAM) BUF_TEAM.assets.primaryLogoUrl = '/logos/buf.png'
+
 export const TEAMS_BY_ID: Record<string, TeamBrand> = Object.fromEntries(
   NFL_TEAMS.map((team) => [team.id, team]),
 )
