@@ -18,6 +18,7 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
   const { game, settings } = state
   const team = getTeam(game.teamId)
   const opponentName = game.opponentId ? getTeam(game.opponentId).name : game.opponent
+  const logo = state.teamLogos[game.teamId]
 
   const preKick = secondsToKickoff > 0
   const kickClock = formatClock(kickoffAt)
@@ -36,7 +37,16 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
     <header className="relative flex items-stretch gap-6 px-8 pt-6 pb-4">
       {/* Left: identity */}
       <div className="flex items-center gap-5">
-        {team.assets.primaryLogoUrl ? (
+        {logo?.url ? (
+          <div className="h-[92px] w-[92px] shrink-0 overflow-hidden drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]">
+            <img
+              src={logo.url}
+              alt={team.name}
+              className="h-full w-full object-contain"
+              style={{ transform: `scale(${logo.zoom}) translateY(${logo.offsetY}%)` }}
+            />
+          </div>
+        ) : team.assets.primaryLogoUrl ? (
           <img
             src={team.assets.primaryLogoUrl}
             alt={team.name}

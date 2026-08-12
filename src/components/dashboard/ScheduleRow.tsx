@@ -11,10 +11,10 @@ interface Props {
 
 /** A single schedule row on the board. */
 export default function ScheduleRow({ item, colorblind, onAcknowledge }: Props) {
-  const { event, level, secondsUntil, scheduledAt } = item
-  const style = rowStyle(level, colorblind)
-  const done = level === 'completed'
-  const isGo = level === 'go'
+  const { event, level, opStatus, secondsUntil, scheduledAt } = item
+  const style = rowStyle(opStatus, level, colorblind)
+  const done = opStatus === 'complete'
+  const isNow = opStatus === 'now'
   const isKick = event.isKickoff
 
   return (
@@ -24,9 +24,9 @@ export default function ScheduleRow({ item, colorblind, onAcknowledge }: Props) 
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ layout: { duration: 0.4, ease: 'easeInOut' } }}
-      onClick={() => isGo && onAcknowledge(event.id)}
+      onClick={() => isNow && onAcknowledge(event.id)}
       className={`grid min-h-0 flex-1 grid-cols-[130px_92px_1fr_150px_210px] items-center gap-3 overflow-hidden rounded-xl border px-5 py-1 ${style.row} ${
-        isGo ? 'cursor-pointer' : ''
+        isNow ? 'cursor-pointer' : ''
       } ${isKick && !done ? 'ring-1 ring-alert-go/40' : ''}`}
     >
       {/* Scheduled clock time */}
@@ -57,7 +57,7 @@ export default function ScheduleRow({ item, colorblind, onAcknowledge }: Props) 
       <div className="flex justify-center">
         {done ? (
           <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[16px] font-bold tracking-wider ${style.statusPill}`}>
-            <CheckIcon /> DONE
+            <CheckIcon /> COMPLETE
           </span>
         ) : (
           <span className={`rounded-full px-4 py-1 text-[17px] font-extrabold tracking-widest ${style.statusPill}`}>
@@ -72,7 +72,7 @@ export default function ScheduleRow({ item, colorblind, onAcknowledge }: Props) 
           <span className="text-[34px]">{formatCountdown(Math.max(0, secondsUntil))}</span>
         ) : done ? (
           <span className="text-[26px]">—</span>
-        ) : isGo ? (
+        ) : isNow ? (
           <span className="text-[38px] font-black tracking-tight">GO&nbsp;NOW</span>
         ) : (
           <span className={level === 'critical' ? 'text-[46px]' : level === 'imminent' ? 'text-[42px]' : 'text-[34px]'}>

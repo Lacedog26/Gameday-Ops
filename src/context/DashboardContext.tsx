@@ -17,6 +17,7 @@ import type {
   Quote,
   ScheduleTemplate,
   Settings,
+  TeamLogo,
   TemplateKind,
 } from '../types'
 import { makeDefaultState, uid } from '../lib/defaults'
@@ -54,6 +55,8 @@ type Action =
   | { type: 'CLEAR_GAME_OVERRIDE'; gameId: string }
   | { type: 'IMPORT_GAMES'; games: NflGame[] }
   | { type: 'LOAD_GAME'; game: GameInfo }
+  | { type: 'SET_TEAM_LOGO'; teamId: string; patch: Partial<TeamLogo> }
+  | { type: 'REMOVE_TEAM_LOGO'; teamId: string }
   | { type: 'RESET' }
 
 function move<T>(arr: T[], from: number, to: number): T[] {
@@ -224,6 +227,20 @@ function reducer(state: AppState, action: Action): AppState {
         activeEvents: state.activeEvents.map((e) => ({ ...e, acknowledgedAt: null })),
       }
 
+    case 'SET_TEAM_LOGO': {
+      const existing = state.teamLogos[action.teamId] ?? { url: '', zoom: 1, offsetY: 0 }
+      return {
+        ...state,
+        teamLogos: { ...state.teamLogos, [action.teamId]: { ...existing, ...action.patch } },
+      }
+    }
+
+    case 'REMOVE_TEAM_LOGO': {
+      const next = { ...state.teamLogos }
+      delete next[action.teamId]
+      return { ...state, teamLogos: next }
+    }
+
     case 'RESET':
       return makeDefaultState()
 
@@ -264,6 +281,8 @@ interface DashboardContextValue {
     clearGameOverride: (gameId: string) => void
     importGames: (games: NflGame[]) => void
     loadGame: (game: GameInfo) => void
+    setTeamLogo: (teamId: string, patch: Partial<TeamLogo>) => void
+    removeTeamLogo: (teamId: string) => void
     reset: () => void
   }
 }
@@ -348,6 +367,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       clearGameOverride: (gameId) => dispatch({ type: 'CLEAR_GAME_OVERRIDE', gameId }),
       importGames: (games) => dispatch({ type: 'IMPORT_GAMES', games }),
       loadGame: (game) => dispatch({ type: 'LOAD_GAME', game }),
+      setTeamLogo: (teamId, patch) => dispatch({ type: 'SET_TEAM_LOGO', teamId, patch }),
+      removeTeamLogo: (teamId) => dispatch({ type: 'REMOVE_TEAM_LOGO', teamId }),
       reset: () => dispatch({ type: 'RESET' }),
     }),
     [],
@@ -395,6 +416,7 @@ function migrate(loaded: AppState): AppState {
     season: loaded.season ?? base.season,
     gameOverrides: loaded.gameOverrides ?? base.gameOverrides,
     customGames: loaded.customGames ?? base.customGames,
+    teamLogos: loaded.teamLogos ?? base.teamLogos,
   }
 }
 
