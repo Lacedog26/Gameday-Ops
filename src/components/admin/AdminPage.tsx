@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import BillsMark from '../common/BillsMark'
 import ScheduleCenterSection from './ScheduleCenterSection'
 import GameSetupSection from './GameSetupSection'
+import TeamLogoSection from './TeamLogoSection'
 import TemplatesSection from './TemplatesSection'
 import ScheduleEditorSection from './ScheduleEditorSection'
 import GraphicsSection from './GraphicsSection'
@@ -38,6 +39,7 @@ export default function AdminPage() {
       <main className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6">
         <ScheduleCenterSection />
         <GameSetupSection />
+        <TeamLogoSection />
         <TemplatesSection />
         <ScheduleEditorSection />
         <GraphicsSection />

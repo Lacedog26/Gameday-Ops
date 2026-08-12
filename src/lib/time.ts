@@ -1,4 +1,4 @@
-import type { AlertLevel, GameInfo, PregameEvent, TimedEvent } from '../types'
+import type { AlertLevel, GameInfo, OpStatus, PregameEvent, TimedEvent } from '../types'
 
 // ---------------------------------------------------------------------------
 // Timezone: every wall-clock the board shows (current time, kickoff, each
@@ -173,7 +173,7 @@ export function buildTimeline(
   nowMs: number,
 ): TimedEvent[] {
   const kickoff = kickoffMs(game)
-  return events
+  const timeline = events
     .map((event, index) => {
       const scheduledAt = eventScheduledAt(kickoff, event)
       const secondsUntil = (scheduledAt - nowMs) / 1000
@@ -184,9 +184,33 @@ export function buildTimeline(
         scheduledAt,
         secondsUntil,
         level: computeLevel(secondsUntil, acknowledged),
+        opStatus: 'upcoming' as OpStatus,
       }
     })
     .sort((a, b) => a.scheduledAt - b.scheduledAt)
+
+  return annotateOpStatus(timeline)
+}
+
+/**
+ * Assign each event its sequence position:
+ *  - complete: already went out (past the GO window / acknowledged)
+ *  - now: at/just after its scheduled time (GO window)
+ *  - ondeck: the earliest not-yet-started event(s) — the next group to go
+ *  - upcoming: everything after on-deck
+ * Simultaneous events (same scheduled time) can share NOW or ON DECK.
+ */
+export function annotateOpStatus(timeline: TimedEvent[]): TimedEvent[] {
+  const pending = timeline.filter((t) => t.level !== 'completed' && t.level !== 'go')
+  const ondeckAt = pending.length ? Math.min(...pending.map((t) => t.scheduledAt)) : Infinity
+  return timeline.map((t) => {
+    let opStatus: OpStatus
+    if (t.level === 'completed') opStatus = 'complete'
+    else if (t.level === 'go') opStatus = 'now'
+    else if (t.scheduledAt === ondeckAt) opStatus = 'ondeck'
+    else opStatus = 'upcoming'
+    return { ...t, opStatus }
+  })
 }
 
 export interface TimelineFocus {

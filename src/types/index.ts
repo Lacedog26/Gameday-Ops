@@ -248,6 +248,18 @@ export interface AppState {
   gameOverrides: Record<GameId, GameOverride>
   /** Imported / manually-added games not in the bundled master schedule. */
   customGames: NflGame[]
+  /** Per-team uploaded logo (data URL) + framing to crop out wordmarks etc. */
+  teamLogos: Record<TeamId, TeamLogo>
+}
+
+/** An uploaded team logo and how to frame it (uniform crop — never distorts). */
+export interface TeamLogo {
+  /** Image data URL (PNG/SVG/JPG). Original artwork preserved. */
+  url: string
+  /** Uniform zoom (1 = fit). Used to crop out text like a wordmark. */
+  zoom: number
+  /** Vertical offset in % (negative moves image up, revealing the top mark). */
+  offsetY: number
 }
 
 // --- Derived (runtime-only) types -----------------------------------------
@@ -264,6 +276,16 @@ export type AlertLevel =
   | 'go' // 0..-60s — "GO NOW"
   | 'completed' // past + acknowledged / > 60s elapsed
 
+/**
+ * Positional operational status (independent of the time-based AlertLevel):
+ * where an event sits in the run-of-show sequence.
+ *   now      — happening at/just after its scheduled time
+ *   ondeck   — the next group that needs to go (only the earliest pending)
+ *   upcoming — everything after on-deck
+ *   complete — already went out (scheduled time passed)
+ */
+export type OpStatus = 'now' | 'ondeck' | 'upcoming' | 'complete'
+
 /** An event enriched with live, per-tick timing + status for rendering. */
 export interface TimedEvent {
   event: PregameEvent
@@ -271,7 +293,10 @@ export interface TimedEvent {
   scheduledAt: number
   /** Seconds until the event (negative once it has passed). */
   secondsUntil: number
+  /** Time-based urgency (drives flashing/colors/countdown emphasis). */
   level: AlertLevel
+  /** Sequence position (drives the NOW / ON DECK / UPCOMING / COMPLETE label). */
+  opStatus: OpStatus
   /** Index within the active schedule. */
   index: number
 }

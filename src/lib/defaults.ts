@@ -197,6 +197,7 @@ export function makeDefaultState(now = Date.now()): AppState {
     season: 2026,
     gameOverrides: {},
     customGames: [],
+    teamLogos: {},
   }
 }
 
