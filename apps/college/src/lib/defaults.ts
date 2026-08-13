@@ -9,7 +9,7 @@ import type {
 import { epochToEtWallISO, uid } from '@gamedayops/core'
 
 // ---------------------------------------------------------------------------
-// GameDayOps College Football — shipped defaults (Texas demonstration org).
+// GameDayOps College — shipped defaults (Texas demonstration org).
 //
 // Nothing here is hard-coded into the UI: templates, culture graphics, and the
 // starting game are editable data. "Hook 'Em Horns" is a culture SLOT with a

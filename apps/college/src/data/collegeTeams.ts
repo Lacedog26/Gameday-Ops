@@ -1,7 +1,7 @@
 import type { TeamBrand } from '@gamedayops/core'
 
 // ---------------------------------------------------------------------------
-// GameDayOps College Football — team universe.
+// GameDayOps College — team universe.
 //
 // This is a DEMONSTRATION SUBSET spanning FBS (multiple conferences + an
 // Independent) and FCS (incl. an HBCU/SWAC program) so the level → conference →

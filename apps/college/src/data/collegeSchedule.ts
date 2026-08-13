@@ -1,7 +1,7 @@
 import type { NflGame } from '@gamedayops/core'
 
 // ---------------------------------------------------------------------------
-// GameDayOps College Football — schedule library.
+// GameDayOps College — schedule library.
 //
 // IMPORTANT: this is a small DEMONSTRATION schedule, not a verified 2026 slate.
 // Real, authoritative college schedules are loaded in Phase 3 via the
