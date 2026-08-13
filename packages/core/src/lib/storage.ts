@@ -1,5 +1,6 @@
 import type { AppState } from '../types'
 import { supabase, isCloudMode, BOARD_ID } from './supabaseConfig'
+import { productConfig } from '../product'
 
 // ---------------------------------------------------------------------------
 // Persistence layer.
@@ -14,6 +15,25 @@ import { supabase, isCloudMode, BOARD_ID } from './supabaseConfig'
 
 export const STORAGE_KEY = 'bills-pregame-dashboard:v1'
 
+// Product-scoped storage so NFL and College never share a board or local cache.
+// Each product sets `storageNamespace` in its ProductConfig; when unset (the
+// legacy NFL deployment) we keep the original key/board so nothing resets.
+function productNamespace(): string | null {
+  try {
+    return productConfig().storageNamespace ?? null
+  } catch {
+    return null
+  }
+}
+function scopedStorageKey(): string {
+  const ns = productNamespace()
+  return ns ? `gamedayops:${ns}:v1` : STORAGE_KEY
+}
+function scopedBoardId(): string {
+  const ns = productNamespace()
+  return ns ? `board-${ns}` : BOARD_ID
+}
+
 export interface StorageAdapter {
   load(): Promise<AppState | null>
   save(state: AppState): Promise<void>
@@ -23,15 +43,20 @@ export interface StorageAdapter {
 
 /** localStorage-backed adapter with cross-tab sync via the `storage` event. */
 export class LocalStorageAdapter implements StorageAdapter {
-  private key: string
+  private keyOverride?: string
 
-  constructor(key = STORAGE_KEY) {
-    this.key = key
+  constructor(key?: string) {
+    this.keyOverride = key
+  }
+
+  /** Resolved lazily so it reflects the configured product namespace. */
+  private keyName(): string {
+    return this.keyOverride ?? scopedStorageKey()
   }
 
   async load(): Promise<AppState | null> {
     try {
-      const raw = localStorage.getItem(this.key)
+      const raw = localStorage.getItem(this.keyName())
       if (!raw) return null
       return JSON.parse(raw) as AppState
     } catch (err) {
@@ -42,7 +67,7 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   async save(state: AppState): Promise<void> {
     try {
-      localStorage.setItem(this.key, JSON.stringify(state))
+      localStorage.setItem(this.keyName(), JSON.stringify(state))
     } catch (err) {
       console.warn('[storage] failed to save state', err)
     }
@@ -50,7 +75,7 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   subscribe(handler: (state: AppState) => void): () => void {
     const listener = (e: StorageEvent) => {
-      if (e.key !== this.key || !e.newValue) return
+      if (e.key !== this.keyName() || !e.newValue) return
       try {
         handler(JSON.parse(e.newValue) as AppState)
       } catch {
@@ -70,15 +95,20 @@ export class LocalStorageAdapter implements StorageAdapter {
  * crashing the display.
  */
 export class SupabaseAdapter implements StorageAdapter {
-  private boardId: string
+  private boardIdOverride?: string
   private cache = new LocalStorageAdapter()
   // Random per-session id so we can ignore the realtime echo of our own writes.
   private clientId = Math.random().toString(36).slice(2) + Date.now().toString(36)
   private saveTimer: ReturnType<typeof setTimeout> | undefined
   private pending: AppState | null = null
 
-  constructor(boardId = BOARD_ID) {
-    this.boardId = boardId
+  constructor(boardId?: string) {
+    this.boardIdOverride = boardId
+  }
+
+  /** Resolved lazily so it reflects the configured product namespace. */
+  private boardName(): string {
+    return this.boardIdOverride ?? scopedBoardId()
   }
 
   async load(): Promise<AppState | null> {
@@ -87,7 +117,7 @@ export class SupabaseAdapter implements StorageAdapter {
       const { data, error } = await supabase
         .from('boards')
         .select('state')
-        .eq('id', this.boardId)
+        .eq('id', this.boardName())
         .maybeSingle()
       if (error) throw error
       const state = (data?.state as AppState | undefined) ?? null
@@ -123,7 +153,7 @@ export class SupabaseAdapter implements StorageAdapter {
     try {
       const { error } = await supabase.from('boards').upsert(
         {
-          id: this.boardId,
+          id: this.boardName(),
           state,
           updated_by: this.clientId,
           updated_at: new Date().toISOString(),
@@ -143,10 +173,10 @@ export class SupabaseAdapter implements StorageAdapter {
     if (!client) return unsubCache
 
     const channel = client
-      .channel(`boards:${this.boardId}`)
+      .channel(`boards:${this.boardName()}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'boards', filter: `id=eq.${this.boardId}` },
+        { event: '*', schema: 'public', table: 'boards', filter: `id=eq.${this.boardName()}` },
         (payload) => {
           const row = payload.new as { state?: AppState; updated_by?: string } | undefined
           // Ignore the echo of our own write.

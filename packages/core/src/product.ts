@@ -20,8 +20,14 @@ import type {
 
 export interface ProductConfig {
   productType: ProductType
-  /** Display name, e.g. "GameDayOps NFL" / "GameDayOps College Football". */
+  /** Display name, e.g. "GameDayOps NFL" / "GameDayOps College". */
   productName: string
+  /**
+   * Storage namespace isolating this product's board + local cache from other
+   * products (so NFL and College never share state). Leave unset on the legacy
+   * NFL deployment to preserve its existing board/key.
+   */
+  storageNamespace?: string
   /** The full team universe for this product (never mixed across products). */
   teams: TeamBrand[]
   /** Fallback team when none is selected. */

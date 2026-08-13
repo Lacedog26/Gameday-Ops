@@ -9,6 +9,7 @@ import { makeDefaultState } from './lib/defaults'
 export const collegeProduct: ProductConfig = {
   productType: 'COLLEGE_FOOTBALL',
   productName: 'GameDayOps College',
+  storageNamespace: 'college',
   teams: COLLEGE_TEAMS,
   defaultTeamId: DEFAULT_TEAM_ID,
   availableSeasons: AVAILABLE_SEASONS,
