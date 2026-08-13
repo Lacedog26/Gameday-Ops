@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useDashboard } from '../../context/DashboardContext'
 import { formatClock, formatHMS } from '../../lib/time'
-import { getTeam } from '../../data/nflTeams'
+import { getTeam } from '../../product'
 import BillsMark from '../common/BillsMark'
 
 interface HeaderProps {

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useDashboard } from '../../context/DashboardContext'
-import { getTeam } from '../../data/nflTeams'
+import { getTeam } from '../../product'
 import { Section, Field, Button } from './ui'
 
 /**

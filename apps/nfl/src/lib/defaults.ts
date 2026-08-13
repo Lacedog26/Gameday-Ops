@@ -5,8 +5,8 @@ import type {
   Quote,
   ScheduleTemplate,
   Settings,
-} from '../types'
-import { epochToEtWallISO } from './time'
+} from '@gamedayops/core'
+import { epochToEtWallISO } from '@gamedayops/core'
 
 // ---------------------------------------------------------------------------
 // Shipped defaults: the standard Bills pre-game routine (from the printed card)

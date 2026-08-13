@@ -1,4 +1,4 @@
-import type { AlertLevel, GameInfo, OpStatus, PregameEvent, TimedEvent } from './types'
+import type { AlertLevel, GameInfo, OpStatus, PregameEvent, TimedEvent } from '../types'
 
 // ---------------------------------------------------------------------------
 // Timezone: every wall-clock the board shows (current time, kickoff, each

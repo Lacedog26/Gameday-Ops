@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useDashboard } from '../../context/DashboardContext'
-import { getTeam } from '../../data/nflTeams'
+import { getTeam } from '../../product'
 import type { CultureGraphic, Quote, TransitionStyle } from '../../types'
 
 interface Props {

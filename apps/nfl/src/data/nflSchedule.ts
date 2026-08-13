@@ -1,4 +1,4 @@
-import type { GameOverride, NflGame } from '../types'
+import type { GameOverride, NflGame } from '@gamedayops/core'
 import rawSchedule from './nflSchedule2026.json'
 
 // ---------------------------------------------------------------------------

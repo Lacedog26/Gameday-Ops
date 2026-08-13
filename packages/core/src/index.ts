@@ -1,7 +1,9 @@
-// @gamedayops/core — the shared, sport-agnostic GameDayOps engine.
-// Consumed by every product app (NFL, College Football, …). Contains ONLY
-// logic and types with no league-specific data, so a fix here improves all
-// products at once.
+// @gamedayops/core — the shared, sport-agnostic GameDayOps platform.
+// Types + engine + product registry + the full application shell. Consumed by
+// every product app (NFL, College Football, …); a fix here improves all.
 export * from './types'
-export * from './time'
-export * from './alertStyles'
+export * from './lib/time'
+export * from './components/dashboard/alertStyles'
+export * from './product'
+export { uid } from './lib/id'
+export { GameDayOpsRoot } from './Root'

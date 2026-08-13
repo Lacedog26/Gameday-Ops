@@ -1,6 +1,6 @@
 import { useDashboard } from '../../context/DashboardContext'
 import { formatClock, kickoffMs } from '../../lib/time'
-import { getTeam, teamsByDivision } from '../../data/nflTeams'
+import { getTeam, teamsByDivision } from '../../product'
 import { Section, Field, TextInput, Select } from './ui'
 
 /** Edit the game-day header info: team, opponent, week, home/away, kickoff. */

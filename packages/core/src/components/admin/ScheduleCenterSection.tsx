@@ -1,12 +1,12 @@
 import { useMemo, useRef, useState } from 'react'
 import { useDashboard } from '../../context/DashboardContext'
-import { getTeam, teamsByDivision } from '../../data/nflTeams'
+import { getTeam, teamsByDivision } from '../../product'
 import {
-  AVAILABLE_SEASONS,
+  availableSeasons,
   applyOverride,
   gameKickoffISO,
   masterGames,
-} from '../../data/nflSchedule'
+} from '../../product'
 import type { GameInfo, GameOverride, NflGame } from '../../types'
 import { etWallTimeToEpoch, formatClock } from '../../lib/time'
 import { Section, Field, TextInput, Select, Button } from './ui'
@@ -120,7 +120,7 @@ export default function ScheduleCenterSection() {
         </Field>
         <Field label="Season">
           <Select value={state.season} onChange={(e) => actions.setSeason(Number(e.target.value))}>
-            {AVAILABLE_SEASONS.map((s) => (
+            {availableSeasons().map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>

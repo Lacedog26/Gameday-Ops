@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { useDashboard } from './DashboardContext'
-import { getTeam } from '../data/nflTeams'
+import { getTeam } from '../product'
 import type { TeamBrand } from '../types'
 
 // ---------------------------------------------------------------------------

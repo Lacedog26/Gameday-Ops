@@ -1,4 +1,4 @@
-import type { TeamBrand } from '../types'
+import type { TeamBrand } from '@gamedayops/core'
 
 // ---------------------------------------------------------------------------
 // All 32 current NFL clubs as configurable brand data.

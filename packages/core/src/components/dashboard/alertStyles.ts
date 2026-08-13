@@ -1,4 +1,4 @@
-import type { AlertLevel, OpStatus } from './types'
+import type { AlertLevel, OpStatus } from '../../types'
 
 // Row treatment is a blend of WHERE the event sits in the sequence (opStatus:
 // now / ondeck / upcoming / complete) and HOW close it is in time (alert level).

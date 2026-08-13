@@ -20,7 +20,8 @@ import type {
   TeamLogo,
   TemplateKind,
 } from '../types'
-import { makeDefaultState, uid } from '../lib/defaults'
+import { makeDefaultState } from '../product'
+import { uid } from '../lib/id'
 import { storage } from '../lib/storage'
 
 // ---------------------------------------------------------------------------
