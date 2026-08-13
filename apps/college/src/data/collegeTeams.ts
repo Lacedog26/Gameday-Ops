@@ -79,7 +79,7 @@ export const COLLEGE_TEAMS: TeamBrand[] = [
 // Texas ships as the initial demonstration organization. Its primary logo is a
 // clearly-labeled placeholder; an authorized customer uploads official artwork.
 const TEX = COLLEGE_TEAMS.find((t) => t.id === 'TEX')
-if (TEX) TEX.assets.primaryLogoUrl = '/logos/texas-placeholder.svg'
+if (TEX) TEX.assets.primaryLogoUrl = '/logos/texas-longhorn.svg'
 
 export const TEAMS_BY_ID: Record<string, TeamBrand> = Object.fromEntries(
   COLLEGE_TEAMS.map((t) => [t.id, t]),
