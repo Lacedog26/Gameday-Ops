@@ -19,6 +19,9 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
   const team = getTeam(game.teamId)
   const opponentName = game.opponentId ? getTeam(game.opponentId).name : game.opponent
   const logo = state.teamLogos[game.teamId]
+  // On-brand text color is opt-in: only when an admin sets it does it override
+  // the default white→secondary gradient (keeps shipped team looks unchanged).
+  const textOverride = state.teamBranding?.[game.teamId]?.colors?.text
 
   const preKick = secondsToKickoff > 0
   const kickClock = formatClock(kickoffAt)
@@ -56,7 +59,14 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
           <BillsMark className="h-[92px] w-[92px] shrink-0 drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]" />
         )}
         <div className="leading-none">
-          <div className="bg-gradient-to-r from-white to-team-secondary bg-clip-text font-display text-[26px] font-bold uppercase tracking-[0.28em] text-transparent">
+          <div
+            className={
+              textOverride
+                ? 'font-display text-[26px] font-bold uppercase tracking-[0.28em]'
+                : 'bg-gradient-to-r from-white to-team-secondary bg-clip-text font-display text-[26px] font-bold uppercase tracking-[0.28em] text-transparent'
+            }
+            style={textOverride ? { color: textOverride } : undefined}
+          >
             {team.name}
           </div>
           <div className="font-display text-[46px] font-extrabold uppercase tracking-[0.06em] text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.35)]">

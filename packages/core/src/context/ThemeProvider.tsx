@@ -1,12 +1,14 @@
 import { useEffect, type ReactNode } from 'react'
 import { useDashboard } from './DashboardContext'
 import { getTeam } from '../product'
-import type { TeamBrand } from '../types'
+import { resolveColors, type ResolvedColors } from '../brand'
 
 // ---------------------------------------------------------------------------
-// White-label theming: reads the active team and writes its colors to CSS
-// variables on <html>, so every `team-*` / `bills-*` Tailwind class and the
-// field background re-theme instantly. No component hard-codes a team color.
+// White-label theming: reads the active team's RESOLVED brand (shipped defaults
+// merged with the org admin's editable overrides) and writes its colors to CSS
+// variables on <html>, so every `team-*` / `bills-*` Tailwind class, the field
+// background, and the on-brand text re-theme instantly. No component hard-codes
+// a team color, so selecting a different school re-skins the entire board.
 // ---------------------------------------------------------------------------
 
 /** "#00338D" -> "0 51 141" (space-separated RGB channels for Tailwind alpha). */
@@ -33,30 +35,39 @@ function mix(hex: string, target: [number, number, number], amt: number): string
 const BLACK: [number, number, number] = [4, 7, 15]
 const WHITE: [number, number, number] = [255, 255, 255]
 
-/** Compute all theme CSS variables for a team. */
-export function themeVars(team: TeamBrand): Record<string, string> {
-  const { primary, secondary, accent } = team.colors
+/** Compute all theme CSS variables for a resolved brand. */
+export function themeVars(colors: ResolvedColors): Record<string, string> {
+  const { primary, secondary, accent, text } = colors
+  // The dark board ramp derives from an explicit background color when the admin
+  // set one, otherwise from the primary color (team-tinted backdrop).
+  const bgBase = colors.background || primary
   return {
     '--team-primary': hexToChannels(primary),
     '--team-primary-light': mix(primary, WHITE, 0.24),
     '--team-secondary': hexToChannels(secondary),
     '--team-accent': hexToChannels(accent),
-    // Dark, team-tinted background ramp so each team gets its own backdrop.
-    '--team-bg-1': mix(primary, BLACK, 0.62),
-    '--team-bg-2': mix(primary, BLACK, 0.76),
-    '--team-bg-3': mix(primary, BLACK, 0.86),
+    '--team-text': hexToChannels(text),
+    '--team-bg-1': mix(bgBase, BLACK, 0.62),
+    '--team-bg-2': mix(bgBase, BLACK, 0.76),
+    '--team-bg-3': mix(bgBase, BLACK, 0.86),
   }
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { state } = useDashboard()
-  const team = getTeam(state.game.teamId)
+  const teamId = state.game.teamId
+  const team = getTeam(teamId)
+  const branding = state.teamBranding?.[teamId]
+  const colors = resolveColors(team, branding)
 
   useEffect(() => {
     const root = document.documentElement
-    const vars = themeVars(team)
+    const vars = themeVars(colors)
     for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v)
-  }, [team])
+    // Optional org-uploaded background image, applied as a subtle board layer.
+    const bgImg = branding?.backgroundImageUrl
+    root.style.setProperty('--team-bg-image', bgImg ? `url("${bgImg}")` : 'none')
+  }, [colors.primary, colors.secondary, colors.accent, colors.text, colors.background, branding?.backgroundImageUrl])
 
   return <>{children}</>
 }

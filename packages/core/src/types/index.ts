@@ -273,6 +273,30 @@ export interface AppState {
   customGames: NflGame[]
   /** Per-team uploaded logo (data URL) + framing to crop out wordmarks etc. */
   teamLogos: Record<TeamId, TeamLogo>
+  /** Per-team editable branding overrides (colors + extra assets). */
+  teamBranding?: Record<TeamId, TeamBranding>
+}
+
+/**
+ * Editable branding overrides for a team, set by an org admin in Admin → Team
+ * Branding. Any present value overrides the team's shipped default; the live
+ * dashboard consumes the merged result, so onboarding a new customer is a
+ * configuration change, never a code change. The primary logo (with crop
+ * framing) lives in `teamLogos`; the remaining assets are stored here.
+ */
+export interface TeamBranding {
+  colors?: {
+    primary?: string
+    secondary?: string
+    accent?: string
+    /** Base background color the dark board ramp is derived from. */
+    background?: string
+    /** Primary on-brand text color (team name, accents). */
+    text?: string
+  }
+  secondaryLogoUrl?: string
+  wordmarkUrl?: string
+  backgroundImageUrl?: string
 }
 
 /** An uploaded team logo and how to frame it (uniform crop — never distorts). */

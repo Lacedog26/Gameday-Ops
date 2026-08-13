@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
+import { useDashboard } from '../../context/DashboardContext'
+import { getTeam, productConfig } from '../../product'
 import BillsMark from '../common/BillsMark'
 import ScheduleCenterSection from './ScheduleCenterSection'
 import GameSetupSection from './GameSetupSection'
-import TeamLogoSection from './TeamLogoSection'
+import TeamBrandingSection from './TeamBrandingSection'
 import TemplatesSection from './TemplatesSection'
 import ScheduleEditorSection from './ScheduleEditorSection'
 import GraphicsSection from './GraphicsSection'
@@ -16,21 +18,30 @@ import DangerSection from './DangerSection'
  * localStorage across every open dashboard).
  */
 export default function AdminPage() {
+  const { state } = useDashboard()
+  const productName = productConfig().productName
+  const team = getTeam(state.game.teamId)
+  const logo = state.teamLogos[team.id]?.url || team.assets.primaryLogoUrl
+
   return (
     <div className="field-bg h-full w-full overflow-y-auto text-white">
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-navy-950/95 px-5 py-3 backdrop-blur">
         <div className="flex items-center gap-3">
-          <BillsMark className="h-10 w-10" />
+          {logo ? (
+            <img src={logo} alt={team.name} className="h-10 w-10 object-contain" />
+          ) : (
+            <BillsMark className="h-10 w-10" />
+          )}
           <div>
             <div className="font-display text-lg font-extrabold uppercase leading-none tracking-wide">
-              Pre-Game Operations
+              {productName}
             </div>
-            <div className="text-xs font-semibold tracking-widest text-slate-400">ADMIN CONSOLE</div>
+            <div className="text-xs font-semibold tracking-widest text-slate-400">ADMIN CONTROL CENTER</div>
           </div>
         </div>
         <Link
           to="/"
-          className="rounded-full bg-bills-red px-5 py-2 text-sm font-bold tracking-wider hover:bg-bills-red/85"
+          className="rounded-full bg-team-primary px-5 py-2 text-sm font-bold tracking-wider hover:bg-team-primary/85"
         >
           ← BACK TO BOARD
         </Link>
@@ -39,7 +50,7 @@ export default function AdminPage() {
       <main className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6">
         <ScheduleCenterSection />
         <GameSetupSection />
-        <TeamLogoSection />
+        <TeamBrandingSection />
         <TemplatesSection />
         <ScheduleEditorSection />
         <GraphicsSection />
@@ -47,7 +58,7 @@ export default function AdminPage() {
         <SettingsSection />
         <DangerSection />
         <footer className="py-6 text-center text-xs text-slate-500">
-          Buffalo Bills Pre-Game Operations Dashboard · changes save automatically
+          {productName} · changes save automatically
         </footer>
       </main>
     </div>

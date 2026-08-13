@@ -17,6 +17,7 @@ import type {
   Quote,
   ScheduleTemplate,
   Settings,
+  TeamBranding,
   TeamLogo,
   TemplateKind,
 } from '../types'
@@ -58,6 +59,8 @@ type Action =
   | { type: 'LOAD_GAME'; game: GameInfo }
   | { type: 'SET_TEAM_LOGO'; teamId: string; patch: Partial<TeamLogo> }
   | { type: 'REMOVE_TEAM_LOGO'; teamId: string }
+  | { type: 'PATCH_TEAM_BRANDING'; teamId: string; patch: TeamBranding }
+  | { type: 'RESET_TEAM_BRANDING'; teamId: string }
   | { type: 'RESET' }
 
 function move<T>(arr: T[], from: number, to: number): T[] {
@@ -242,6 +245,25 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, teamLogos: next }
     }
 
+    case 'PATCH_TEAM_BRANDING': {
+      const cur = state.teamBranding?.[action.teamId] ?? {}
+      const merged: TeamBranding = {
+        ...cur,
+        ...action.patch,
+        colors: { ...(cur.colors ?? {}), ...(action.patch.colors ?? {}) },
+      }
+      return {
+        ...state,
+        teamBranding: { ...(state.teamBranding ?? {}), [action.teamId]: merged },
+      }
+    }
+
+    case 'RESET_TEAM_BRANDING': {
+      const next = { ...(state.teamBranding ?? {}) }
+      delete next[action.teamId]
+      return { ...state, teamBranding: next }
+    }
+
     case 'RESET':
       return makeDefaultState()
 
@@ -284,6 +306,8 @@ interface DashboardContextValue {
     loadGame: (game: GameInfo) => void
     setTeamLogo: (teamId: string, patch: Partial<TeamLogo>) => void
     removeTeamLogo: (teamId: string) => void
+    patchTeamBranding: (teamId: string, patch: TeamBranding) => void
+    resetTeamBranding: (teamId: string) => void
     reset: () => void
   }
 }
@@ -370,6 +394,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       loadGame: (game) => dispatch({ type: 'LOAD_GAME', game }),
       setTeamLogo: (teamId, patch) => dispatch({ type: 'SET_TEAM_LOGO', teamId, patch }),
       removeTeamLogo: (teamId) => dispatch({ type: 'REMOVE_TEAM_LOGO', teamId }),
+      patchTeamBranding: (teamId, patch) => dispatch({ type: 'PATCH_TEAM_BRANDING', teamId, patch }),
+      resetTeamBranding: (teamId) => dispatch({ type: 'RESET_TEAM_BRANDING', teamId }),
       reset: () => dispatch({ type: 'RESET' }),
     }),
     [],
@@ -418,6 +444,7 @@ function migrate(loaded: AppState): AppState {
     gameOverrides: loaded.gameOverrides ?? base.gameOverrides,
     customGames: loaded.customGames ?? base.customGames,
     teamLogos: loaded.teamLogos ?? base.teamLogos,
+    teamBranding: loaded.teamBranding ?? {},
   }
 }
 
