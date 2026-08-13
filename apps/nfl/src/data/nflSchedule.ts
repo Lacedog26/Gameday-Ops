@@ -1,4 +1,4 @@
-import type { GameOverride, NflGame } from '@gamedayops/core'
+import type { NflGame } from '@gamedayops/core'
 import rawSchedule from './nflSchedule2026.json'
 
 // ---------------------------------------------------------------------------
@@ -109,25 +109,3 @@ export function masterGames(teamId: string, season: number): NflGame[] {
   return MASTER[`${teamId}:${season}`] ?? []
 }
 
-/** Apply an override to a master game, producing the "current" game view. */
-export function applyOverride(game: NflGame, ov?: GameOverride): NflGame {
-  if (!ov) return game
-  return {
-    ...game,
-    date: ov.date ?? game.date,
-    time: ov.time ?? game.time,
-    opponentId: ov.opponentId ?? game.opponentId,
-    opponentName: ov.opponentName ?? game.opponentName,
-    homeAway: ov.homeAway ?? game.homeAway,
-    venue: ov.venue ?? game.venue,
-    weekLabel: ov.weekLabel ?? game.weekLabel,
-    status: ov.status ?? game.status,
-    notes: ov.notes ?? game.notes,
-  }
-}
-
-/** Kickoff ISO (ET wall time) for a game, or '' when date/time TBD. */
-export function gameKickoffISO(game: NflGame): string {
-  if (!game.date || !game.time) return ''
-  return `${game.date}T${game.time}`
-}
