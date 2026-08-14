@@ -2,7 +2,8 @@ import { motion } from 'framer-motion'
 import { useDashboard } from '../../context/DashboardContext'
 import { formatClock, formatHMS } from '../../lib/time'
 import { getTeam } from '../../product'
-import BillsMark from '../common/BillsMark'
+import { resolveTeam } from '../../brand'
+import TeamMonogram from '../common/TeamMonogram'
 
 interface HeaderProps {
   nowMs: number
@@ -16,8 +17,10 @@ interface HeaderProps {
 export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderProps) {
   const { state } = useDashboard()
   const { game, settings } = state
-  const team = getTeam(game.teamId)
-  const opponentName = game.opponentId ? getTeam(game.opponentId).name : game.opponent
+  const team = resolveTeam(getTeam(game.teamId), state.teamBranding?.[game.teamId])
+  const opponentName = game.opponentId
+    ? resolveTeam(getTeam(game.opponentId), state.teamBranding?.[game.opponentId]).name
+    : game.opponent
   const logo = state.teamLogos[game.teamId]
   // On-brand text color is opt-in: only when an admin sets it does it override
   // the default white→secondary gradient (keeps shipped team looks unchanged).
@@ -56,7 +59,7 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
             className="h-[92px] w-[92px] shrink-0 object-contain drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]"
           />
         ) : (
-          <BillsMark className="h-[92px] w-[92px] shrink-0 drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]" />
+          <TeamMonogram abbr={team.abbr} className="h-[92px] w-[92px] shrink-0 drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]" />
         )}
         <div className="leading-none">
           <div

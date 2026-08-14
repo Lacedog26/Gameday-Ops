@@ -285,6 +285,10 @@ export interface AppState {
  * framing) lives in `teamLogos`; the remaining assets are stored here.
  */
 export interface TeamBranding {
+  /** Editable identity overrides (shipped team name is the default). */
+  name?: string
+  shortName?: string
+  abbr?: string
   colors?: {
     primary?: string
     secondary?: string

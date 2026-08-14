@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
 import { useDashboard } from '../../context/DashboardContext'
 import { getTeam } from '../../product'
-import { resolveColors } from '../../brand'
-import { Section, Field, Button } from './ui'
+import { resolveColors, resolveTeam } from '../../brand'
+import { Section, Field, Button, TextInput } from './ui'
 
 /**
  * Team Branding — the white-label control center. An org admin edits the
@@ -16,13 +16,32 @@ export default function TeamBrandingSection() {
   const team = getTeam(teamId)
   const branding = state.teamBranding?.[teamId]
   const colors = resolveColors(team, branding)
+  const identity = resolveTeam(team, branding)
 
   const setColor = (key: 'primary' | 'secondary' | 'accent' | 'background' | 'text', value: string) =>
     actions.patchTeamBranding(teamId, { colors: { [key]: value } })
+  const setId = (key: 'name' | 'shortName' | 'abbr', value: string) =>
+    actions.patchTeamBranding(teamId, { [key]: value })
 
   return (
-    <Section title="Team Branding" subtitle={`Colors & assets for ${team.name} — the board themes to these live`}>
+    <Section title="Team Branding" subtitle={`Identity, colors & assets for ${identity.name} — the board themes to these live`}>
       <div className="flex flex-col gap-6">
+        {/* Identity */}
+        <div>
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">Identity</h3>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label="Team Name">
+              <TextInput value={identity.name} onChange={(e) => setId('name', e.target.value)} />
+            </Field>
+            <Field label="Short Name">
+              <TextInput value={identity.shortName} onChange={(e) => setId('shortName', e.target.value)} />
+            </Field>
+            <Field label="Abbreviation">
+              <TextInput value={identity.abbr} onChange={(e) => setId('abbr', e.target.value)} maxLength={5} />
+            </Field>
+          </div>
+        </div>
+
         {/* Colors */}
         <div>
           <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">Colors</h3>

@@ -23,3 +23,16 @@ export function resolveColors(team: TeamBrand, b?: TeamBranding): ResolvedColors
     background: c.background || undefined,
   }
 }
+
+/** A team merged with its editable overrides (identity + colors). */
+export function resolveTeam(team: TeamBrand, b?: TeamBranding): TeamBrand {
+  if (!b) return team
+  const rc = resolveColors(team, b)
+  return {
+    ...team,
+    name: b.name?.trim() || team.name,
+    shortName: b.shortName?.trim() || team.shortName,
+    abbr: b.abbr?.trim() || team.abbr,
+    colors: { primary: rc.primary, secondary: rc.secondary, accent: rc.accent, text: rc.text },
+  }
+}

@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import { useDashboard } from '../../context/DashboardContext'
 import { getTeam, productConfig } from '../../product'
-import BillsMark from '../common/BillsMark'
+import { resolveTeam } from '../../brand'
+import TeamMonogram from '../common/TeamMonogram'
 import ScheduleCenterSection from './ScheduleCenterSection'
 import GameSetupSection from './GameSetupSection'
 import TeamBrandingSection from './TeamBrandingSection'
@@ -20,7 +21,7 @@ import DangerSection from './DangerSection'
 export default function AdminPage() {
   const { state } = useDashboard()
   const productName = productConfig().productName
-  const team = getTeam(state.game.teamId)
+  const team = resolveTeam(getTeam(state.game.teamId), state.teamBranding?.[state.game.teamId])
   const logo = state.teamLogos[team.id]?.url || team.assets.primaryLogoUrl
 
   return (
@@ -30,7 +31,7 @@ export default function AdminPage() {
           {logo ? (
             <img src={logo} alt={team.name} className="h-10 w-10 object-contain" />
           ) : (
-            <BillsMark className="h-10 w-10" />
+            <TeamMonogram abbr={team.abbr} className="h-10 w-10" />
           )}
           <div>
             <div className="font-display text-lg font-extrabold uppercase leading-none tracking-wide">
