@@ -5,6 +5,7 @@ import { DashboardProvider } from './context/DashboardContext'
 import { ThemeProvider } from './context/ThemeProvider'
 import AdminPage from './components/admin/AdminPage'
 import Dashboard from './components/dashboard/Dashboard'
+import Landing from './components/landing/Landing'
 import './index.css'
 
 // The shared GameDayOps application shell. HashRouter keeps deep links working
@@ -20,6 +21,10 @@ export function GameDayOpsRoot() {
               <Route path="/" element={<App />}>
                 <Route index element={<Dashboard />} />
                 <Route path="admin" element={<AdminPage />} />
+                {/* Public marketing page (product-branded, no customer data). */}
+                <Route path="welcome" element={<Landing />} />
+                {/* TV kiosk display — no admin, no nav, no chrome. */}
+                <Route path="display/:displayId" element={<Dashboard kiosk />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>

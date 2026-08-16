@@ -20,7 +20,7 @@ import ConnectionStatus from './ConnectionStatus'
  * rail, focus panel, and culture panel, and wires the live clock, alert sounds,
  * wake-lock, fullscreen, keyboard shortcuts, and browser notifications.
  */
-export default function Dashboard() {
+export default function Dashboard({ kiosk = false }: { kiosk?: boolean }) {
   const { state, actions } = useDashboard()
   const { settings } = state
   const nowMs = useNow(1000)
@@ -79,15 +79,18 @@ export default function Dashboard() {
   return (
     <FitScreen>
       <div className="relative flex h-full w-full flex-col text-white">
-        <ControlBar
-          soundEnabled={settings.soundEnabled}
-          colorblind={settings.colorblindMode}
-          isFullscreen={isFullscreen}
-          onToggleSound={() => actions.setSettings({ soundEnabled: !settings.soundEnabled })}
-          onToggleColorblind={() => actions.setSettings({ colorblindMode: !settings.colorblindMode })}
-          onToggleFullscreen={toggleFullscreen}
-          visible={controlsVisible}
-        />
+        {/* Kiosk (TV display) mode shows ZERO admin controls or navigation. */}
+        {!kiosk && (
+          <ControlBar
+            soundEnabled={settings.soundEnabled}
+            colorblind={settings.colorblindMode}
+            isFullscreen={isFullscreen}
+            onToggleSound={() => actions.setSettings({ soundEnabled: !settings.soundEnabled })}
+            onToggleColorblind={() => actions.setSettings({ colorblindMode: !settings.colorblindMode })}
+            onToggleFullscreen={toggleFullscreen}
+            visible={controlsVisible}
+          />
+        )}
 
         <ConnectionStatus />
 
