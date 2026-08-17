@@ -7,6 +7,7 @@ import { useWakeLock } from '../../hooks/useWakeLock'
 import { useFullscreen } from '../../hooks/useFullscreen'
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts'
 import FitScreen from '../common/FitScreen'
+import FullscreenButton from './FullscreenButton'
 import Header from './Header'
 import ScheduleTable from './ScheduleTable'
 import ProgressRail from './ProgressRail'
@@ -79,8 +80,12 @@ export default function Dashboard({ kiosk = false }: { kiosk?: boolean }) {
   return (
     <FitScreen>
       <div className="relative flex h-full w-full flex-col text-white">
-        {/* Kiosk (TV display) mode shows ZERO admin controls or navigation. */}
-        {!kiosk && (
+        {/* Kiosk (TV display) mode shows ZERO admin controls or navigation —
+            only a discreet "Full Screen" button so an operator can hand the
+            whole TV to the board (browser chrome + taskbar disappear). */}
+        {kiosk ? (
+          <FullscreenButton />
+        ) : (
           <ControlBar
             soundEnabled={settings.soundEnabled}
             colorblind={settings.colorblindMode}

@@ -20,8 +20,17 @@ const DEFAULT_URL = 'https://aefrrchhrwjepaiimwju.supabase.co'
 const DEFAULT_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlZnJyY2hocndqZXBhaWltd2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NDUzMDEsImV4cCI6MjEwMjAyMTMwMX0.RVMr8DzTaOH7QCyQMyLiz4VHRkpFGDNVzuJJqjJE88g'
 
-const url = import.meta.env.VITE_SUPABASE_URL?.trim() || DEFAULT_URL
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || DEFAULT_ANON_KEY
+const envUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
+const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
+
+// The baked Bills defaults are a MATCHED pair (same project). Use them only when
+// a deployment sets neither var (the legacy single-tenant NFL/Bills build). If a
+// deployment sets one, it must set both: never pair a custom URL with the default
+// key (or vice-versa) — that mismatch is a guaranteed 401 "Invalid API key". A
+// deployment that supplies only one falls back to local mode instead of talking
+// to the wrong project. (This keeps the NFL build identical — it sets neither.)
+const url = envUrl || (envKey ? undefined : DEFAULT_URL)
+const anonKey = envKey || (envUrl ? undefined : DEFAULT_ANON_KEY)
 
 export const BOARD_ID = import.meta.env.VITE_BOARD_ID?.trim() || 'default'
 
