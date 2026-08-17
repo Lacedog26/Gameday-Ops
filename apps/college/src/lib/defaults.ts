@@ -94,24 +94,14 @@ export function defaultTemplates(): ScheduleTemplate[] {
 }
 
 export function defaultGraphics(): CultureGraphic[] {
-  return [
-    {
-      id: uid('gfx'),
-      name: "Hook 'Em Horns",
-      // Placeholder culture graphic — an authorized customer uploads its own
-      // artwork via Admin → Team Culture. Not official trademarked artwork.
-      src: '/culture/hook-em-placeholder.svg',
-      enabled: true,
-      order: 0,
-    },
-  ]
+  // No global culture graphic ships by default — each team's culture panel is
+  // driven by its own per-team default saying (data-driven, follows the selected
+  // team), and an org uploads its own graphics via Admin → Team Culture.
+  return []
 }
 
 export function defaultQuotes(): Quote[] {
-  return [
-    { id: uid('qt'), text: 'PROTECT THE ROCK.', enabled: true, order: 0, accent: 'white' },
-    { id: uid('qt'), text: 'EARN IT TODAY.', enabled: true, order: 1, accent: 'white' },
-  ]
+  return []
 }
 
 export function defaultSettings(): Settings {

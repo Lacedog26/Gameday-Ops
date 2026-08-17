@@ -301,6 +301,11 @@ export interface TeamBranding {
   secondaryLogoUrl?: string
   wordmarkUrl?: string
   backgroundImageUrl?: string
+  /**
+   * Per-team default culture saying. Undefined = use the product's shipped
+   * default for this team; a value overrides it; an empty string hides it.
+   */
+  culture?: string
 }
 
 /** An uploaded team logo and how to frame it (uniform crop — never distorts). */

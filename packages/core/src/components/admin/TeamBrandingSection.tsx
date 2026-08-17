@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useDashboard } from '../../context/DashboardContext'
-import { getTeam } from '../../product'
+import { getTeam, teamDefaultCulture } from '../../product'
 import { resolveColors, resolveTeam } from '../../brand'
 import { Section, Field, Button, TextInput } from './ui'
 
@@ -56,6 +56,29 @@ export default function TeamBrandingSection() {
             />
             <ColorField label="Text" value={colors.text} onChange={(v) => setColor('text', v)} />
           </div>
+        </div>
+
+        {/* Team culture saying (follows the team; editable / clearable) */}
+        <div>
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">Team Culture Saying</h3>
+          <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+            <Field label="Default shown on the board (clear to hide, or add graphics below)">
+              <TextInput
+                value={branding?.culture ?? teamDefaultCulture(teamId)}
+                placeholder="e.g. HOOK 'EM"
+                onChange={(e) => actions.patchTeamBranding(teamId, { culture: e.target.value })}
+              />
+            </Field>
+            <Button
+              variant="ghost"
+              onClick={() => actions.patchTeamBranding(teamId, { culture: undefined })}
+            >
+              Reset saying
+            </Button>
+          </div>
+          <p className="mt-1 text-[11px] text-slate-500">
+            Follows the selected team automatically. Upload full culture graphics in the Team Culture section below.
+          </p>
         </div>
 
         {/* Primary logo (with crop framing, stored in teamLogos) */}

@@ -3,6 +3,7 @@ import { applyGameOverride, computeKickoffISO } from '@gamedayops/core'
 import { COLLEGE_TEAMS, DEFAULT_TEAM_ID } from './data/collegeTeams'
 import { AVAILABLE_SEASONS, masterGames } from './data/collegeSchedule'
 import { makeDefaultState } from './lib/defaults'
+import { TEAM_CULTURE } from './data/collegeCulture'
 
 // GameDayOps College — the college data universe injected into the
 // shared core engine (same UI/engine as NFL; different team + schedule world).
@@ -17,4 +18,5 @@ export const collegeProduct: ProductConfig = {
   applyOverride: applyGameOverride,
   gameKickoffISO: computeKickoffISO,
   makeDefaultState,
+  teamCulture: TEAM_CULTURE,
 }

@@ -11,6 +11,7 @@ import ScheduleEditorSection from './ScheduleEditorSection'
 import GraphicsSection from './GraphicsSection'
 import QuotesSection from './QuotesSection'
 import SettingsSection from './SettingsSection'
+import BillingSection from './BillingSection'
 import DangerSection from './DangerSection'
 
 /**
@@ -57,6 +58,7 @@ export default function AdminPage() {
         <GraphicsSection />
         <QuotesSection />
         <SettingsSection />
+        <BillingSection />
         <DangerSection />
         <footer className="py-6 text-center text-xs text-slate-500">
           {productName} · changes save automatically

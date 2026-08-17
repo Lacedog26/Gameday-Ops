@@ -42,6 +42,8 @@ export interface ProductConfig {
   gameKickoffISO: (game: NflGame) => string
   /** Build a fresh first-run AppState (default team, template, culture). */
   makeDefaultState: (now?: number) => AppState
+  /** Per-team default culture saying (short cheer), keyed by team id. */
+  teamCulture?: Record<string, string>
 }
 
 let _cfg: ProductConfig | null = null
@@ -92,3 +94,7 @@ export const applyOverride = (game: NflGame, ov?: GameOverride): NflGame =>
   productConfig().applyOverride(game, ov)
 export const gameKickoffISO = (game: NflGame): string => productConfig().gameKickoffISO(game)
 export const makeDefaultState = (now?: number): AppState => productConfig().makeDefaultState(now)
+
+/** The shipped default culture saying for a team (empty string if none). */
+export const teamDefaultCulture = (teamId: string): string =>
+  productConfig().teamCulture?.[teamId] ?? ''

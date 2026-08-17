@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useDashboard } from '../../context/DashboardContext'
-import { getTeam } from '../../product'
+import { getTeam, teamDefaultCulture } from '../../product'
 import type { CultureGraphic, Quote, TransitionStyle } from '../../types'
 
 interface Props {
@@ -23,10 +23,21 @@ type Slide =
 export default function CulturePanel({ suppressed }: Props) {
   const { state } = useDashboard()
   const { graphics, quotes, settings } = state
-  const team = getTeam(state.game.teamId)
+  const teamId = state.game.teamId
+  const team = getTeam(teamId)
 
-  // Combined rotation: enabled graphics first, then enabled text quotes.
+  // The team's default culture saying follows the selected team automatically:
+  // a per-team override (teamBranding.culture) wins; undefined falls back to the
+  // product's shipped default; an empty string hides it (fully editable).
+  const branding = state.teamBranding?.[teamId]
+  const teamSaying = branding?.culture ?? teamDefaultCulture(teamId)
+
+  // Combined rotation: the team's culture saying first, then enabled graphics,
+  // then enabled text quotes.
   const slides = useMemo<Slide[]>(() => {
+    const s: Slide[] = teamSaying
+      ? [{ kind: 'quote', id: 'team-culture', quote: { id: 'team-culture', text: teamSaying, enabled: true, order: -1, accent: 'white' } }]
+      : []
     const g: Slide[] = graphics
       .filter((x) => x.enabled)
       .sort((a, b) => a.order - b.order)
@@ -35,8 +46,8 @@ export default function CulturePanel({ suppressed }: Props) {
       .filter((x) => x.enabled)
       .sort((a, b) => a.order - b.order)
       .map((quote) => ({ kind: 'quote', id: quote.id, quote }))
-    return [...g, ...q]
-  }, [graphics, quotes])
+    return [...s, ...g, ...q]
+  }, [teamSaying, graphics, quotes])
 
   const [index, setIndex] = useState(0)
 
