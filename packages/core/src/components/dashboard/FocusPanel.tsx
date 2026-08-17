@@ -46,9 +46,9 @@ export default function FocusPanel({ now, next, onAcknowledge }: Props) {
         }`}
       >
         <div className="flex items-center justify-between">
-          <span className="font-display text-[26px] font-extrabold tracking-[0.4em] opacity-90">NOW</span>
+          <span className="font-display text-[1.625rem] font-extrabold tracking-[0.4em] opacity-90">NOW</span>
           {(level === 'imminent' || level === 'critical') && (
-            <span className={`rounded-full px-4 py-1 text-[20px] font-black tracking-widest ${skin.badge}`}>
+            <span className={`rounded-full px-4 py-1 text-[1.25rem] font-black tracking-widest ${skin.badge}`}>
               ON DECK
             </span>
           )}
@@ -62,30 +62,30 @@ export default function FocusPanel({ now, next, onAcknowledge }: Props) {
             exit={{ opacity: 0, y: -12 }}
             className="my-2"
           >
-            <div className="font-display text-[58px] font-black uppercase leading-[0.95] tracking-tight">
+            <div className="font-display text-[3.625rem] font-black uppercase leading-[0.95] tracking-tight">
               {now ? now.event.label : 'ALL CLEAR'}
             </div>
-            {now?.event.note && <div className="mt-1 text-[20px] font-semibold opacity-80">{now.event.note}</div>}
+            {now?.event.note && <div className="mt-1 text-[1.25rem] font-semibold opacity-80">{now.event.note}</div>}
           </motion.div>
         </AnimatePresence>
 
         <div>
-          <div className="font-display text-[22px] font-bold tracking-[0.3em] opacity-80">
+          <div className="font-display text-[1.375rem] font-bold tracking-[0.3em] opacity-80">
             {now ? (isGo ? 'SEND THEM' : 'GOES OUT IN') : ''}
           </div>
           <div className={`tnum font-mono font-black leading-none ${skin.timer}`}>
             {now ? (
               isGo ? (
-                <span className="text-[92px] tracking-tight">GO&nbsp;NOW</span>
+                <span className="text-[5.75rem] tracking-tight">GO&nbsp;NOW</span>
               ) : (
-                <span className="text-[104px]">{formatCountdown(now.secondsUntil)}</span>
+                <span className="text-[6.5rem]">{formatCountdown(now.secondsUntil)}</span>
               )
             ) : (
-              <span className="text-[70px] text-alert-go">READY</span>
+              <span className="text-[4.375rem] text-alert-go">READY</span>
             )}
           </div>
           {isGo && (
-            <div className="mt-1 text-[16px] font-bold uppercase tracking-widest opacity-80">
+            <div className="mt-1 text-[1rem] font-bold uppercase tracking-widest opacity-80">
               Tap / press Space to acknowledge
             </div>
           )}
@@ -95,12 +95,12 @@ export default function FocusPanel({ now, next, onAcknowledge }: Props) {
       {/* NEXT */}
       <div className="glass flex items-center justify-between rounded-2xl px-6 py-4">
         <div className="min-w-0">
-          <div className="font-display text-[20px] font-extrabold tracking-[0.4em] text-bills-red">NEXT</div>
-          <div className="truncate font-display text-[36px] font-black uppercase leading-none text-white">
+          <div className="font-display text-[1.25rem] font-extrabold tracking-[0.4em] text-bills-red">NEXT</div>
+          <div className="truncate font-display text-[2.25rem] font-black uppercase leading-none text-white">
             {next ? next.event.label : '—'}
           </div>
         </div>
-        <div className="tnum shrink-0 pl-4 font-mono text-[44px] font-bold text-sky-300">
+        <div className="tnum shrink-0 pl-4 font-mono text-[2.75rem] font-bold text-sky-300">
           {next ? formatCountdown(next.secondsUntil) : '--:--'}
         </div>
       </div>

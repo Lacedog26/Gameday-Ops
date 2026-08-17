@@ -32,7 +32,7 @@ export default function ConnectionStatus() {
           online ? 'bg-alert-go shadow-[0_0_10px_rgba(34,197,94,0.9)]' : 'bg-amber-400 animate-pulse'
         }`}
       />
-      <span className="font-display text-[13px] font-bold tracking-[0.25em] text-white/70">
+      <span className="font-display text-[0.8125rem] font-bold tracking-[0.25em] text-white/70">
         {online ? (isCloudMode ? 'LIVE SYNC' : 'CONNECTED') : 'OFFLINE'}
       </span>
     </div>

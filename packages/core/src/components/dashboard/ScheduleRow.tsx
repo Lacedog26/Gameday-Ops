@@ -25,42 +25,42 @@ export default function ScheduleRow({ item, colorblind, onAcknowledge }: Props) 
       exit={{ opacity: 0 }}
       transition={{ layout: { duration: 0.4, ease: 'easeInOut' } }}
       onClick={() => isNow && onAcknowledge(event.id)}
-      className={`grid min-h-0 flex-1 grid-cols-[130px_92px_1fr_150px_210px] items-center gap-3 overflow-hidden rounded-xl border px-5 py-1 ${style.row} ${
+      className={`grid min-h-0 flex-1 grid-cols-[8.125rem_5.75rem_1fr_9.375rem_13.125rem] items-center gap-3 overflow-hidden rounded-xl border px-5 py-1 ${style.row} ${
         isNow ? 'cursor-pointer' : ''
       } ${isKick && !done ? 'ring-1 ring-alert-go/40' : ''}`}
     >
       {/* Scheduled clock time */}
-      <div className="tnum whitespace-nowrap font-mono text-[27px] font-bold leading-none">
+      <div className="tnum whitespace-nowrap font-mono text-[1.6875rem] font-bold leading-none">
         {formatCardClock(scheduledAt, event.tMinusSeconds)}
       </div>
 
       {/* T-minus */}
-      <div className="whitespace-nowrap font-display text-[22px] font-bold tracking-wide opacity-90">
+      <div className="whitespace-nowrap font-display text-[1.375rem] font-bold tracking-wide opacity-90">
         {formatTMinus(event.tMinusSeconds)}
       </div>
 
       {/* Event name */}
       <div className="min-w-0">
         <div
-          className={`truncate font-display text-[34px] font-extrabold uppercase leading-none tracking-tight ${
+          className={`truncate font-display text-[2.125rem] font-extrabold uppercase leading-none tracking-tight ${
             done ? 'line-through decoration-slate-600/50' : ''
           }`}
         >
           {event.label}
         </div>
         {event.note && (
-          <div className="truncate text-[15px] font-medium opacity-70">{event.note}</div>
+          <div className="truncate text-[0.9375rem] font-medium opacity-70">{event.note}</div>
         )}
       </div>
 
       {/* Status pill */}
       <div className="flex justify-center">
         {done ? (
-          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[16px] font-bold tracking-wider ${style.statusPill}`}>
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[1rem] font-bold tracking-wider ${style.statusPill}`}>
             <CheckIcon /> COMPLETE
           </span>
         ) : (
-          <span className={`rounded-full px-4 py-1 text-[17px] font-extrabold tracking-widest ${style.statusPill}`}>
+          <span className={`rounded-full px-4 py-1 text-[1.0625rem] font-extrabold tracking-widest ${style.statusPill}`}>
             {style.statusLabel}
           </span>
         )}
@@ -69,13 +69,13 @@ export default function ScheduleRow({ item, colorblind, onAcknowledge }: Props) 
       {/* Countdown */}
       <div className={`text-right tnum font-mono font-bold leading-none ${style.timer}`}>
         {isKick && !done ? (
-          <span className="text-[34px]">{formatCountdown(Math.max(0, secondsUntil))}</span>
+          <span className="text-[2.125rem]">{formatCountdown(Math.max(0, secondsUntil))}</span>
         ) : done ? (
-          <span className="text-[26px]">—</span>
+          <span className="text-[1.625rem]">—</span>
         ) : isNow ? (
-          <span className="text-[38px] font-black tracking-tight">GO&nbsp;NOW</span>
+          <span className="text-[2.375rem] font-black tracking-tight">GO&nbsp;NOW</span>
         ) : (
-          <span className={level === 'critical' ? 'text-[46px]' : level === 'imminent' ? 'text-[42px]' : 'text-[34px]'}>
+          <span className={level === 'critical' ? 'text-[2.875rem]' : level === 'imminent' ? 'text-[2.625rem]' : 'text-[2.125rem]'}>
             {formatCountdown(secondsUntil)}
           </span>
         )}

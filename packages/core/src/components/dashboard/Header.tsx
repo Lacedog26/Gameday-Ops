@@ -44,7 +44,7 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
       {/* Left: identity */}
       <div className="flex items-center gap-5">
         {logo?.url ? (
-          <div className="h-[92px] w-[92px] shrink-0 overflow-hidden drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]">
+          <div className="h-[5.75rem] w-[5.75rem] shrink-0 overflow-hidden drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]">
             <img
               src={logo.url}
               alt={team.name}
@@ -56,23 +56,23 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
           <img
             src={team.assets.primaryLogoUrl}
             alt={team.name}
-            className="h-[92px] w-[92px] shrink-0 object-contain drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]"
+            className="h-[5.75rem] w-[5.75rem] shrink-0 object-contain drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]"
           />
         ) : (
-          <TeamMonogram abbr={team.abbr} className="h-[92px] w-[92px] shrink-0 drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]" />
+          <TeamMonogram abbr={team.abbr} className="h-[5.75rem] w-[5.75rem] shrink-0 drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]" />
         )}
         <div className="leading-none">
           <div
             className={
               textOverride
-                ? 'font-display text-[26px] font-bold uppercase tracking-[0.28em]'
-                : 'bg-gradient-to-r from-white to-team-secondary bg-clip-text font-display text-[26px] font-bold uppercase tracking-[0.28em] text-transparent'
+                ? 'font-display text-[1.625rem] font-bold uppercase tracking-[0.28em]'
+                : 'bg-gradient-to-r from-white to-team-secondary bg-clip-text font-display text-[1.625rem] font-bold uppercase tracking-[0.28em] text-transparent'
             }
             style={textOverride ? { color: textOverride } : undefined}
           >
             {team.name}
           </div>
-          <div className="font-display text-[46px] font-extrabold uppercase tracking-[0.06em] text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.35)]">
+          <div className="font-display text-[2.875rem] font-extrabold uppercase tracking-[0.06em] text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.35)]">
             Pre-Game Operations
           </div>
         </div>
@@ -91,7 +91,7 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
       {/* Right: giant kickoff countdown */}
       <div className="relative flex flex-col items-end justify-center rounded-2xl px-6 py-1">
         <div className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(120%_120%_at_80%_20%,rgba(30,92,214,0.22),transparent_70%)]" />
-        <div className="relative flex items-center gap-2 font-display text-[22px] font-bold uppercase tracking-[0.4em] text-bills-red">
+        <div className="relative flex items-center gap-2 font-display text-[1.375rem] font-bold uppercase tracking-[0.4em] text-bills-red">
           <span className="inline-block h-2 w-2 animate-pulse-soft rounded-full bg-bills-red shadow-[0_0_10px_rgba(198,12,48,0.9)]" />
           {preKick ? 'Kickoff In' : 'Kickoff'}
         </div>
@@ -99,20 +99,20 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
           key={preKick ? 'pre' : 'post'}
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`tnum relative font-mono font-bold leading-none text-[92px] ${kickoffColor}`}
+          className={`tnum relative font-mono font-bold leading-none text-[5.75rem] ${kickoffColor}`}
         >
           {preKick ? formatHMS(secondsToKickoff) : 'LIVE'}
         </motion.div>
       </div>
 
       {settings.colorblindMode && (
-        <div className="pointer-events-none absolute right-8 top-2 rounded bg-amber-400/90 px-2 py-0.5 text-[11px] font-bold tracking-widest text-navy-950">
+        <div className="pointer-events-none absolute right-8 top-2 rounded bg-amber-400/90 px-2 py-0.5 text-[0.6875rem] font-bold tracking-widest text-navy-950">
           CB MODE
         </div>
       )}
 
       {/* Bills red underline accent */}
-      <div className="absolute inset-x-0 bottom-0 h-[3px] bg-gradient-to-r from-bills-royal via-bills-red to-bills-royal" />
+      <div className="absolute inset-x-0 bottom-0 h-[0.1875rem] bg-gradient-to-r from-bills-royal via-bills-red to-bills-royal" />
     </header>
   )
 }
@@ -128,11 +128,11 @@ function InfoCell({
 }) {
   return (
     <div className="flex flex-col items-center px-6">
-      <span className="font-display text-[15px] font-semibold tracking-[0.3em] text-slate-400">
+      <span className="font-display text-[0.9375rem] font-semibold tracking-[0.3em] text-slate-400">
         {label}
       </span>
       <span
-        className={`mt-1 font-display text-[30px] font-bold leading-none ${
+        className={`mt-1 font-display text-[1.875rem] font-bold leading-none ${
           live ? 'tnum text-sky-200' : 'text-white'
         }`}
       >

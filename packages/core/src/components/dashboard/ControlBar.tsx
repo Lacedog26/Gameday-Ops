@@ -42,7 +42,7 @@ export default function ControlBar({
         </Btn>
         <Link
           to="/admin"
-          className="pointer-events-auto rounded-full bg-bills-royal px-4 py-1.5 text-[15px] font-bold tracking-wider text-white hover:bg-bills-royal/80"
+          className="pointer-events-auto rounded-full bg-bills-royal px-4 py-1.5 text-[0.9375rem] font-bold tracking-wider text-white hover:bg-bills-royal/80"
         >
           ADMIN
         </Link>
@@ -66,7 +66,7 @@ function Btn({
     <button
       onClick={onClick}
       title={title}
-      className={`grid h-9 w-9 place-items-center rounded-full text-[18px] transition-colors ${
+      className={`grid h-9 w-9 place-items-center rounded-full text-[1.125rem] transition-colors ${
         active ? 'bg-white/15 text-white' : 'text-slate-400 hover:bg-white/10'
       }`}
     >

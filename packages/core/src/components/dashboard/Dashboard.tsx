@@ -110,7 +110,7 @@ export default function Dashboard({ kiosk = false }: { kiosk?: boolean }) {
             onAcknowledge={actions.ackEvent}
           />
 
-          <aside className="flex w-[600px] shrink-0 flex-col gap-6">
+          <aside className="flex w-[37.5rem] shrink-0 flex-col gap-6">
             <div className="flex min-h-0 flex-[3] flex-col">
               <FocusPanel now={now} next={next} onAcknowledge={actions.ackEvent} />
             </div>

@@ -86,7 +86,7 @@ export default function CulturePanel({ suppressed }: Props) {
       <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-bills-royal/25 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-bills-red/15 blur-3xl" />
       <div className="flex items-center justify-between px-6 pt-4">
-        <span className="font-display text-[18px] font-extrabold tracking-[0.4em] text-white/70">
+        <span className="font-display text-[1.125rem] font-extrabold tracking-[0.4em] text-white/70">
           {team.shortName.toUpperCase()} CULTURE
         </span>
         <div className="flex gap-1.5">
@@ -122,7 +122,7 @@ export default function CulturePanel({ suppressed }: Props) {
               key="empty"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center font-display text-[28px] font-bold text-slate-500"
+              className="text-center font-display text-[1.75rem] font-bold text-slate-500"
             >
               Add graphics or quotes in Admin
             </motion.div>
@@ -206,7 +206,7 @@ function QuoteSlide({ quote, transition }: { quote: Quote; transition: Transitio
 
   // Scale text down as the quote gets longer so it always fills without clipping.
   const len = quote.text.length
-  const sizeClass = len > 48 ? 'text-[40px]' : len > 26 ? 'text-[54px]' : 'text-[72px]'
+  const sizeClass = len > 48 ? 'text-[2.5rem]' : len > 26 ? 'text-[3.375rem]' : 'text-[4.5rem]'
   const accent = QUOTE_ACCENT[quote.accent ?? 'white']
 
   return (
@@ -218,7 +218,7 @@ function QuoteSlide({ quote, transition }: { quote: Quote; transition: Transitio
       transition={{ duration: 0.6, ease: 'easeInOut' }}
       className="flex max-h-full w-full flex-col items-center justify-center px-6 text-center"
     >
-      <span aria-hidden className="mb-2 font-display text-[64px] leading-none text-bills-red/60">
+      <span aria-hidden className="mb-2 font-display text-[4rem] leading-none text-bills-red/60">
         &ldquo;
       </span>
       <span
@@ -227,7 +227,7 @@ function QuoteSlide({ quote, transition }: { quote: Quote; transition: Transitio
         {quote.text}
       </span>
       {quote.author && (
-        <span className="mt-4 font-display text-[22px] font-bold uppercase tracking-[0.2em] text-slate-300">
+        <span className="mt-4 font-display text-[1.375rem] font-bold uppercase tracking-[0.2em] text-slate-300">
           {quote.author}
         </span>
       )}
