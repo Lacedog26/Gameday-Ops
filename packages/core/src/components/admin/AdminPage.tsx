@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useDashboard } from '../../context/DashboardContext'
+import { useAuth } from '../../context/AuthProvider'
 import { getTeam, productConfig } from '../../product'
 import { resolveTeam } from '../../brand'
 import TeamMonogram from '../common/TeamMonogram'
@@ -21,6 +22,7 @@ import DangerSection from './DangerSection'
  */
 export default function AdminPage() {
   const { state } = useDashboard()
+  const { user, signOut } = useAuth()
   const productName = productConfig().productName
   const team = resolveTeam(getTeam(state.game.teamId), state.teamBranding?.[state.game.teamId])
   const logo = state.teamLogos[team.id]?.url || team.assets.primaryLogoUrl
@@ -41,12 +43,23 @@ export default function AdminPage() {
             <div className="text-xs font-semibold tracking-widest text-slate-400">ADMIN CONTROL CENTER</div>
           </div>
         </div>
-        <Link
-          to="/"
-          className="rounded-full bg-team-primary px-5 py-2 text-sm font-bold tracking-wider hover:bg-team-primary/85"
-        >
-          ← BACK TO BOARD
-        </Link>
+        <div className="flex items-center gap-2">
+          {user && (
+            <button
+              onClick={() => signOut()}
+              className="rounded-full border border-white/20 px-4 py-2 text-sm font-bold tracking-wider text-slate-200 hover:bg-white/10"
+              title={user.email ?? 'Sign out'}
+            >
+              Sign out
+            </button>
+          )}
+          <Link
+            to="/"
+            className="rounded-full bg-team-primary px-5 py-2 text-sm font-bold tracking-wider hover:bg-team-primary/85"
+          >
+            ← BACK TO BOARD
+          </Link>
+        </div>
       </header>
 
       <main className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6">

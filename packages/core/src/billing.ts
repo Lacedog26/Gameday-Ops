@@ -1,87 +1,68 @@
 // ---------------------------------------------------------------------------
-// Commercial / billing architecture (Stripe-ready, NOT connected).
+// Commercial / billing (Stripe-ready, NOT connected). No money moves here.
 //
-// Data model + plan catalog for selling GameDayOps as SaaS. No payment provider
-// is wired up here and no money moves — this is the shape the backend + a future
-// Stripe integration fill in. Prices are CONFIGURABLE (not hard-coded final
-// numbers): `priceUsdMonthly` is a suggested default an operator overrides, and
-// `null` means "contact us / custom".
+// ONE product, ONE simple plan (per product direction): low price, low friction.
+//   • GameDayOps College — $5.99/month  OR  $59.99/year
+//   • 14-day free trial, no card required to start.
+// Prices are CONFIGURABLE here (and via env at checkout), never hard-coded into
+// UI copy. A future Stripe integration + webhook fills in the subscription.
 // ---------------------------------------------------------------------------
 
-export type PlanId = 'free' | 'pro' | 'team' | 'enterprise'
+export type BillingInterval = 'monthly' | 'annual'
 
-export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired'
+export type SubscriptionStatus =
+  | 'trialing'
+  | 'active'
+  | 'past_due'
+  | 'canceled'
+  | 'expired'
+  | 'suspended'
 
-export interface Plan {
-  id: PlanId
-  name: string
-  /** Suggested monthly price (USD). null = custom / contact sales. Configurable. */
-  priceUsdMonthly: number | null
-  /** Included display (TV) seats. null = unlimited. */
-  maxDisplays: number | null
-  /** Included admin/operator users. null = unlimited. */
-  maxUsers: number | null
-  features: string[]
-  /** Marketing blurb. */
-  tagline: string
-}
+/** The single product plan. Prices are defaults; override via env at checkout. */
+export const PLAN = {
+  id: 'college',
+  name: 'GameDayOps College',
+  monthlyUsd: 5.99,
+  annualUsd: 59.99,
+  trialDays: 14,
+  features: [
+    'All FBS + FCS teams & schedules',
+    'Live game-day countdown & alerts',
+    'Position / group timing',
+    'Team branding, logos & culture',
+    'Editable pre-game templates',
+    'Unlimited TV displays',
+    'Schedule importer & overrides',
+  ],
+} as const
 
-/** The plan catalog. Operators tune prices/limits; UI reads from here. */
-export const PLANS: Plan[] = [
-  {
-    id: 'free',
-    name: 'Free / Demo',
-    priceUsdMonthly: 0,
-    maxDisplays: 1,
-    maxUsers: 2,
-    tagline: 'Try GameDayOps College with a single display.',
-    features: ['1 TV display', 'Full pre-game engine', 'Team branding', 'Community support'],
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    priceUsdMonthly: 99,
-    maxDisplays: 5,
-    maxUsers: 10,
-    tagline: 'For a single program running game day.',
-    features: ['Up to 5 displays', 'Editable schedules & templates', 'Culture graphics', 'Email support'],
-  },
-  {
-    id: 'team',
-    name: 'Team',
-    priceUsdMonthly: 249,
-    maxDisplays: 20,
-    maxUsers: 40,
-    tagline: 'Full operations across the building.',
-    features: ['Up to 20 displays', 'Roles & permissions', 'Priority support', 'Audit history'],
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    priceUsdMonthly: null,
-    maxDisplays: null,
-    maxUsers: null,
-    tagline: 'Athletic-department wide, custom terms.',
-    features: ['Unlimited displays', 'SSO / SAML (roadmap)', 'Dedicated support', 'Custom onboarding'],
-  },
-]
-
-/** An organization's subscription record (populated by the backend + Stripe). */
+/** An organization's subscription (populated by the backend + a Stripe webhook). */
 export interface Subscription {
-  plan: PlanId
   status: SubscriptionStatus
+  interval?: BillingInterval
   /** Trial end (ISO) when status === 'trialing'. */
   trialEndsAt?: string
   /** Current paid period end (ISO). */
   currentPeriodEnd?: string
-  /** Stripe identifiers — set once billing is connected. */
   stripeCustomerId?: string
   stripeSubscriptionId?: string
-  /** Provisioned limits (may override the plan defaults per contract). */
-  maxDisplays?: number | null
-  maxUsers?: number | null
 }
 
-export function getPlan(id: PlanId): Plan {
-  return PLANS.find((p) => p.id === id) ?? PLANS[0]
+/** Whole days left in a trial (0 if none / ended). Pass an ISO trial end. */
+export function trialDaysRemaining(trialEndsAt?: string, now = Date.now()): number {
+  if (!trialEndsAt) return 0
+  const ms = new Date(trialEndsAt).getTime() - now
+  return ms <= 0 ? 0 : Math.ceil(ms / 86_400_000)
+}
+
+/** Is the org entitled to use the product right now? */
+export function isEntitled(sub?: Subscription, now = Date.now()): boolean {
+  if (!sub) return false
+  if (sub.status === 'active') return true
+  if (sub.status === 'trialing') return trialDaysRemaining(sub.trialEndsAt, now) > 0
+  return false
+}
+
+export function priceLabel(interval: BillingInterval): string {
+  return interval === 'annual' ? `$${PLAN.annualUsd}/year` : `$${PLAN.monthlyUsd}/month`
 }

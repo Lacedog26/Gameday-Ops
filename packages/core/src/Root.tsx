@@ -3,9 +3,12 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import App from './App'
 import { DashboardProvider } from './context/DashboardContext'
 import { ThemeProvider } from './context/ThemeProvider'
+import { AuthProvider } from './context/AuthProvider'
 import AdminPage from './components/admin/AdminPage'
 import Dashboard from './components/dashboard/Dashboard'
 import Landing from './components/landing/Landing'
+import LoginPage from './components/auth/LoginPage'
+import RequireAuth from './components/auth/RequireAuth'
 import './index.css'
 
 // The shared GameDayOps application shell. HashRouter keeps deep links working
@@ -14,23 +17,27 @@ import './index.css'
 export function GameDayOpsRoot() {
   return (
     <React.StrictMode>
-      <DashboardProvider>
-        <ThemeProvider>
-          <HashRouter>
-            <Routes>
-              <Route path="/" element={<App />}>
-                <Route index element={<Dashboard />} />
-                <Route path="admin" element={<AdminPage />} />
-                {/* Public marketing page (product-branded, no customer data). */}
-                <Route path="welcome" element={<Landing />} />
-                {/* TV kiosk display — no admin, no nav, no chrome. */}
-                <Route path="display/:displayId" element={<Dashboard kiosk />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Route>
-            </Routes>
-          </HashRouter>
-        </ThemeProvider>
-      </DashboardProvider>
+      <AuthProvider>
+        <DashboardProvider>
+          <ThemeProvider>
+            <HashRouter>
+              <Routes>
+                <Route path="/" element={<App />}>
+                  <Route index element={<Dashboard />} />
+                  {/* Admin is gated by RequireAuth (opt-in via VITE_REQUIRE_AUTH). */}
+                  <Route path="admin" element={<RequireAuth><AdminPage /></RequireAuth>} />
+                  <Route path="login" element={<LoginPage />} />
+                  {/* Public marketing page (product-branded, no customer data). */}
+                  <Route path="welcome" element={<Landing />} />
+                  {/* TV kiosk display — no admin, no nav, no chrome. */}
+                  <Route path="display/:displayId" element={<Dashboard kiosk />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Route>
+              </Routes>
+            </HashRouter>
+          </ThemeProvider>
+        </DashboardProvider>
+      </AuthProvider>
     </React.StrictMode>
   )
 }
