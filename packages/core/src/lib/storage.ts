@@ -1,6 +1,7 @@
 import type { AppState } from '../types'
-import { supabase, isCloudMode, BOARD_ID } from './supabaseConfig'
+import { supabase, isCloudMode } from './supabaseConfig'
 import { productConfig } from '../product'
+import { getScope } from './session'
 
 // ---------------------------------------------------------------------------
 // Persistence layer.
@@ -28,10 +29,6 @@ function productNamespace(): string | null {
 function scopedStorageKey(): string {
   const ns = productNamespace()
   return ns ? `gamedayops:${ns}:v1` : STORAGE_KEY
-}
-function scopedBoardId(): string {
-  const ns = productNamespace()
-  return ns ? `board-${ns}` : BOARD_ID
 }
 
 export interface StorageAdapter {
@@ -96,7 +93,6 @@ export class LocalStorageAdapter implements StorageAdapter {
  */
 export class SupabaseAdapter implements StorageAdapter {
   private boardIdOverride?: string
-  private cache = new LocalStorageAdapter()
   // Random per-session id so we can ignore the realtime echo of our own writes.
   private clientId = Math.random().toString(36).slice(2) + Date.now().toString(36)
   private saveTimer: ReturnType<typeof setTimeout> | undefined
@@ -106,13 +102,34 @@ export class SupabaseAdapter implements StorageAdapter {
     this.boardIdOverride = boardId
   }
 
-  /** Resolved lazily so it reflects the configured product namespace. */
+  /**
+   * The active board row id. When overridden (tests) that wins; otherwise it
+   * tracks the live board scope: the public/demo board for anonymous visitors,
+   * or `org-<uuid>` once a user signs in (RLS isolates it to that org).
+   */
   private boardName(): string {
-    return this.boardIdOverride ?? scopedBoardId()
+    return this.boardIdOverride ?? getScope().boardId
+  }
+
+  /** The org id for the active board (null for the public/demo board). */
+  private orgId(): string | null {
+    return this.boardIdOverride ? null : getScope().orgId
+  }
+
+  /**
+   * Offline cache, scoped so tenants never bleed into one another. The public
+   * board keeps the legacy key (unchanged for NFL + the current demo); each org
+   * board gets its own suffix.
+   */
+  private cache(): LocalStorageAdapter {
+    const orgId = this.orgId()
+    const base = scopedStorageKey()
+    return new LocalStorageAdapter(orgId ? `${base}:org-${orgId}` : base)
   }
 
   async load(): Promise<AppState | null> {
-    if (!supabase) return this.cache.load()
+    const cache = this.cache()
+    if (!supabase) return cache.load()
     try {
       const { data, error } = await supabase
         .from('boards')
@@ -122,23 +139,26 @@ export class SupabaseAdapter implements StorageAdapter {
       if (error) throw error
       const state = (data?.state as AppState | undefined) ?? null
       if (state) {
-        this.cache.save(state) // refresh offline cache
+        cache.save(state) // refresh offline cache
         return state
       }
-      // No cloud board yet: seed it from this device's local state so every TV
-      // converges on the same board (open admin here first after activation).
-      const cached = await this.cache.load()
+      // Empty cloud board. For a fresh org, return null so the provider seeds a
+      // clean default (never bleed the public demo into a new customer's board).
+      if (this.orgId()) return null
+      // Public/demo board: seed it from this device's local state so every TV
+      // converges on the same board.
+      const cached = await cache.load()
       if (cached) this.save(cached)
       return cached
     } catch (err) {
       console.warn('[storage] cloud load failed, using cache', err)
-      return this.cache.load()
+      return cache.load()
     }
   }
 
   async save(state: AppState): Promise<void> {
     // Always mirror locally immediately (offline cache + instant same-device).
-    this.cache.save(state)
+    this.cache().save(state)
     if (!supabase) return
     // Debounce network writes so rapid admin edits don't spam the database.
     this.pending = state
@@ -154,6 +174,7 @@ export class SupabaseAdapter implements StorageAdapter {
       const { error } = await supabase.from('boards').upsert(
         {
           id: this.boardName(),
+          org_id: this.orgId(),
           state,
           updated_by: this.clientId,
           updated_at: new Date().toISOString(),
@@ -168,20 +189,21 @@ export class SupabaseAdapter implements StorageAdapter {
 
   subscribe(handler: (state: AppState) => void): () => void {
     // Same-device tabs still sync via localStorage.
-    const unsubCache = this.cache.subscribe(handler)
+    const unsubCache = this.cache().subscribe(handler)
     const client = supabase
     if (!client) return unsubCache
 
+    const boardId = this.boardName()
     const channel = client
-      .channel(`boards:${this.boardName()}`)
+      .channel(`boards:${boardId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'boards', filter: `id=eq.${this.boardName()}` },
+        { event: '*', schema: 'public', table: 'boards', filter: `id=eq.${boardId}` },
         (payload) => {
           const row = payload.new as { state?: AppState; updated_by?: string } | undefined
           // Ignore the echo of our own write.
           if (!row?.state || row.updated_by === this.clientId) return
-          this.cache.save(row.state)
+          this.cache().save(row.state)
           handler(row.state)
         },
       )

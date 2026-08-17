@@ -10,10 +10,16 @@ None of it is done automatically, and nothing charges you without your clicks.
 - **Do not upgrade until you decide.** I have not enabled anything paid.
 
 ## 2. Run the migrations (free)
-Supabase Dashboard → **SQL Editor** → run these in order (paste each file):
-1. `apps/nfl/supabase/migrations/0001_init.sql` (the shared multi-tenant schema)
+Supabase Dashboard → **SQL Editor** → run each file in its OWN query, in order.
+Skip 0002 and 0003 — those seed NFL data and aren't used by College.
+1. `supabase/migrations/0001_init.sql` (the shared multi-tenant schema)
 2. `supabase/migrations/0004_billing_multitenant.sql`
 3. `supabase/migrations/0005_college_production.sql`  (creates the `team-assets` Storage bucket too)
+4. `supabase/migrations/0006_org_boards.sql`  (per-org board isolation + the `bootstrap_org` login function)
+
+After 0006, real accounts work: signing in creates your org + a 14-day trial and
+your edits save to your own RLS-isolated board. Anonymous visitors and TVs still
+see the public demo board.
 
 ## 3. Enable Auth (free)
 Dashboard → **Authentication → Providers → Email**: ensure it's **on**.

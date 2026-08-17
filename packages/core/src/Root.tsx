@@ -4,6 +4,7 @@ import App from './App'
 import { DashboardProvider } from './context/DashboardContext'
 import { ThemeProvider } from './context/ThemeProvider'
 import { AuthProvider } from './context/AuthProvider'
+import { OrgProvider } from './context/OrgProvider'
 import AdminPage from './components/admin/AdminPage'
 import Dashboard from './components/dashboard/Dashboard'
 import Landing from './components/landing/Landing'
@@ -18,25 +19,27 @@ export function GameDayOpsRoot() {
   return (
     <React.StrictMode>
       <AuthProvider>
-        <DashboardProvider>
-          <ThemeProvider>
-            <HashRouter>
-              <Routes>
-                <Route path="/" element={<App />}>
-                  <Route index element={<Dashboard />} />
-                  {/* Admin is gated by RequireAuth (opt-in via VITE_REQUIRE_AUTH). */}
-                  <Route path="admin" element={<RequireAuth><AdminPage /></RequireAuth>} />
-                  <Route path="login" element={<LoginPage />} />
-                  {/* Public marketing page (product-branded, no customer data). */}
-                  <Route path="welcome" element={<Landing />} />
-                  {/* TV kiosk display — no admin, no nav, no chrome. */}
-                  <Route path="display/:displayId" element={<Dashboard kiosk />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Route>
-              </Routes>
-            </HashRouter>
-          </ThemeProvider>
-        </DashboardProvider>
+        <OrgProvider>
+          <DashboardProvider>
+            <ThemeProvider>
+              <HashRouter>
+                <Routes>
+                  <Route path="/" element={<App />}>
+                    <Route index element={<Dashboard />} />
+                    {/* Admin is gated by RequireAuth (opt-in via VITE_REQUIRE_AUTH). */}
+                    <Route path="admin" element={<RequireAuth><AdminPage /></RequireAuth>} />
+                    <Route path="login" element={<LoginPage />} />
+                    {/* Public marketing page (product-branded, no customer data). */}
+                    <Route path="welcome" element={<Landing />} />
+                    {/* TV kiosk display — no admin, no nav, no chrome. */}
+                    <Route path="display/:displayId" element={<Dashboard kiosk />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Route>
+                </Routes>
+              </HashRouter>
+            </ThemeProvider>
+          </DashboardProvider>
+        </OrgProvider>
       </AuthProvider>
     </React.StrictMode>
   )

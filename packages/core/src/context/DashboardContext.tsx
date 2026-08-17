@@ -5,6 +5,7 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
   type ReactNode,
 } from 'react'
 import type {
@@ -24,6 +25,7 @@ import type {
 import { makeDefaultState } from '../product'
 import { uid } from '../lib/id'
 import { storage } from '../lib/storage'
+import { getScope, subscribeScope } from '../lib/session'
 
 // ---------------------------------------------------------------------------
 // Central state store: useReducer + Context, persisted through the storage
@@ -320,7 +322,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const skipPersistRef = useRef(true) // don't persist the very first render
   const [, forceHydrated] = useReducer((c) => c + 1, 0)
 
-  // Initial load from storage.
+  // The active board (public/demo, or the signed-in user's org board). When a
+  // user logs in and their org resolves, this changes and we reload from — and
+  // re-subscribe to — the org's own board, so every tenant is isolated.
+  const [boardId, setBoardId] = useState(() => getScope().boardId)
+  useEffect(() => subscribeScope((scope) => setBoardId(scope.boardId)), [])
+
+  // Initial load — and reload whenever the board scope changes.
   useEffect(() => {
     let cancelled = false
     storage.load().then((loaded) => {
@@ -333,11 +341,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         // (e.g. removing the seeded duplicate quotes) stick without an edit.
         if (migrated.version !== loaded.version) storage.save(migrated)
       } else {
-        // First run on this machine: persist the seeded default immediately so
-        // every TV/tab shares one schedule from the very first load. `state`
-        // here is the initial default from makeDefaultState().
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        storage.save(state)
+        // Empty board — first run, or a brand-new org's board. Seed a clean
+        // default (never the previous board's content) and persist it so the
+        // row is created and every TV/tab converges on one schedule.
+        const fresh = makeDefaultState()
+        skipPersistRef.current = true
+        dispatch({ type: 'HYDRATE', state: fresh, external: true })
+        storage.save(fresh)
       }
       hydratedRef.current = true
       forceHydrated()
@@ -345,15 +355,16 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [boardId])
 
   // Cross-tab / cross-TV sync: apply external changes without re-persisting.
+  // Re-subscribes when the board scope changes so we track the right board.
   useEffect(() => {
     return storage.subscribe((incoming) => {
       skipPersistRef.current = true
       dispatch({ type: 'HYDRATE', state: incoming, external: true })
     })
-  }, [])
+  }, [boardId])
 
   // Persist on every local change (skips hydrations to avoid write loops).
   useEffect(() => {

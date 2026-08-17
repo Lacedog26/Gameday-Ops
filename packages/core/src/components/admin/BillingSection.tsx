@@ -1,32 +1,88 @@
-import { PLAN, trialDaysRemaining, type Subscription } from '../../billing'
+import { useState } from 'react'
+import { PLAN, trialDaysRemaining, type BillingInterval, type Subscription } from '../../billing'
+import { useOrg } from '../../context/OrgProvider'
+import { supabase } from '../../lib/supabaseConfig'
 import { Section, Button } from './ui'
 
 /**
- * Billing — one simple plan (Stripe-ready, not yet connected). $5.99/mo or
- * $59.99/yr with a 14-day free trial. Actions activate once Stripe + the backend
- * are wired. Until then this reflects a local trial placeholder.
+ * Billing — one simple plan: $5.99/mo or $59.99/yr, 14-day free trial.
+ *
+ * Reads the org's REAL subscription (seeded as a 14-day trial when the account
+ * is created). "Start Subscription" calls the `create-checkout` edge function
+ * and redirects to Stripe Checkout — it goes live the moment Stripe is wired
+ * (keys in function secrets); until then it surfaces a clear message. No secret
+ * keys ever touch the client.
  */
 export default function BillingSection() {
-  // Placeholder trial until auth + backend provide the real subscription.
-  const sub: Subscription = {
+  const { org, subscription } = useOrg()
+  const [busy, setBusy] = useState<BillingInterval | null>(null)
+  const [msg, setMsg] = useState<string | null>(null)
+
+  // Real subscription when signed in; a local trial placeholder for the demo.
+  const sub: Subscription = subscription ?? {
     status: 'trialing',
     trialEndsAt: new Date(Date.now() + PLAN.trialDays * 86_400_000).toISOString(),
   }
   const daysLeft = trialDaysRemaining(sub.trialEndsAt)
+  const statusLabel =
+    sub.status === 'trialing' ? 'Free trial' : sub.status.charAt(0).toUpperCase() + sub.status.slice(1)
+  const nextBilling = sub.currentPeriodEnd
+    ? new Date(sub.currentPeriodEnd).toLocaleDateString()
+    : sub.status === 'trialing' && sub.trialEndsAt
+      ? `Trial ends ${new Date(sub.trialEndsAt).toLocaleDateString()}`
+      : '—'
+
+  async function startCheckout(interval: BillingInterval) {
+    setMsg(null)
+    if (!supabase || !org) {
+      setMsg('Sign in to start a subscription.')
+      return
+    }
+    setBusy(interval)
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { interval, orgId: org.id, returnUrl: window.location.origin },
+      })
+      if (error) throw error
+      const url = (data as { url?: string } | null)?.url
+      if (url) {
+        window.location.href = url
+        return
+      }
+      setMsg('Checkout is not available yet — Stripe is not connected. (See BACKEND_SETUP.md.)')
+    } catch {
+      setMsg('Checkout is not available yet — Stripe is not connected. (See BACKEND_SETUP.md.)')
+    } finally {
+      setBusy(null)
+    }
+  }
 
   return (
-    <Section title="Billing & Subscription" subtitle="GameDayOps College — simple pricing, 14-day free trial">
+    <Section title="Billing & Subscription" subtitle={`${PLAN.name} — simple pricing, ${PLAN.trialDays}-day free trial`}>
       <div className="flex flex-col gap-5">
         <div className="grid gap-3 rounded-xl border border-white/10 bg-navy-950/50 p-4 sm:grid-cols-4">
-          <Summary label="Plan" value="GameDayOps College" />
-          <Summary label="Status" value={sub.status === 'trialing' ? 'Free trial' : sub.status} />
-          <Summary label="Trial Days Left" value={`${daysLeft}`} />
-          <Summary label="Next Billing" value="—" />
+          <Summary label="Account" value={org?.name ?? 'Demo (not signed in)'} />
+          <Summary label="Status" value={statusLabel} />
+          <Summary label="Trial Days Left" value={sub.status === 'trialing' ? `${daysLeft}` : '—'} />
+          <Summary label="Next Billing" value={nextBilling} />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <PriceCard title="Monthly" price={`$${PLAN.monthlyUsd}`} unit="/month" />
-          <PriceCard title="Annual" price={`$${PLAN.annualUsd}`} unit="/year" best />
+          <PriceCard
+            title="Monthly"
+            price={`$${PLAN.monthlyUsd}`}
+            unit="/month"
+            busy={busy === 'monthly'}
+            onStart={() => startCheckout('monthly')}
+          />
+          <PriceCard
+            title="Annual"
+            price={`$${PLAN.annualUsd}`}
+            unit="/year"
+            best
+            busy={busy === 'annual'}
+            onStart={() => startCheckout('annual')}
+          />
         </div>
 
         <ul className="grid gap-1 text-xs text-slate-300 sm:grid-cols-2">
@@ -35,23 +91,36 @@ export default function BillingSection() {
           ))}
         </ul>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
-          <p className="text-xs text-slate-500">
-            Checkout, Manage &amp; Cancel activate once Stripe is connected (backend phase). Prices are configured
-            in <code>billing.ts</code> and Stripe env vars — never hard-coded in the UI.
+        {msg && (
+          <p className="rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-200">
+            {msg}
           </p>
-          <div className="flex gap-2">
-            <Button disabled>Start Subscription</Button>
-            <Button variant="ghost" disabled>Manage</Button>
-            <Button variant="ghost" disabled>Cancel</Button>
-          </div>
-        </div>
+        )}
+
+        <p className="border-t border-white/10 pt-4 text-xs text-slate-500">
+          Your trial is live. Subscribing redirects to secure Stripe Checkout — no card details touch this app,
+          and no secret keys are ever stored in the client or the repo.
+        </p>
       </div>
     </Section>
   )
 }
 
-function PriceCard({ title, price, unit, best }: { title: string; price: string; unit: string; best?: boolean }) {
+function PriceCard({
+  title,
+  price,
+  unit,
+  best,
+  busy,
+  onStart,
+}: {
+  title: string
+  price: string
+  unit: string
+  best?: boolean
+  busy?: boolean
+  onStart: () => void
+}) {
   return (
     <div className={`rounded-2xl border p-5 ${best ? 'border-team-primary bg-team-primary/10' : 'border-white/10 bg-white/[0.03]'}`}>
       <div className="flex items-center justify-between">
@@ -62,6 +131,9 @@ function PriceCard({ title, price, unit, best }: { title: string; price: string;
         {price}
         <span className="text-sm font-normal text-slate-400">{unit}</span>
       </div>
+      <Button className="mt-4 w-full" onClick={onStart} disabled={busy}>
+        {busy ? 'Starting…' : 'Start Subscription'}
+      </Button>
     </div>
   )
 }
