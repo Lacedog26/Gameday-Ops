@@ -32,21 +32,6 @@ body {
   overflow: hidden; /* TV mode: never scroll */
 }
 
-/*
- * Fluid board scaling. The TV dashboard is authored at a 1920×1080 reference in
- * rem units; this makes the root font-size track the smaller of the viewport's
- * width/height so the ENTIRE board scales to fit any screen at 100% browser
- * zoom — no transform, no letterbox, no manual zoom. Everything sized in rem
- * (typography AND spacing) scales together, and the flex layout fills the space.
- *   • 1920×1080 → ~16px (the reference)      • 1366×768 → ~11.4px
- *   • 2560×1440 → ~21px                       • clamped so it never gets unreadable
- * Scoped to `.board-fit` (added to <html> only while the dashboard/TV route is
- * mounted) so admin, landing, and login keep normal 16px sizing and stay scrollable.
- */
-html.board-fit {
-  font-size: clamp(7px, min(0.8333vw, 1.4815vh), 22px);
-}
-
 /* Tabular figures keep countdown digits from shifting width every tick. */
 .tnum {
   font-variant-numeric: tabular-nums;
