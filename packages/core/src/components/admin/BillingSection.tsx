@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabaseConfig'
 import { Section, Button } from './ui'
 
 /**
- * Billing — one simple plan: $5.99/mo or $59.99/yr, 14-day free trial.
+ * Billing — one simple plan: $5.99/mo or $60/yr, 14-day free trial.
  *
  * Reads the org's REAL subscription (seeded as a 14-day trial when the account
  * is created). "Start Subscription" calls the `create-checkout` edge function
@@ -16,6 +16,7 @@ import { Section, Button } from './ui'
 export default function BillingSection() {
   const { org, subscription } = useOrg()
   const [busy, setBusy] = useState<BillingInterval | null>(null)
+  const [portalBusy, setPortalBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
 
   // Real subscription when signed in; a local trial placeholder for the demo.
@@ -57,6 +58,25 @@ export default function BillingSection() {
     }
   }
 
+  async function openPortal() {
+    setMsg(null)
+    if (!supabase || !org) return
+    setPortalBusy(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal', { body: { orgId: org.id } })
+      if (error) throw error
+      const url = (data as { url?: string; error?: string } | null)?.url
+      if (url) { window.location.href = url; return }
+      setMsg((data as { error?: string } | null)?.error ?? 'Billing portal is not available yet.')
+    } catch {
+      setMsg('Billing portal is not available yet — Stripe is not connected.')
+    } finally {
+      setPortalBusy(false)
+    }
+  }
+
+  const isSubscribed = Boolean(sub.stripeCustomerId) || sub.status === 'active' || sub.status === 'past_due'
+
   return (
     <Section title="Billing & Subscription" subtitle={`${PLAN.name} — simple pricing, ${PLAN.trialDays}-day free trial`}>
       <div className="flex flex-col gap-5">
@@ -66,6 +86,19 @@ export default function BillingSection() {
           <Summary label="Trial Days Left" value={sub.status === 'trialing' ? `${daysLeft}` : '—'} />
           <Summary label="Next Billing" value={nextBilling} />
         </div>
+
+        {isSubscribed && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-400/25 bg-emerald-500/5 px-4 py-3">
+            <span className="text-sm text-slate-300">
+              {sub.status === 'past_due'
+                ? '⚠ Payment action required — update your card to keep access.'
+                : 'Your subscription is active. Manage payment, plan, invoices, or cancel anytime.'}
+            </span>
+            <Button variant="ghost" onClick={openPortal} disabled={portalBusy}>
+              {portalBusy ? 'Opening…' : 'Manage Billing'}
+            </Button>
+          </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <PriceCard

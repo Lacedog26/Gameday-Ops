@@ -11,23 +11,35 @@ const PRICE = {
 }
 const SITE = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://pregameopscfb.app'
 
+const cors = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
+
 Deno.serve(async (req) => {
-  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
   try {
     const { interval = 'monthly', orgId, email } = await req.json()
     const price = interval === 'annual' ? PRICE.annual : PRICE.monthly
-    if (!price) return new Response('Stripe prices not configured', { status: 500 })
+    if (!price) return json({ error: 'Stripe prices not configured' }, 500)
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       line_items: [{ price, quantity: 1 }],
       customer_email: email,
       client_reference_id: orgId,
+      // Put orgId on the subscription so the webhook can map it back to the org.
       subscription_data: { trial_period_days: 14, metadata: { orgId } },
+      allow_promotion_codes: true,
       success_url: `${SITE}/#/admin?checkout=success`,
       cancel_url: `${SITE}/#/admin?checkout=cancel`,
     })
-    return Response.json({ url: session.url })
+    return json({ url: session.url })
   } catch (e) {
-    return new Response(`Error: ${e instanceof Error ? e.message : 'unknown'}`, { status: 500 })
+    return json({ error: e instanceof Error ? e.message : 'unknown' }, 500)
   }
 })
