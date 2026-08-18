@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "GameDayOps College Football \u2014 pre-game operations for FBS & FCS programs.",
+  "description": "GameDayOps College Football — pre-game operations for FBS & FCS programs.",
   "scripts": {
     "dev": "vite --host",
     "build": "tsc -b && vite build",
@@ -11,14 +11,17 @@
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
+    "@gamedayops/core": "*",
     "@supabase/supabase-js": "^2.45.4",
     "framer-motion": "^11.3.19",
+    "pdfjs-dist": "^4.7.76",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.27.0",
-    "@gamedayops/core": "*"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/node": "^20.14.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
@@ -26,7 +29,6 @@
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
     "typescript": "^5.6.3",
-    "vite": "^5.4.10",
-    "@types/node": "^20.14.0"
+    "vite": "^5.4.10"
   }
 }

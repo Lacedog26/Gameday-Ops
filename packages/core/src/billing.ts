@@ -23,7 +23,7 @@ export const PLAN = {
   id: 'college',
   name: 'GameDayOps College',
   monthlyUsd: 5.99,
-  annualUsd: 59.99,
+  annualUsd: 60,
   trialDays: 14,
   features: [
     'All FBS + FCS teams & schedules',

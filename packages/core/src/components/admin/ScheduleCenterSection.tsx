@@ -10,6 +10,7 @@ import {
 import type { GameInfo, GameOverride, NflGame } from '../../types'
 import { etWallTimeToEpoch, formatClock } from '../../lib/time'
 import { Section, Field, TextInput, Select, Button } from './ui'
+import ScheduleImportModal from './ScheduleImportModal'
 
 // --- date/time helpers (ET) -------------------------------------------------
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -39,6 +40,7 @@ export default function ScheduleCenterSection() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [confirmGame, setConfirmGame] = useState<NflGame | null>(null)
   const [editId, setEditId] = useState<string | null>(null)
+  const [showImport, setShowImport] = useState(false)
 
   // Merge master + custom games for this team/season, then apply overrides.
   const games = useMemo(() => {
@@ -138,7 +140,7 @@ export default function ScheduleCenterSection() {
             Import the official schedule (JSON) to populate it — the app never invents games.
           </p>
           <div className="mt-3">
-            <Button onClick={() => fileRef.current?.click()}>Import Schedule (JSON)</Button>
+            <Button onClick={() => setShowImport(true)}>Import Schedule</Button>
           </div>
         </div>
       ) : (
@@ -163,8 +165,9 @@ export default function ScheduleCenterSection() {
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <Button variant="ghost" onClick={() => fileRef.current?.click()}>
-          ⬆ Import Schedule (JSON)
+        <Button onClick={() => setShowImport(true)}>⬆ Import Schedule</Button>
+        <Button variant="ghost" onClick={() => fileRef.current?.click()} className="text-xs">
+          Advanced: import CFBD JSON
         </Button>
         <input
           ref={fileRef}
@@ -174,7 +177,7 @@ export default function ScheduleCenterSection() {
           onChange={(e) => e.target.files?.[0] && importJSON(e.target.files[0])}
         />
         <span className="text-xs text-slate-500">
-          Master schedule is never overwritten — edits are stored as overrides.
+          CSV, spreadsheet, PDF, or paste — reviewed before it goes live.
         </span>
       </div>
 
@@ -191,6 +194,9 @@ export default function ScheduleCenterSection() {
       {confirmGame && (
         <LoadConfirm game={confirmGame} onClose={() => setConfirmGame(null)} />
       )}
+
+      {/* Universal schedule importer (CSV / XLSX / PDF / paste → review → confirm) */}
+      {showImport && <ScheduleImportModal onClose={() => setShowImport(false)} />}
     </Section>
   )
 }
