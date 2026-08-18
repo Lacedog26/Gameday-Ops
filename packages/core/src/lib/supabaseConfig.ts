@@ -20,7 +20,22 @@ const DEFAULT_URL = 'https://aefrrchhrwjepaiimwju.supabase.co'
 const DEFAULT_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlZnJyY2hocndqZXBhaWltd2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NDUzMDEsImV4cCI6MjEwMjAyMTMwMX0.RVMr8DzTaOH7QCyQMyLiz4VHRkpFGDNVzuJJqjJE88g'
 
-const envUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
+// Normalize a Supabase URL so a slightly-off env value (missing scheme, a
+// trailing slash, stray whitespace, or an accidental /rest|/auth path) can't
+// turn every auth/data request into a "Failed to fetch" against a bad host.
+function normalizeUrl(raw?: string): string | undefined {
+  let s = raw?.trim()
+  if (!s) return undefined
+  if (!/^https?:\/\//i.test(s)) s = `https://${s}` // tolerate a missing scheme
+  try {
+    // Keep only scheme + host (Supabase base URL); drop any path/query/trailing slash.
+    return new URL(s).origin
+  } catch {
+    return undefined // unparseable → treat as unset (falls back to local mode)
+  }
+}
+
+const envUrl = normalizeUrl(import.meta.env.VITE_SUPABASE_URL)
 const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
 
 // The baked Bills defaults are a MATCHED pair (same project). Use them only when
@@ -34,8 +49,20 @@ const anonKey = envKey || (envUrl ? undefined : DEFAULT_ANON_KEY)
 
 export const BOARD_ID = import.meta.env.VITE_BOARD_ID?.trim() || 'default'
 
+/** The effective Supabase base URL this build targets (for diagnostics). */
+export const supabaseUrl = url
+
 /** True when a Supabase backend is configured for this deployment. */
 export const isCloudMode = Boolean(url && anonKey)
+
+// One-time, non-sensitive diagnostic so the target project is visible in the
+// browser console (the host is public; the key is never logged). Makes a
+// "Failed to fetch" trivial to trace: it shows exactly which host is called.
+if (typeof console !== 'undefined') {
+  console.info(
+    isCloudMode ? `[GameDayOps] Supabase cloud mode → ${url}` : '[GameDayOps] local mode (no Supabase configured)',
+  )
+}
 
 /** The shared client, or null in local mode. Created once. */
 export const supabase: SupabaseClient | null = isCloudMode
