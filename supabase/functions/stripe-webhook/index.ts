@@ -1,22 +1,15 @@
 // Supabase Edge Function (Deno) — Stripe webhook -> sync the subscriptions table.
 // The webhook is the SOURCE OF TRUTH for subscription state (never the browser
 // redirect). Deploy: supabase functions deploy stripe-webhook --no-verify-jwt
-// Env: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET (SUPABASE_URL +
-// SUPABASE_SERVICE_ROLE_KEY auto-injected).
+// Env: STRIPE_WEBHOOK_SECRET (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY auto-injected).
 //
-// stripe@16 from esm.sh + Web Fetch HTTP client + SubtleCrypto provider so it
-// runs on the Supabase Edge (Deno) runtime (avoids Deno.core crash and the
-// stripe v17 fetch-client connection errors).
-import Stripe from 'https://esm.sh/stripe@16.12.0?target=deno'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2?target=deno'
-
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
-  apiVersion: '2024-06-20',
-  httpClient: Stripe.createFetchHttpClient(),
-})
-const cryptoProvider = Stripe.createSubtleCryptoProvider()
-const whSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? ''
-const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '')
+// No Stripe SDK: verifies the signature with Web SubtleCrypto (HMAC-SHA256) and
+// syncs straight from the event payload (subscription events carry the full
+// object), then writes to Supabase via PostgREST with plain fetch — so it can't
+// hit the SDK's Deno-incompatible HTTP client.
+const WH_SECRET = (Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '').trim()
+const SB_URL = (Deno.env.get('SUPABASE_URL') ?? '').trim()
+const SB_KEY = (Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '').trim()
 
 const STATUS: Record<string, string> = {
   trialing: 'trialing', active: 'active', past_due: 'past_due',
@@ -24,22 +17,52 @@ const STATUS: Record<string, string> = {
   incomplete_expired: 'expired', paused: 'suspended',
 }
 
-async function updateByOrg(orgId: string, patch: Record<string, unknown>) {
-  if (!orgId) return
-  await admin.from('subscriptions').update({ ...patch, updated_at: new Date().toISOString() }).eq('org_id', orgId)
+const enc = new TextEncoder()
+function toHex(buf: ArrayBuffer): string {
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-async function syncSubscription(sub: Stripe.Subscription) {
-  const orgId = (sub.metadata?.orgId as string) ?? ''
+/** Verify a Stripe "t=…,v1=…" signature header against the raw body. */
+async function verify(body: string, header: string): Promise<boolean> {
+  const parts = Object.fromEntries(header.split(',').map((kv) => kv.split('=') as [string, string]))
+  const t = parts['t']
+  const v1 = parts['v1']
+  if (!t || !v1 || !WH_SECRET) return false
+  const key = await crypto.subtle.importKey('raw', enc.encode(WH_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+  const mac = toHex(await crypto.subtle.sign('HMAC', key, enc.encode(`${t}.${body}`)))
+  // constant-time-ish compare
+  if (mac.length !== v1.length) return false
+  let diff = 0
+  for (let i = 0; i < mac.length; i++) diff |= mac.charCodeAt(i) ^ v1.charCodeAt(i)
+  return diff === 0
+}
+
+async function updateByOrg(orgId: string, patch: Record<string, unknown>) {
   if (!orgId) return
-  const price = sub.items.data[0]?.price
+  await fetch(`${SB_URL}/rest/v1/subscriptions?org_id=eq.${encodeURIComponent(orgId)}`, {
+    method: 'PATCH',
+    headers: {
+      apikey: SB_KEY,
+      Authorization: `Bearer ${SB_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({ ...patch, updated_at: new Date().toISOString() }),
+  })
+}
+
+// deno-lint-ignore no-explicit-any
+async function syncSubscription(sub: any) {
+  const orgId = sub?.metadata?.orgId ?? ''
+  if (!orgId) return
+  const price = sub?.items?.data?.[0]?.price
   await updateByOrg(orgId, {
     status: STATUS[sub.status] ?? 'active',
-    stripe_customer_id: typeof sub.customer === 'string' ? sub.customer : sub.customer.id,
+    stripe_customer_id: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id ?? null,
     stripe_subscription_id: sub.id,
     stripe_price_id: price?.id ?? null,
     billing_interval: price?.recurring?.interval === 'year' ? 'annual' : 'monthly',
-    current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+    current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
     trial_ends_at: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
     cancel_at_period_end: sub.cancel_at_period_end ?? false,
   })
@@ -48,41 +71,38 @@ async function syncSubscription(sub: Stripe.Subscription) {
 Deno.serve(async (req) => {
   const sig = req.headers.get('stripe-signature') ?? ''
   const body = await req.text()
-  let event: Stripe.Event
+  if (!(await verify(body, sig))) {
+    console.error('[stripe-webhook] bad signature')
+    return new Response('Bad signature', { status: 400 })
+  }
+
+  let event: { type: string; data: { object: Record<string, unknown> } }
   try {
-    event = await stripe.webhooks.constructEventAsync(body, sig, whSecret, undefined, cryptoProvider)
-  } catch (e) {
-    console.error('[stripe-webhook] bad signature', e instanceof Error ? e.message : e)
-    return new Response(`Bad signature: ${e instanceof Error ? e.message : ''}`, { status: 400 })
+    event = JSON.parse(body)
+  } catch {
+    return new Response('Bad JSON', { status: 400 })
   }
 
   try {
+    const obj = event.data.object as Record<string, unknown>
     switch (event.type) {
       case 'checkout.session.completed': {
-        const s = event.data.object as Stripe.Checkout.Session
-        const orgId = (s.client_reference_id as string) ?? (s.metadata?.orgId as string) ?? ''
-        if (orgId && s.subscription) {
-          const sub = await stripe.subscriptions.retrieve(s.subscription as string)
-          if (!sub.metadata?.orgId) sub.metadata = { ...sub.metadata, orgId }
-          await syncSubscription(sub)
-          if (typeof s.customer === 'string') await updateByOrg(orgId, { stripe_customer_id: s.customer })
-        }
+        const orgId = (obj.client_reference_id as string) ?? ((obj.metadata as Record<string, string>)?.orgId) ?? ''
+        if (orgId && typeof obj.customer === 'string') await updateByOrg(orgId, { stripe_customer_id: obj.customer })
         break
       }
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
-        await syncSubscription(event.data.object as Stripe.Subscription)
+        await syncSubscription(obj)
         break
       case 'invoice.payment_failed': {
-        const inv = event.data.object as Stripe.Invoice
-        const orgId = (inv.subscription_details?.metadata?.orgId as string) ?? ''
+        const orgId = ((obj.subscription_details as Record<string, unknown>)?.metadata as Record<string, string>)?.orgId ?? ''
         if (orgId) await updateByOrg(orgId, { status: 'past_due' })
         break
       }
       case 'invoice.paid': {
-        const inv = event.data.object as Stripe.Invoice
-        const orgId = (inv.subscription_details?.metadata?.orgId as string) ?? ''
+        const orgId = ((obj.subscription_details as Record<string, unknown>)?.metadata as Record<string, string>)?.orgId ?? ''
         if (orgId) await updateByOrg(orgId, { status: 'active' })
         break
       }
