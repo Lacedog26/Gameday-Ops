@@ -1,16 +1,22 @@
 // Supabase Edge Function (Deno) — Stripe webhook -> sync the subscriptions table.
 // The webhook is the SOURCE OF TRUTH for subscription state (never the browser
 // redirect). Deploy: supabase functions deploy stripe-webhook --no-verify-jwt
-// Env: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, SUPABASE_URL,
-//   SUPABASE_SERVICE_ROLE_KEY (service role bypasses RLS to write status).
-import Stripe from 'https://esm.sh/stripe@16?target=deno'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2?target=deno'
+// Env: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET (SUPABASE_URL +
+// SUPABASE_SERVICE_ROLE_KEY are auto-injected).
+//
+// Uses the Web Fetch HTTP client + SubtleCrypto provider so it runs on the
+// Supabase Edge (Deno) runtime; the default Node HTTP/crypto path calls
+// unsupported Deno internals (Deno.core.runMicrotasks) and crashes the function.
+import Stripe from 'npm:stripe@17.7.0'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', { apiVersion: '2024-06-20' })
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
+  httpClient: Stripe.createFetchHttpClient(),
+})
+const cryptoProvider = Stripe.createSubtleCryptoProvider()
 const whSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? ''
 const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '')
 
-// Map Stripe subscription status -> our enum.
 const STATUS: Record<string, string> = {
   trialing: 'trialing', active: 'active', past_due: 'past_due',
   canceled: 'canceled', unpaid: 'unpaid', incomplete: 'incomplete',
@@ -43,8 +49,9 @@ Deno.serve(async (req) => {
   const body = await req.text()
   let event: Stripe.Event
   try {
-    event = await stripe.webhooks.constructEventAsync(body, sig, whSecret)
+    event = await stripe.webhooks.constructEventAsync(body, sig, whSecret, undefined, cryptoProvider)
   } catch (e) {
+    console.error('[stripe-webhook] bad signature', e instanceof Error ? e.message : e)
     return new Response(`Bad signature: ${e instanceof Error ? e.message : ''}`, { status: 400 })
   }
 
@@ -54,7 +61,6 @@ Deno.serve(async (req) => {
         const s = event.data.object as Stripe.Checkout.Session
         const orgId = (s.client_reference_id as string) ?? (s.metadata?.orgId as string) ?? ''
         if (orgId && s.subscription) {
-          // Pull the full subscription so we sync status/period/price in one place.
           const sub = await stripe.subscriptions.retrieve(s.subscription as string)
           if (!sub.metadata?.orgId) sub.metadata = { ...sub.metadata, orgId }
           await syncSubscription(sub)
@@ -81,6 +87,7 @@ Deno.serve(async (req) => {
       }
     }
   } catch (e) {
+    console.error('[stripe-webhook] handler', e instanceof Error ? e.message : e)
     return new Response(`Handler error: ${e instanceof Error ? e.message : ''}`, { status: 500 })
   }
   return Response.json({ received: true })
