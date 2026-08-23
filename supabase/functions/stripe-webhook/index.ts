@@ -2,15 +2,16 @@
 // The webhook is the SOURCE OF TRUTH for subscription state (never the browser
 // redirect). Deploy: supabase functions deploy stripe-webhook --no-verify-jwt
 // Env: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET (SUPABASE_URL +
-// SUPABASE_SERVICE_ROLE_KEY are auto-injected).
+// SUPABASE_SERVICE_ROLE_KEY auto-injected).
 //
-// Uses the Web Fetch HTTP client + SubtleCrypto provider so it runs on the
-// Supabase Edge (Deno) runtime; the default Node HTTP/crypto path calls
-// unsupported Deno internals (Deno.core.runMicrotasks) and crashes the function.
-import Stripe from 'npm:stripe@17.7.0'
-import { createClient } from 'npm:@supabase/supabase-js@2'
+// stripe@16 from esm.sh + Web Fetch HTTP client + SubtleCrypto provider so it
+// runs on the Supabase Edge (Deno) runtime (avoids Deno.core crash and the
+// stripe v17 fetch-client connection errors).
+import Stripe from 'https://esm.sh/stripe@16.12.0?target=deno'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2?target=deno'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
+  apiVersion: '2024-06-20',
   httpClient: Stripe.createFetchHttpClient(),
 })
 const cryptoProvider = Stripe.createSubtleCryptoProvider()

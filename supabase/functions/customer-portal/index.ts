@@ -1,11 +1,12 @@
 // Supabase Edge Function (Deno) — open the Stripe Customer Billing Portal.
 // Deploy: supabase functions deploy customer-portal
 // Env: STRIPE_SECRET_KEY, PUBLIC_SITE_URL (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
-// are auto-injected by Supabase). Uses the Web Fetch HTTP client for Edge/Deno.
-import Stripe from 'npm:stripe@17.7.0'
-import { createClient } from 'npm:@supabase/supabase-js@2'
+// are auto-injected). stripe@16 + Fetch HTTP client for the Edge/Deno runtime.
+import Stripe from 'https://esm.sh/stripe@16.12.0?target=deno'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2?target=deno'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
+  apiVersion: '2024-06-20',
   httpClient: Stripe.createFetchHttpClient(),
 })
 const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '')

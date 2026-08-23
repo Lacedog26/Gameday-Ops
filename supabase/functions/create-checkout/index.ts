@@ -3,12 +3,14 @@
 // Env (secrets): STRIPE_SECRET_KEY, STRIPE_PRICE_MONTHLY, STRIPE_PRICE_ANNUAL,
 //   PUBLIC_SITE_URL. Secrets never live in the repo.
 //
-// Uses the npm: Stripe SDK with the Web Fetch HTTP client so it runs on the
-// Supabase Edge (Deno) runtime — the default Node HTTP client calls unsupported
-// Deno internals (Deno.core.runMicrotasks) and crashes the function.
-import Stripe from 'npm:stripe@17.7.0'
+// Stripe on Supabase Edge (Deno): pin stripe@16 from esm.sh and use the Web
+// Fetch HTTP client. The default Node HTTP client crashes on Deno internals
+// (Deno.core.runMicrotasks); stripe v17's fetch client throws connection errors
+// on this runtime — v16 + createFetchHttpClient is the stable, documented combo.
+import Stripe from 'https://esm.sh/stripe@16.12.0?target=deno'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
+  apiVersion: '2024-06-20',
   httpClient: Stripe.createFetchHttpClient(),
 })
 const PRICE = {
@@ -45,7 +47,6 @@ Deno.serve(async (req) => {
     })
     return json({ url: session.url })
   } catch (e) {
-    // Log the real error server-side (never the secret key) for debugging.
     console.error('[create-checkout]', e instanceof Error ? e.message : e)
     return json({ error: e instanceof Error ? e.message : 'unknown' }, 500)
   }
