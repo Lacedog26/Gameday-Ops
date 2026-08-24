@@ -13,6 +13,27 @@ import { Section, Button } from './ui'
  * (keys in function secrets); until then it surfaces a clear message. No secret
  * keys ever touch the client.
  */
+/**
+ * Pull the real reason out of a failed edge-function call: prefer the JSON
+ * {error} the function returns; fall back to the FunctionsHttpError body, then
+ * its message. So the admin sees "No such price" / "Invalid API Key" etc.
+ * instead of a misleading "Stripe is not connected".
+ */
+async function errorDetail(error: unknown, data: unknown): Promise<string> {
+  const fromData = (data as { error?: string } | null)?.error
+  if (fromData) return fromData
+  const ctx = (error as { context?: Response } | null)?.context
+  if (ctx && typeof ctx.json === 'function') {
+    try {
+      const body = await ctx.json()
+      if (body?.error) return body.error as string
+    } catch {
+      /* not JSON */
+    }
+  }
+  return error instanceof Error ? error.message : 'Stripe not reachable — check the function logs.'
+}
+
 export default function BillingSection() {
   const { org, subscription } = useOrg()
   const [busy, setBusy] = useState<BillingInterval | null>(null)
@@ -44,15 +65,14 @@ export default function BillingSection() {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { interval, orgId: org.id, returnUrl: window.location.origin },
       })
-      if (error) throw error
       const url = (data as { url?: string } | null)?.url
       if (url) {
         window.location.href = url
         return
       }
-      setMsg('Checkout is not available yet — Stripe is not connected. (See BACKEND_SETUP.md.)')
-    } catch {
-      setMsg('Checkout is not available yet — Stripe is not connected. (See BACKEND_SETUP.md.)')
+      setMsg(`Couldn't start checkout: ${await errorDetail(error, data)}`)
+    } catch (e) {
+      setMsg(`Couldn't start checkout: ${e instanceof Error ? e.message : 'unexpected error'}`)
     } finally {
       setBusy(null)
     }
@@ -67,9 +87,9 @@ export default function BillingSection() {
       if (error) throw error
       const url = (data as { url?: string; error?: string } | null)?.url
       if (url) { window.location.href = url; return }
-      setMsg((data as { error?: string } | null)?.error ?? 'Billing portal is not available yet.')
-    } catch {
-      setMsg('Billing portal is not available yet — Stripe is not connected.')
+      setMsg(`Couldn't open billing: ${await errorDetail(error, data)}`)
+    } catch (e) {
+      setMsg(`Couldn't open billing: ${e instanceof Error ? e.message : 'unexpected error'}`)
     } finally {
       setPortalBusy(false)
     }
