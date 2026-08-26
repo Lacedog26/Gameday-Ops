@@ -10,3 +10,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .vite
+
+# TypeScript incremental build info
+*.tsbuildinfo

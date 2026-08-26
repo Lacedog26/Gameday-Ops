@@ -35,6 +35,25 @@ export default {
           warn: '#FFC72C', // 5-minute yellow
           go: '#22C55E', // GO / completed green
         },
+        // Training & Anatomy module palette. Deliberately separate from the
+        // team-themed tokens above: the anatomy app is not white-labelled and
+        // must keep a constant, instrument-like dark surface ramp.
+        tr: {
+          bg: '#07090E',
+          surface: '#0C1017',
+          raised: '#121722',
+          hi: '#18202E',
+          line: '#1F2836',
+          line2: '#2C3648',
+          text: '#EAEEF6',
+          muted: '#98A1B4',
+          dim: '#616B80',
+          accent: '#00D9A3',
+          'accent-dim': '#0B7C61',
+          primary: '#FF4D3D',
+          secondary: '#FFA53D',
+          stabilizer: '#4DD4FF',
+        },
       },
       fontFamily: {
         display: ['"Rajdhani"', '"Barlow Condensed"', 'system-ui', 'sans-serif'],

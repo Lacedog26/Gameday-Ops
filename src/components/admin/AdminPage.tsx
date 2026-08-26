@@ -28,12 +28,21 @@ export default function AdminPage() {
             <div className="text-xs font-semibold tracking-widest text-slate-400">ADMIN CONSOLE</div>
           </div>
         </div>
-        <Link
-          to="/"
-          className="rounded-full bg-bills-red px-5 py-2 text-sm font-bold tracking-wider hover:bg-bills-red/85"
-        >
-          ← BACK TO BOARD
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Entry point to the local Training & Anatomy module (/#/train). */}
+          <Link
+            to="/train"
+            className="rounded-full border border-white/20 px-4 py-2 text-sm font-bold tracking-wider text-slate-200 hover:border-white/40 hover:text-white"
+          >
+            TRAINING &amp; ANATOMY
+          </Link>
+          <Link
+            to="/"
+            className="rounded-full bg-bills-red px-5 py-2 text-sm font-bold tracking-wider hover:bg-bills-red/85"
+          >
+            ← BACK TO BOARD
+          </Link>
+        </div>
       </header>
 
       <main className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6">
