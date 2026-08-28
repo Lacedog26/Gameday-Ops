@@ -14,6 +14,7 @@ import QuotesSection from './QuotesSection'
 import SettingsSection from './SettingsSection'
 import BillingSection from './BillingSection'
 import DangerSection from './DangerSection'
+import { buildLabel } from '../../lib/buildInfo'
 
 /**
  * Operations control panel. Mobile-friendly, scrollable, and separate from the
@@ -75,6 +76,8 @@ export default function AdminPage() {
         <DangerSection />
         <footer className="py-6 text-center text-xs text-slate-500">
           {productName} · changes save automatically
+          <span className="mx-2 opacity-40">·</span>
+          <span className="tnum font-mono opacity-70" title="Deployed build">{buildLabel()}</span>
         </footer>
       </main>
     </div>
