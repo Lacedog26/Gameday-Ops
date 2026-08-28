@@ -12,12 +12,6 @@ Built with **React + TypeScript + Vite + Tailwind CSS + Framer Motion**.
 State persists to **localStorage** today and is structured to migrate to
 **Supabase or Firebase** by swapping one adapter.
 
-> **Also in this repo:** [**Training & Anatomy**](TRAINING_ANATOMY.md) — a
-> local-first 3D exercise and human-anatomy reference at `/#/train`, with an
-> interactive muscle map, a 67-exercise library, combinable search and filters,
-> and a workout builder. Fully additive: the board and admin console are
-> unchanged, and the module is lazy-loaded so the TV view pays nothing for it.
-
 ---
 
 ## Table of contents
