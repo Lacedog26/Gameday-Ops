@@ -34,6 +34,13 @@ function scopedStorageKey(): string {
 export interface StorageAdapter {
   load(): Promise<AppState | null>
   save(state: AppState): Promise<void>
+  /**
+   * Persist NOW and resolve only when the write has actually SUCCEEDED; REJECTS
+   * if it failed. Unlike `save` (fire-and-forget, debounced, best-effort), this
+   * is what an explicit "Save Changes" button awaits so the UI can show real
+   * success or a real error — never a false "saved".
+   */
+  saveNow(state: AppState): Promise<void>
   /** Subscribe to external changes (other TVs/tabs). Returns unsubscribe. */
   subscribe(handler: (state: AppState) => void): () => void
 }
@@ -68,6 +75,11 @@ export class LocalStorageAdapter implements StorageAdapter {
     } catch (err) {
       console.warn('[storage] failed to save state', err)
     }
+  }
+
+  /** Awaited save that surfaces failure (e.g. quota exceeded) to the caller. */
+  async saveNow(state: AppState): Promise<void> {
+    localStorage.setItem(this.keyName(), JSON.stringify(state))
   }
 
   subscribe(handler: (state: AppState) => void): () => void {
@@ -116,18 +128,49 @@ export class SupabaseAdapter implements StorageAdapter {
     return this.boardIdOverride ? null : getScope().orgId
   }
 
+  /** The TV display token when running as a kiosk (read-only), else null. */
+  private displayToken(): string | null {
+    return this.boardIdOverride ? null : getScope().displayToken
+  }
+
   /**
    * Offline cache, scoped so tenants never bleed into one another. The public
    * board keeps the legacy key (unchanged for NFL + the current demo); each org
-   * board gets its own suffix.
+   * board — and each TV display — gets its own suffix.
    */
   private cache(): LocalStorageAdapter {
+    const token = this.displayToken()
     const orgId = this.orgId()
     const base = scopedStorageKey()
+    if (token) return new LocalStorageAdapter(`${base}:display-${token}`)
     return new LocalStorageAdapter(orgId ? `${base}:org-${orgId}` : base)
   }
 
+  /**
+   * Load a TV display's board through the SECURITY DEFINER `display_board` RPC.
+   * Anonymous kiosks have NO direct select on `boards`; the RPC returns only the
+   * board of the org that owns the given token, so a TV can never read another
+   * org's data even by changing the URL token.
+   */
+  private async loadViaDisplayToken(token: string): Promise<AppState | null> {
+    const cache = this.cache()
+    if (!supabase) return cache.load()
+    try {
+      const { data, error } = await supabase.rpc('display_board', { p_token: token })
+      if (error) throw error
+      const state = (data as AppState | null) ?? null
+      if (state) cache.save(state)
+      return state
+    } catch (err) {
+      console.warn('[storage] display load failed, using cache', err)
+      return cache.load()
+    }
+  }
+
   async load(): Promise<AppState | null> {
+    const token = this.displayToken()
+    if (token) return this.loadViaDisplayToken(token)
+
     const cache = this.cache()
     if (!supabase) return cache.load()
     try {
@@ -157,6 +200,8 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async save(state: AppState): Promise<void> {
+    // A TV display is strictly read-only — never write back to the org's board.
+    if (this.displayToken()) return
     // Always mirror locally immediately (offline cache + instant same-device).
     this.cache().save(state)
     if (!supabase) return
@@ -164,6 +209,35 @@ export class SupabaseAdapter implements StorageAdapter {
     this.pending = state
     if (this.saveTimer) clearTimeout(this.saveTimer)
     this.saveTimer = setTimeout(() => this.flush(), 400)
+  }
+
+  /**
+   * Awaited, non-debounced save that REJECTS on failure so the caller can show
+   * a truthful result. Used by explicit "Save Changes" actions.
+   */
+  async saveNow(state: AppState): Promise<void> {
+    if (this.displayToken()) {
+      throw new Error('This is a read-only TV display and cannot save changes.')
+    }
+    // Cancel any queued debounced write; this call supersedes it.
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer)
+      this.saveTimer = undefined
+    }
+    this.pending = null
+    this.cache().save(state)
+    if (!supabase) return // local-only deployment: cache write above is the save
+    const { error } = await supabase.from('boards').upsert(
+      {
+        id: this.boardName(),
+        org_id: this.orgId(),
+        state,
+        updated_by: this.clientId,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'id' },
+    )
+    if (error) throw new Error(error.message || 'Database write was rejected.')
   }
 
   private async flush(): Promise<void> {
@@ -192,6 +266,24 @@ export class SupabaseAdapter implements StorageAdapter {
     const unsubCache = this.cache().subscribe(handler)
     const client = supabase
     if (!client) return unsubCache
+
+    // TV display (anon): no direct board select and no realtime, so poll the
+    // display_board RPC to stay in sync with admin edits.
+    const token = this.displayToken()
+    if (token) {
+      let stopped = false
+      const poll = async () => {
+        if (stopped) return
+        const next = await this.loadViaDisplayToken(token)
+        if (!stopped && next) handler(next)
+      }
+      const timer = setInterval(poll, 5000)
+      return () => {
+        stopped = true
+        clearInterval(timer)
+        unsubCache()
+      }
+    }
 
     const boardId = this.boardName()
     const channel = client

@@ -13,6 +13,7 @@ import GraphicsSection from './GraphicsSection'
 import QuotesSection from './QuotesSection'
 import SettingsSection from './SettingsSection'
 import BillingSection from './BillingSection'
+import DisplaysSection from './DisplaysSection'
 import DangerSection from './DangerSection'
 import { buildLabel } from '../../lib/buildInfo'
 
@@ -72,6 +73,7 @@ export default function AdminPage() {
         <GraphicsSection />
         <QuotesSection />
         <SettingsSection />
+        <DisplaysSection />
         <BillingSection />
         <DangerSection />
         <footer className="py-6 text-center text-xs text-slate-500">

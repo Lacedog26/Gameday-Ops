@@ -3,6 +3,12 @@
 // Env: STRIPE_SECRET_KEY, PUBLIC_SITE_URL (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
 // auto-injected). Uses plain fetch for both Stripe and Supabase (no SDK HTTP
 // client — the Stripe SDK client fails on the Supabase Edge/Deno runtime).
+//
+// SECURITY (C6): the caller must present a valid Supabase JWT AND be a member of
+// the org whose portal they're opening, so a user can't open another org's
+// billing portal by passing a different orgId.
+import { getUser, isOrgMember } from '../_shared/auth.ts'
+
 const STRIPE_KEY = (Deno.env.get('STRIPE_SECRET_KEY') ?? '').trim()
 const SB_URL = (Deno.env.get('SUPABASE_URL') ?? '').trim()
 const SB_KEY = (Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '').trim()
@@ -22,6 +28,13 @@ Deno.serve(async (req) => {
   try {
     const { orgId } = await req.json()
     if (!orgId) return json({ error: 'Missing orgId' }, 400)
+
+    // --- AuthZ: valid JWT + membership of THIS org ---
+    const user = await getUser(req)
+    if (!user) return json({ error: 'Authentication required' }, 401)
+    if (!(await isOrgMember(user.id, orgId))) {
+      return json({ error: 'Not authorized for this organization' }, 403)
+    }
 
     // Look up the org's Stripe customer id via PostgREST (service role).
     const q = await fetch(

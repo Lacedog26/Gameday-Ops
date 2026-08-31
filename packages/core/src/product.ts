@@ -44,6 +44,20 @@ export interface ProductConfig {
   makeDefaultState: (now?: number) => AppState
   /** Per-team default culture saying (short cheer), keyed by team id. */
   teamCulture?: Record<string, string>
+  /**
+   * Commercial mode. When true, authentication AND an active entitlement are
+   * enforced by the route architecture itself (not merely an env var): a
+   * logged-out visitor cannot reach the app, and a user without a valid
+   * trial/subscription is routed to billing. Leave unset for the single-facility
+   * NFL deployment, which stays open.
+   */
+  requireAuth?: boolean
+  /**
+   * Canonical production origin (e.g. "https://pregameopscfb.app"). Used for
+   * auth email redirect targets so confirmation / reset links never point at
+   * localhost. Falls back to window.location.origin when unset.
+   */
+  publicSiteUrl?: string
 }
 
 let _cfg: ProductConfig | null = null
@@ -98,3 +112,28 @@ export const makeDefaultState = (now?: number): AppState => productConfig().make
 /** The shipped default culture saying for a team (empty string if none). */
 export const teamDefaultCulture = (teamId: string): string =>
   productConfig().teamCulture?.[teamId] ?? ''
+
+/**
+ * Commercial mode: auth + entitlement enforced by the route architecture.
+ * True when the product opts in, or the VITE_REQUIRE_AUTH safeguard is set.
+ */
+export function commercialMode(): boolean {
+  let fromCfg = false
+  try {
+    fromCfg = productConfig().requireAuth === true
+  } catch {
+    fromCfg = false
+  }
+  return fromCfg || import.meta.env.VITE_REQUIRE_AUTH === 'true'
+}
+
+/** Canonical production origin for auth redirects (falls back to current origin). */
+export function siteUrl(): string {
+  try {
+    const configured = productConfig().publicSiteUrl
+    if (configured) return configured.replace(/\/+$/, '')
+  } catch {
+    /* not configured yet */
+  }
+  return typeof window !== 'undefined' ? window.location.origin : ''
+}

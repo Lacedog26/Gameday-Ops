@@ -19,4 +19,8 @@ export const collegeProduct: ProductConfig = {
   gameKickoffISO: computeKickoffISO,
   makeDefaultState,
   teamCulture: TEAM_CULTURE,
+  // Commercial SaaS: enforce login + entitlement at the route layer, and send
+  // auth emails back to the production origin (never localhost).
+  requireAuth: true,
+  publicSiteUrl: 'https://pregameopscfb.app',
 }

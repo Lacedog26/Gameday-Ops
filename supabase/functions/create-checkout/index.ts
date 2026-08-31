@@ -8,6 +8,12 @@
 // StripeConnectionError on the Supabase Edge runtime. Plain fetch is bulletproof
 // here and surfaces Stripe's real error. The secret key is trimmed so a stray
 // newline from copy-paste can't corrupt the Authorization header.
+//
+// SECURITY (C5): the caller must present a valid Supabase JWT AND be a member of
+// the org they're checking out for. orgId from the body is verified against the
+// authenticated user's memberships — it can never be swapped to another org.
+import { getUser, isOrgMember } from '../_shared/auth.ts'
+
 const STRIPE_KEY = (Deno.env.get('STRIPE_SECRET_KEY') ?? '').trim()
 const PRICE = {
   monthly: (Deno.env.get('STRIPE_PRICE_MONTHLY') ?? '').trim(),
@@ -28,7 +34,16 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
   try {
     if (!STRIPE_KEY) return json({ error: 'STRIPE_SECRET_KEY not set' }, 500)
-    const { interval = 'monthly', orgId, email } = await req.json()
+    const { interval = 'monthly', orgId } = await req.json()
+    if (!orgId) return json({ error: 'Missing orgId' }, 400)
+
+    // --- AuthZ: valid JWT + membership of THIS org (never trust body orgId) ---
+    const user = await getUser(req)
+    if (!user) return json({ error: 'Authentication required' }, 401)
+    if (!(await isOrgMember(user.id, orgId))) {
+      return json({ error: 'Not authorized for this organization' }, 403)
+    }
+
     const price = interval === 'annual' ? PRICE.annual : PRICE.monthly
     if (!price) return json({ error: 'Stripe prices not configured' }, 500)
 
@@ -37,11 +52,10 @@ Deno.serve(async (req) => {
     form.set('mode', 'subscription')
     form.set('line_items[0][price]', price)
     form.set('line_items[0][quantity]', '1')
-    if (email) form.set('customer_email', email)
-    if (orgId) {
-      form.set('client_reference_id', orgId)
-      form.set('subscription_data[metadata][orgId]', orgId)
-    }
+    // Use the verified user's email, not a client-supplied one.
+    if (user.email) form.set('customer_email', user.email)
+    form.set('client_reference_id', orgId)
+    form.set('subscription_data[metadata][orgId]', orgId)
     form.set('subscription_data[trial_period_days]', '14')
     form.set('allow_promotion_codes', 'true')
     form.set('success_url', `${SITE}/#/admin?checkout=success`)

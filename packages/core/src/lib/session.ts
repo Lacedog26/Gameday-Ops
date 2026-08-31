@@ -28,15 +28,29 @@ export interface BoardScope {
   orgId: string | null
   /** The board row id the storage layer should use. */
   boardId: string
+  /**
+   * A TV display's opaque token when running as a kiosk opened via
+   * `/display/<token>`. In this mode the storage layer reads that display's org
+   * board through a SECURITY DEFINER RPC (no login, read-only) rather than a
+   * direct table select, so a TV shows the correct org's board without exposing
+   * any other org's data.
+   */
+  displayToken: string | null
 }
 
 let currentOrgId: string | null = null
+let currentDisplayToken: string | null = null
 const listeners = new Set<(scope: BoardScope) => void>()
 
 export function getScope(): BoardScope {
   return {
     orgId: currentOrgId,
-    boardId: currentOrgId ? `org-${currentOrgId}` : publicBoardId(),
+    boardId: currentDisplayToken
+      ? `display-${currentDisplayToken}`
+      : currentOrgId
+        ? `org-${currentOrgId}`
+        : publicBoardId(),
+    displayToken: currentDisplayToken,
   }
 }
 
@@ -44,6 +58,18 @@ export function getScope(): BoardScope {
 export function setActiveOrg(orgId: string | null): void {
   if (orgId === currentOrgId) return
   currentOrgId = orgId
+  const scope = getScope()
+  listeners.forEach((fn) => fn(scope))
+}
+
+/**
+ * Enter (or leave) read-only display mode for a specific TV token. Clears any
+ * org scope so a kiosk never reads or writes an authenticated board.
+ */
+export function setDisplayToken(token: string | null): void {
+  if (token === currentDisplayToken) return
+  currentDisplayToken = token
+  if (token) currentOrgId = null
   const scope = getScope()
   listeners.forEach((fn) => fn(scope))
 }

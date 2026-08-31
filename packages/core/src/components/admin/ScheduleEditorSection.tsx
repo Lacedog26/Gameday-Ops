@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useDashboard } from '../../context/DashboardContext'
-import type { PregameEvent, TemplateKind } from '../../types'
+import type { PregameEvent, ScheduleTemplate, TemplateKind } from '../../types'
 import { eventScheduledAt, formatCardClock, formatTMinus, kickoffMs, parseTMinus } from '../../lib/time'
 import { uid } from '../../lib/id'
 import { Section, TextInput, Button, IconButton, Select } from './ui'
@@ -34,6 +34,8 @@ export default function ScheduleEditorSection() {
   const [draft, setDraft] = useState<PregameEvent[]>(activeEvents)
   const [dirty, setDirty] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Mirror live state into the draft while there are no unsaved edits (so
   // loading a game / template or a cross-TV sync shows through). Once the
@@ -46,6 +48,7 @@ export default function ScheduleEditorSection() {
     setDraft(next)
     setDirty(true)
     setSavedAt(null)
+    setError(null)
   }
 
   const addEvent = () =>
@@ -56,27 +59,56 @@ export default function ScheduleEditorSection() {
   const reorder = (from: number, to: number) => edit(move(draft, from, to))
   const sortByTime = () => edit([...draft].sort((a, b) => b.tMinusSeconds - a.tMinusSeconds))
 
-  const save = () => {
-    actions.setEvents(draft)
-    setDirty(false)
-    setSavedAt(Date.now())
+  // Save the edited timeline to the active game. We only clear "dirty" and show
+  // the confirmation AFTER the database write actually succeeds (H3); on failure
+  // the edits stay put and the real error is shown.
+  const save = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      await actions.commit({ ...state, activeEvents: draft })
+      setDirty(false)
+      setSavedAt(Date.now())
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Save failed — your changes are kept. Try again.')
+    } finally {
+      setBusy(false)
+    }
   }
   const discard = () => {
     setDraft(activeEvents)
     setDirty(false)
     setSavedAt(null)
+    setError(null)
   }
 
   const [tplName, setTplName] = useState('')
   const [tplKind, setTplKind] = useState<TemplateKind>('regular')
-  const saveAsTemplate = () => {
+  const saveAsTemplate = async () => {
     const name = tplName.trim() || `Template ${new Date().toLocaleDateString()}`
-    // Persist the current (draft) events first so the template captures them.
-    if (dirty) actions.setEvents(draft)
-    actions.saveTemplate(name, tplKind)
-    setTplName('')
-    setSavedAt(Date.now())
-    setDirty(false)
+    const snapshot = draft.map((e) => ({ ...e, acknowledgedAt: null }))
+    const tpl: ScheduleTemplate = {
+      id: uid('tpl'),
+      name,
+      kind: tplKind,
+      events: snapshot,
+      builtIn: false,
+      updatedAt: Date.now(),
+    }
+    setBusy(true)
+    setError(null)
+    try {
+      // Persist the draft events AND the new template atomically, confirming
+      // only on a real DB success.
+      await actions.commit({ ...state, activeEvents: draft, templates: [...state.templates, tpl] })
+      setTplName('')
+      setDirty(false)
+      setSavedAt(Date.now())
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save template — your changes are kept.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const justSaved = savedAt && Date.now() - savedAt < 4000
@@ -119,14 +151,24 @@ export default function ScheduleEditorSection() {
 
       {/* Save bar — sticky so it's always reachable while editing a long list. */}
       <div className="sticky bottom-2 mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-navy-900/95 p-3 backdrop-blur">
-        <Button onClick={save} disabled={!dirty} className="text-base">
-          {dirty ? '● Save Changes' : 'Save Changes'}
+        <Button onClick={save} disabled={!dirty || busy} className="text-base">
+          {busy ? 'Saving…' : dirty ? '● Save Changes' : 'Save Changes'}
         </Button>
-        {dirty && (
+        {dirty && !busy && (
           <Button variant="ghost" onClick={discard}>Discard</Button>
         )}
-        <span className={`text-sm font-semibold ${dirty ? 'text-alert-warn' : justSaved ? 'text-alert-go' : 'text-slate-500'}`}>
-          {dirty ? 'Unsaved changes' : justSaved ? '✓ Saved — live on every display' : 'All changes saved'}
+        <span
+          className={`text-sm font-semibold ${
+            error ? 'text-bills-red' : dirty ? 'text-alert-warn' : justSaved ? 'text-alert-go' : 'text-slate-500'
+          }`}
+        >
+          {error
+            ? `⚠ ${error}`
+            : dirty
+              ? 'Unsaved changes'
+              : justSaved
+                ? '✓ Saved — live on every display'
+                : 'All changes saved'}
         </span>
 
         <div className="ml-auto flex items-center gap-2">
@@ -141,7 +183,7 @@ export default function ScheduleEditorSection() {
               <option key={k} value={k}>{k}</option>
             ))}
           </Select>
-          <Button variant="ghost" onClick={saveAsTemplate}>Save as Master Template</Button>
+          <Button variant="ghost" onClick={saveAsTemplate} disabled={busy}>Save as Master Template</Button>
         </div>
       </div>
     </Section>

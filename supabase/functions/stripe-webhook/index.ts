@@ -39,16 +39,25 @@ async function verify(body: string, header: string): Promise<boolean> {
 
 async function updateByOrg(orgId: string, patch: Record<string, unknown>) {
   if (!orgId) return
-  await fetch(`${SB_URL}/rest/v1/subscriptions?org_id=eq.${encodeURIComponent(orgId)}`, {
-    method: 'PATCH',
-    headers: {
-      apikey: SB_KEY,
-      Authorization: `Bearer ${SB_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
+  // A real DB failure (HTTP error) must throw so the handler returns 500 and
+  // Stripe RETRIES — never silently ack an event whose DB write failed (H4).
+  const res = await fetch(
+    `${SB_URL}/rest/v1/subscriptions?org_id=eq.${encodeURIComponent(orgId)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        apikey: SB_KEY,
+        Authorization: `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({ ...patch, updated_at: new Date().toISOString() }),
     },
-    body: JSON.stringify({ ...patch, updated_at: new Date().toISOString() }),
-  })
+  )
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '')
+    throw new Error(`subscriptions update failed (HTTP ${res.status}) ${detail}`)
+  }
 }
 
 // deno-lint-ignore no-explicit-any

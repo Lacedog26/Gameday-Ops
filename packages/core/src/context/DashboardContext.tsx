@@ -311,6 +311,14 @@ interface DashboardContextValue {
     patchTeamBranding: (teamId: string, patch: TeamBranding) => void
     resetTeamBranding: (teamId: string) => void
     reset: () => void
+    /**
+     * Atomically persist `next` and, ONLY if the write actually succeeds, adopt
+     * it as the in-memory state. Rejects (leaving state unchanged) if the DB
+     * rejected the write. Explicit "Save Changes" buttons await this so the UI
+     * can show a truthful result — never a false "saved" — and unsaved edits
+     * survive a failure.
+     */
+    commit: (next: AppState) => Promise<void>
   }
 }
 
@@ -408,6 +416,14 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       patchTeamBranding: (teamId, patch) => dispatch({ type: 'PATCH_TEAM_BRANDING', teamId, patch }),
       resetTeamBranding: (teamId) => dispatch({ type: 'RESET_TEAM_BRANDING', teamId }),
       reset: () => dispatch({ type: 'RESET' }),
+      commit: async (next: AppState) => {
+        // Persist first; if the DB rejects it, throw WITHOUT mutating state so
+        // the caller keeps the user's unsaved edits and shows a real error.
+        await storage.saveNow(next)
+        // Success: adopt it and skip the redundant auto-persist for this change.
+        skipPersistRef.current = true
+        dispatch({ type: 'HYDRATE', state: next, external: true })
+      },
     }),
     [],
   )

@@ -55,12 +55,48 @@ export function trialDaysRemaining(trialEndsAt?: string, now = Date.now()): numb
   return ms <= 0 ? 0 : Math.ceil(ms / 86_400_000)
 }
 
-/** Is the org entitled to use the product right now? */
+/**
+ * Is the org entitled to use the paid product right now?
+ *
+ *  • active                → yes
+ *  • past_due              → yes (grace: card retry in progress; portal fixes it)
+ *  • trialing              → yes while the trial window is open
+ *  • canceled (in period)  → yes until current_period_end
+ *  • otherwise             → no (expired / suspended / trial over / none)
+ */
 export function isEntitled(sub?: Subscription, now = Date.now()): boolean {
   if (!sub) return false
-  if (sub.status === 'active') return true
+  if (sub.status === 'active' || sub.status === 'past_due') return true
   if (sub.status === 'trialing') return trialDaysRemaining(sub.trialEndsAt, now) > 0
+  if (sub.status === 'canceled') {
+    return sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd).getTime() > now : false
+  }
   return false
+}
+
+export type EntitlementReason =
+  | 'active'
+  | 'trialing'
+  | 'past_due'
+  | 'canceled_grace'
+  | 'trial_expired'
+  | 'canceled'
+  | 'none'
+
+/** Why the org is / isn't entitled — drives gating redirects and banners. */
+export function entitlementReason(sub?: Subscription, now = Date.now()): EntitlementReason {
+  if (!sub) return 'none'
+  if (sub.status === 'active') return 'active'
+  if (sub.status === 'past_due') return 'past_due'
+  if (sub.status === 'trialing') {
+    return trialDaysRemaining(sub.trialEndsAt, now) > 0 ? 'trialing' : 'trial_expired'
+  }
+  if (sub.status === 'canceled') {
+    return sub.currentPeriodEnd && new Date(sub.currentPeriodEnd).getTime() > now
+      ? 'canceled_grace'
+      : 'canceled'
+  }
+  return 'none'
 }
 
 export function priceLabel(interval: BillingInterval): string {
