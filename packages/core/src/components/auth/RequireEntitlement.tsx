@@ -17,15 +17,17 @@ import { commercialMode } from '../../product'
  * migration 0008) independently blocks writes even if this gate is bypassed.
  */
 export default function RequireEntitlement({ children }: { children: React.ReactNode }) {
-  const { subscription, loading } = useOrg()
+  const { org, subscription, loading } = useOrg()
 
   if (!commercialMode()) return <>{children}</>
 
-  // While the org + subscription resolve, hold rather than flash a redirect.
-  if (loading || subscription === null) {
+  // Hold until the org has actually resolved — gating on `org` (not on
+  // `subscription`) avoids both a premature redirect before resolution starts
+  // and an infinite spinner when an org legitimately has no subscription row.
+  if (loading || !org) {
     return <div className="grid min-h-full place-items-center bg-[#05070f] text-slate-400">Loading…</div>
   }
 
-  if (!isEntitled(subscription)) return <Navigate to="/billing" replace />
+  if (!isEntitled(subscription ?? undefined)) return <Navigate to="/billing" replace />
   return <>{children}</>
 }
