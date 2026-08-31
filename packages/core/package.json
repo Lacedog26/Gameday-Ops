@@ -1,0 +1,9 @@
+{
+  "name": "@gamedayops/core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "GameDayOps shared engine: timeline, alerts, timing, and shared types.",
+  "main": "src/index.ts",
+  "types": "src/index.ts"
+}
