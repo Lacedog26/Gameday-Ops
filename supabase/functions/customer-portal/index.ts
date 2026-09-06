@@ -6,13 +6,48 @@
 //
 // SECURITY (C6): the caller must present a valid Supabase JWT AND be a member of
 // the org whose portal they're opening, so a user can't open another org's
-// billing portal by passing a different orgId.
-import { getUser, isOrgMember } from '../_shared/auth.ts'
-
+// billing portal by passing a different orgId. Auth helpers are INLINED (not
+// imported) so this function is self-contained for dashboard paste-deploy.
 const STRIPE_KEY = (Deno.env.get('STRIPE_SECRET_KEY') ?? '').trim()
 const SB_URL = (Deno.env.get('SUPABASE_URL') ?? '').trim()
 const SB_KEY = (Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '').trim()
+const SB_ANON = (Deno.env.get('SUPABASE_ANON_KEY') ?? '').trim()
 const SITE = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://pregameopscfb.app'
+
+/** Resolve the authenticated user from the request's Bearer JWT, or null. */
+async function getUser(req: Request): Promise<{ id: string; email?: string } | null> {
+  const header = req.headers.get('Authorization') ?? ''
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : ''
+  if (!token) return null
+  try {
+    const res = await fetch(`${SB_URL}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: SB_ANON || SB_KEY },
+    })
+    if (!res.ok) return null
+    const u = await res.json()
+    return u?.id ? { id: u.id as string, email: u.email as string | undefined } : null
+  } catch {
+    return null
+  }
+}
+
+/** Is `userId` a member of `orgId`? Checked with the service role via PostgREST. */
+async function isOrgMember(userId: string, orgId: string): Promise<boolean> {
+  if (!userId || !orgId) return false
+  try {
+    const url =
+      `${SB_URL}/rest/v1/memberships?user_id=eq.${encodeURIComponent(userId)}` +
+      `&org_id=eq.${encodeURIComponent(orgId)}&select=user_id&limit=1`
+    const res = await fetch(url, {
+      headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+    })
+    if (!res.ok) return false
+    const rows = await res.json()
+    return Array.isArray(rows) && rows.length > 0
+  } catch {
+    return false
+  }
+}
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
