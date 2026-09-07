@@ -1,0 +1,15 @@
+{
+  "name": "GameDayOps College",
+  "short_name": "GameDayOps",
+  "description": "Pre-game operations command center for college football.",
+  "start_url": "./#/",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#04070f",
+  "theme_color": "#04070f",
+  "icons": [
+    { "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
