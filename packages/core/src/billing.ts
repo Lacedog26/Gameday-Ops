@@ -11,6 +11,7 @@
 export type BillingInterval = 'monthly' | 'annual'
 
 export type SubscriptionStatus =
+  | 'incomplete'
   | 'trialing'
   | 'active'
   | 'past_due'

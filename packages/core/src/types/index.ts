@@ -39,10 +39,12 @@ export interface NflGame {
   week: number
   /** Display label, e.g. "Week 2", "Preseason Week 1", "Wild Card". */
   weekLabel: string
-  /** ET date "YYYY-MM-DD" ("" when date is TBD). */
+  /** Local date "YYYY-MM-DD" ("" when date is TBD), in `timezone`. */
   date: string
-  /** ET 24h time "HH:MM" ("" when time is TBD). */
+  /** Local 24h time "HH:MM" ("" when time is TBD), in `timezone`. */
   time: string
+  /** IANA timezone the date/time are in (e.g. America/Chicago). Defaults ET. */
+  timezone?: string
   opponentId?: TeamId
   opponentName?: string // fallback when opponent isn't an NFL team id
   homeAway: 'HOME' | 'AWAY'
@@ -188,8 +190,10 @@ export interface GameInfo {
   opponent: string
   /** Free-form week label, e.g. "Week 1", "Wild Card", "Preseason Wk 2". */
   week: string
-  /** Kickoff as an ISO 8601 string (Eastern wall time by default). */
+  /** Kickoff wall-clock "YYYY-MM-DDTHH:mm", interpreted in `timezone`. */
   kickoffISO: string
+  /** IANA timezone the kickoff is in (e.g. America/Chicago). Defaults ET. */
+  timezone?: string
   /** Home/away — affects a small header accent only. */
   homeAway: 'HOME' | 'AWAY'
   /** Stadium / location (optional). */

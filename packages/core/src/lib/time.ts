@@ -1,18 +1,34 @@
 import type { AlertLevel, GameInfo, OpStatus, PregameEvent, TimedEvent } from '../types'
 
 // ---------------------------------------------------------------------------
-// Timezone: every wall-clock the board shows (current time, kickoff, each
-// event's scheduled time) is rendered in US Eastern Time, and the kickoff
-// input is interpreted as Eastern — so the board is correct on any TV/player
-// regardless of that machine's own clock zone. Durations/countdowns are pure
-// epoch math and are timezone-independent.
+// Timezone: a game's kickoff/date/time are stored as a wall-clock in the GAME's
+// own timezone (e.g. a Texas home game is Central), and the board renders every
+// wall-clock (current time, kickoff, each event's scheduled time) in that same
+// zone — so a Central-time program sees Central times and the countdown fires at
+// the correct real instant, on any TV regardless of the machine's clock. DST is
+// handled by resolving the offset at the target instant. Durations/countdowns
+// are pure epoch math and are timezone-independent.
+//
+// The ACTIVE zone defaults to Eastern (unchanged for NFL) and is set from the
+// loaded game's `timezone` (see DashboardContext). Every helper also accepts an
+// explicit `tz` so callers can format a specific game's zone directly.
 // ---------------------------------------------------------------------------
 export const TEAM_TZ = 'America/New_York'
 
-/** Extract wall-clock parts for an instant, evaluated in the team timezone. */
-function partsInTZ(epochMs: number) {
+let activeTZ: string = TEAM_TZ
+/** Set the active display timezone (from the loaded game). Falls back to ET. */
+export function setActiveTimeZone(tz?: string | null): void {
+  activeTZ = tz || TEAM_TZ
+}
+/** The active display timezone. */
+export function getActiveTimeZone(): string {
+  return activeTZ
+}
+
+/** Extract wall-clock parts for an instant, evaluated in `tz` (default active). */
+function partsInTZ(epochMs: number, tz: string = activeTZ) {
   const dtf = new Intl.DateTimeFormat('en-US', {
-    timeZone: TEAM_TZ,
+    timeZone: tz,
     hour12: false,
     year: 'numeric',
     month: '2-digit',
@@ -30,31 +46,31 @@ function partsInTZ(epochMs: number) {
   return p as { year: number; month: number; day: number; hour: number; minute: number; second: number }
 }
 
-/** Offset (ms) of the team timezone from UTC at a given instant (handles DST). */
-function tzOffsetMs(epochMs: number): number {
-  const p = partsInTZ(epochMs)
+/** Offset (ms) of `tz` from UTC at a given instant (handles DST). */
+function tzOffsetMs(epochMs: number, tz: string = activeTZ): number {
+  const p = partsInTZ(epochMs, tz)
   const asUTC = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second)
   return asUTC - epochMs
 }
 
 /**
- * Convert an Eastern-Time wall clock ("YYYY-MM-DDTHH:mm") to a UTC epoch.
- * Interpreting the kickoff field as Eastern keeps the board correct even if the
- * TV/admin device is set to another timezone.
+ * Convert a wall clock ("YYYY-MM-DDTHH:mm") in `tz` to a UTC epoch. Interpreting
+ * the kickoff field in the game's own zone keeps the board and countdown correct
+ * even if the TV/admin device is set to another timezone.
  */
-export function etWallTimeToEpoch(iso: string): number {
+export function etWallTimeToEpoch(iso: string, tz: string = activeTZ): number {
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/)
   if (!m) return new Date(iso).getTime()
   const [, y, mo, d, h, mi, s] = m
   const naiveUTC = Date.UTC(+y, +mo - 1, +d, +h, +mi, s ? +s : 0)
   // Offset at the naive instant is a close-enough anchor for DST correctness.
-  const offset = tzOffsetMs(naiveUTC)
+  const offset = tzOffsetMs(naiveUTC, tz)
   return naiveUTC - offset
 }
 
-/** Format an epoch as "YYYY-MM-DDTHH:mm" in Eastern Time (for the admin input). */
-export function epochToEtWallISO(epochMs: number): string {
-  const p = partsInTZ(epochMs)
+/** Format an epoch as "YYYY-MM-DDTHH:mm" in `tz` (for the admin input). */
+export function epochToEtWallISO(epochMs: number, tz: string = activeTZ): string {
+  const p = partsInTZ(epochMs, tz)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${p.year}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}`
 }
@@ -139,9 +155,9 @@ export function formatCardClock(epochMs: number, tMinusSeconds: number): string 
   return showSeconds ? `${h}:${p2(p.minute)}:${p2(p.second)}` : `${h}:${p2(p.minute)}`
 }
 
-/** Kickoff timestamp (ms) from game info, interpreting the field as Eastern. */
+/** Kickoff timestamp (ms) from game info, interpreting the field in its zone. */
 export function kickoffMs(game: GameInfo): number {
-  return etWallTimeToEpoch(game.kickoffISO)
+  return etWallTimeToEpoch(game.kickoffISO, game.timezone || activeTZ)
 }
 
 /** Absolute scheduled time (ms) for an event given kickoff. */

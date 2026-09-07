@@ -64,7 +64,7 @@ export default function ScheduleCenterSection() {
   const now = Date.now()
   const enriched = games.map((g) => {
     const c = g.current
-    const ko = c.date ? etWallTimeToEpoch(`${c.date}T${c.time || '23:59'}`) : NaN
+    const ko = c.date ? etWallTimeToEpoch(`${c.date}T${c.time || '23:59'}`, c.timezone) : NaN
     const completed = c.status !== 'bye' && !Number.isNaN(ko) && now > ko + 4 * 3600 * 1000
     return { ...g, completed }
   })
@@ -520,6 +520,7 @@ function LoadConfirm({ game, onClose }: { game: NflGame; onClose: () => void }) 
       week: game.weekLabel,
       homeAway: game.homeAway,
       kickoffISO: kickoffISO || state.game.kickoffISO,
+      timezone: game.timezone,
       venue: game.venue,
       sourceGameId: game.id,
       originalKickoffISO: state.gameOverrides[game.id]?.originalKickoffISO,

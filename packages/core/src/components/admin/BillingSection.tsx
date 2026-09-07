@@ -47,7 +47,11 @@ export default function BillingSection() {
   }
   const daysLeft = trialDaysRemaining(sub.trialEndsAt)
   const statusLabel =
-    sub.status === 'trialing' ? 'Free trial' : sub.status.charAt(0).toUpperCase() + sub.status.slice(1)
+    sub.status === 'trialing'
+      ? 'Free trial'
+      : sub.status === 'incomplete'
+        ? 'Trial not started'
+        : sub.status.charAt(0).toUpperCase() + sub.status.slice(1)
   const nextBilling = sub.currentPeriodEnd
     ? new Date(sub.currentPeriodEnd).toLocaleDateString()
     : sub.status === 'trialing' && sub.trialEndsAt

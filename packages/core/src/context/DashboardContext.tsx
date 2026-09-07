@@ -26,6 +26,7 @@ import { makeDefaultState } from '../product'
 import { uid } from '../lib/id'
 import { storage } from '../lib/storage'
 import { getScope, subscribeScope } from '../lib/session'
+import { setActiveTimeZone } from '../lib/time'
 
 // ---------------------------------------------------------------------------
 // Central state store: useReducer + Context, persisted through the storage
@@ -382,6 +383,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }
     storage.save(state)
   }, [state])
+
+  // Keep the display/kickoff timezone in sync with the active game, so a Central
+  // (or any) program's board and countdown use the correct zone.
+  useEffect(() => {
+    setActiveTimeZone(state.game.timezone)
+  }, [state.game.timezone])
 
   const actions = useMemo<DashboardContextValue['actions']>(
     () => ({

@@ -39,6 +39,11 @@ export default function ScheduleImportModal({ onClose }: { onClose: () => void }
     () => teamsByDivision().flatMap((d) => d.teams.map((t) => ({ id: t.id, name: t.name, shortName: t.shortName, abbr: t.abbr }))),
     [],
   )
+  // Rows without an explicit "CT/ET/…" fall back to the current game's zone.
+  const parseOpts = useMemo(
+    () => ({ season, teams, defaultTimeZone: state.game.timezone }),
+    [season, teams, state.game.timezone],
+  )
   const existing = useMemo(() => {
     const master = masterGames(teamId, season)
     const custom = state.customGames.filter((g) => g.teamId === teamId && g.season === season)
@@ -76,19 +81,19 @@ export default function ScheduleImportModal({ onClose }: { onClose: () => void }
         const XLSX = await import('xlsx')
         const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' })
         const csv = XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]])
-        ingest(parseScheduleText(csv, { season, teams }), file.name)
+        ingest(parseScheduleText(csv, parseOpts), file.name)
       } else if (ext === 'pdf') {
         const text = await extractPdfText(await file.arrayBuffer())
         if (!text.trim()) {
           setNote('That PDF has no selectable text (likely a scan/image). Open it, copy the schedule, and paste below.')
         } else {
-          ingest(parseScheduleText(text, { season, teams }), file.name)
+          ingest(parseScheduleText(text, parseOpts), file.name)
         }
       } else if (file.type.startsWith('image/')) {
         setNote('Image detected. Automatic reading of photos isn’t reliable — type the games into the grid, or paste the text below, then Parse.')
         if (!rows) setRows([blankRow(1)])
       } else {
-        ingest(parseScheduleText(await file.text(), { season, teams }), file.name)
+        ingest(parseScheduleText(await file.text(), parseOpts), file.name)
       }
     } catch (e) {
       setNote(`Couldn't read that file (${e instanceof Error ? e.message : 'error'}). Try CSV, or paste the rows below.`)
@@ -99,7 +104,7 @@ export default function ScheduleImportModal({ onClose }: { onClose: () => void }
   }
 
   function parsePasted() {
-    ingest(parseScheduleText(text, { season, teams }), 'the pasted text')
+    ingest(parseScheduleText(text, parseOpts), 'the pasted text')
   }
 
   function editRow(i: number, patch: Partial<ParsedRow>) {
@@ -133,6 +138,31 @@ export default function ScheduleImportModal({ onClose }: { onClose: () => void }
     }
     const games = rowsToGames(keep, { teamId, season })
     actions.importGames(games)
+
+    // Make the import DRIVE THE APP: pick the upcoming game (soonest game today
+    // or later, else the earliest) and load it onto the active board so the
+    // countdown, header, and every kickoff-derived feature immediately reflect
+    // the imported schedule — not just a success screen. Re-importing updates the
+    // same games (stable ids), so this re-selects/refreshes cleanly.
+    const dated = games.filter((g) => g.date)
+    if (dated.length) {
+      const key = (g: (typeof dated)[number]) => `${g.date}T${g.time || '00:00'}`
+      const todayISO = new Date().toISOString().slice(0, 10)
+      const sorted = [...dated].sort((a, b) => key(a).localeCompare(key(b)))
+      const upcoming = sorted.find((g) => g.date >= todayISO) ?? sorted[0]
+      const opp = upcoming.opponentId ? getTeam(upcoming.opponentId) : null
+      actions.loadGame({
+        teamId: upcoming.teamId,
+        opponentId: upcoming.opponentId,
+        opponent: opp ? opp.name : upcoming.opponentName ?? '',
+        week: upcoming.weekLabel,
+        homeAway: upcoming.homeAway,
+        kickoffISO: upcoming.time ? `${upcoming.date}T${upcoming.time}` : `${upcoming.date}T12:00`,
+        timezone: upcoming.timezone,
+        venue: upcoming.venue,
+        sourceGameId: upcoming.id,
+      })
+    }
     onClose()
   }
 

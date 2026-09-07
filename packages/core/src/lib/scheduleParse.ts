@@ -1,5 +1,4 @@
 import type { NflGame } from '../types'
-import { uid } from './id'
 
 // ---------------------------------------------------------------------------
 // Schedule parsing — turn messy real-world input (CSV, a pasted table, a
@@ -16,7 +15,9 @@ export interface ParsedRow {
   week: number | null
   weekLabel: string
   date: string // YYYY-MM-DD, or '' when TBD/unparseable
-  time: string // HH:MM 24h, or '' when TBD
+  time: string // HH:MM 24h, or '' when TBD (window/flex → the window START time)
+  /** IANA timezone the `time` is expressed in (e.g. America/Chicago for CT). */
+  timezone?: string
   opponentId?: string
   opponentName: string
   homeAway: 'HOME' | 'AWAY'
@@ -90,20 +91,47 @@ export function parseDate(raw: string, seasonYear: number): string {
   return ''
 }
 
-/** Parse a time like "7:00 PM", "7 PM", "19:00", "noon", "TBD" to "HH:MM" 24h. */
+/**
+ * Parse a kickoff time to "HH:MM" 24h. Handles exact times ("7:00 PM", "19:00",
+ * "noon"), and — importantly for real schedules — TIME WINDOWS and FLEX slots:
+ *   "11:00 AM–12:00 PM"                  → 11:00   (window start)
+ *   "2:30–3:30 PM"                       → 14:30   (AM/PM taken from later token)
+ *   "Flex: 2:30–3:30 PM or 5:00–7:00 PM" → 14:30   (earliest slot's start)
+ * The window/flex START is used as the kickoff anchor so the countdown always has
+ * a concrete target; the operator can fine-tune once the time is finalized.
+ */
 export function parseTime(raw: string): string {
   const s = raw.trim().toLowerCase()
   if (!s || /tbd|tba/.test(s)) return ''
   if (/noon/.test(s)) return '12:00'
-  const m = s.match(/(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?/)
-  if (!m) return ''
+  if (/midnight/.test(s)) return '00:00'
+  // First clock token = the window/flex start (the earliest listed time).
+  const m = s.match(/(\d{1,2})(?::(\d{2}))?/)
+  if (!m || m.index === undefined) return ''
   let h = +m[1]
   const min = m[2] ? +m[2] : 0
-  const ap = m[3]?.replace(/\./g, '')
-  if (ap === 'pm' && h < 12) h += 12
-  if (ap === 'am' && h === 12) h = 0
   if (h > 23 || min > 59) return ''
+  // Meridiem: prefer an am/pm attached AFTER this token (covers "2:30–3:30 PM",
+  // where the PM belongs to the whole window); else the first am/pm anywhere.
+  const after = s.slice(m.index + m[0].length)
+  const ap = (after.match(/(a\.?m\.?|p\.?m\.?)/)?.[1] ?? s.match(/(a\.?m\.?|p\.?m\.?)/)?.[1])?.replace(/\./g, '')
+  if (ap === 'pm' && h < 12) h += 12
+  else if (ap === 'am' && h === 12) h = 0
+  else if (!ap && h >= 1 && h <= 8) h += 12 // no meridiem at all → assume afternoon/evening kickoff
   return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`
+}
+
+const TZ_ABBREV: Record<string, string> = {
+  et: 'America/New_York', est: 'America/New_York', edt: 'America/New_York', eastern: 'America/New_York',
+  ct: 'America/Chicago', cst: 'America/Chicago', cdt: 'America/Chicago', central: 'America/Chicago',
+  mt: 'America/Denver', mst: 'America/Denver', mdt: 'America/Denver', mountain: 'America/Denver',
+  pt: 'America/Los_Angeles', pst: 'America/Los_Angeles', pdt: 'America/Los_Angeles', pacific: 'America/Los_Angeles',
+}
+
+/** Detect a US timezone from a cell/line ("6:30 PM CT" → America/Chicago). */
+export function parseTimeZone(raw: string): string | undefined {
+  const m = raw.toLowerCase().match(/\b(et|est|edt|eastern|ct|cst|cdt|central|mt|mst|mdt|mountain|pt|pst|pdt|pacific)\b/)
+  return m ? TZ_ABBREV[m[1]] : undefined
 }
 
 /** Detect HOME/AWAY from a cell or an opponent string ("@", "at", "vs", "H"/"A"). */
@@ -114,10 +142,15 @@ function parseHomeAway(cell: string, opponent: string): 'HOME' | 'AWAY' {
   return 'HOME'
 }
 
-/** Split one line into fields, honoring commas, tabs, pipes, or 2+ spaces. */
+/** Split one line into fields, honoring commas, tabs, pipes, dashes, or 2+ spaces. */
 function splitLine(line: string): string[] {
   if (line.includes('\t')) return line.split('\t')
   if (line.includes('|')) return line.split('|')
+  // Dash-separated lists (em/en/hyphen surrounded by spaces) are common when a
+  // schedule is pasted as "Opponent — Sep 12 — 6:30 PM CT". Do this before the
+  // comma/space fallbacks. A dash INSIDE a window ("2:30–3:30") has no spaces so
+  // it's untouched.
+  if (/\s[—–-]\s/.test(line)) return line.split(/\s+[—–-]\s+/).map((c) => c.trim())
   if (line.includes(',')) return parseCsvLine(line)
   // Fallback: 2+ spaces as a column boundary (common when pasted from a PDF).
   return line.split(/\s{2,}/)
@@ -169,7 +202,7 @@ function detectHeader(cells: string[]): ColumnMap | null {
  */
 export function parseScheduleText(
   text: string,
-  opts: { season: number; teams: TeamLite[] },
+  opts: { season: number; teams: TeamLite[]; defaultTimeZone?: string },
 ): ParsedRow[] {
   const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
   if (!lines.length) return []
@@ -210,6 +243,9 @@ export function parseScheduleText(
     const week = weekCell && /\d/.test(weekCell) ? parseInt(weekCell.replace(/\D/g, ''), 10) : ++autoWeek
     const date = parseDate(dateCell, opts.season)
     const time = parseTime(timeCell)
+    // Timezone from the time cell first (e.g. "6:30 PM CT"), else anywhere on the
+    // line, else the import default (so a team's home zone can be supplied once).
+    const timezone = parseTimeZone(timeCell) ?? parseTimeZone(line) ?? opts.defaultTimeZone
     const homeAway = parseHomeAway(haCell, oppCell)
     const opponentName = oppCell.replace(/^\s*(@|at|vs\.?|v\.?)\s+/i, '').trim()
     const opponentId = matchOpponent(opponentName, opts.teams)
@@ -222,7 +258,7 @@ export function parseScheduleText(
     rows.push({
       week: Number.isFinite(week) ? week : null,
       weekLabel: `Week ${Number.isFinite(week) ? week : autoWeek}`,
-      date, time, opponentId, opponentName, homeAway,
+      date, time, timezone, opponentId, opponentName, homeAway,
       venue: venueCell, errors,
     })
   }
@@ -264,10 +300,17 @@ export function diffSchedule(rows: ParsedRow[], existing: NflGame[]): DiffRow[] 
   })
 }
 
-/** Convert confirmed rows into structured game records for a team+season. */
+/**
+ * Convert confirmed rows into structured game records for a team+season.
+ *
+ * The id is DETERMINISTIC (`<teamId>-<season>-w<week>`) — no random suffix — so
+ * re-importing the same schedule updates the SAME game rather than creating a
+ * duplicate, and anything referencing the game by id (a loaded board's
+ * sourceGameId) stays linked across re-imports.
+ */
 export function rowsToGames(rows: ParsedRow[], opts: { teamId: string; season: number }): NflGame[] {
   return rows.map((r) => ({
-    id: uid(`${opts.teamId}-${opts.season}-w${r.week ?? 0}`),
+    id: `${opts.teamId}-${opts.season}-w${r.week ?? 0}`,
     season: opts.season,
     teamId: opts.teamId,
     phase: 'regular',
@@ -275,6 +318,7 @@ export function rowsToGames(rows: ParsedRow[], opts: { teamId: string; season: n
     weekLabel: r.weekLabel || `Week ${r.week ?? 0}`,
     date: r.date,
     time: r.time,
+    timezone: r.timezone,
     opponentId: r.opponentId,
     opponentName: r.opponentId ? undefined : r.opponentName || undefined,
     homeAway: r.homeAway,

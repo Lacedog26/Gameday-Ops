@@ -95,6 +95,12 @@ Deno.serve(async (req) => {
     form.set('client_reference_id', orgId)
     form.set('subscription_data[metadata][orgId]', orgId)
     form.set('subscription_data[trial_period_days]', '14')
+    // Require a card up front for the trial: Checkout collects and attaches the
+    // payment method now, charges $0 during the 14 days, then auto-charges it at
+    // trial end. If somehow no card is captured, cancel at trial end rather than
+    // leaving an unpayable subscription.
+    form.set('payment_method_collection', 'always')
+    form.set('subscription_data[trial_settings][end_behavior][missing_payment_method]', 'cancel')
     form.set('allow_promotion_codes', 'true')
     form.set('success_url', `${SITE}/#/admin?checkout=success`)
     form.set('cancel_url', `${SITE}/#/admin?checkout=cancel`)
