@@ -265,6 +265,103 @@ export function parseScheduleText(
   return rows
 }
 
+/**
+ * OCR-tolerant parser for free-form schedule text (from an image or a messy
+ * paste). Unlike the tabular parser it does not assume columns: it scans each
+ * line for a date, a time (exact / window / TBA), a home/away marker, and an
+ * opponent (matched against the team list, which is far more reliable on OCR
+ * output than positional guessing). A line contributes a game if it yields at
+ * least a date OR a confidently-matched opponent — so a readable game never
+ * collapses into one invalid blob, and only the genuinely-missing field is
+ * flagged for review.
+ */
+export function parseLooseSchedule(
+  text: string,
+  opts: { season: number; teams: TeamLite[]; defaultTimeZone?: string; excludeTeamId?: string },
+): ParsedRow[] {
+  const teams = opts.teams.filter((t) => t.id !== opts.excludeTeamId)
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 1)
+  const rows: ParsedRow[] = []
+  let autoWeek = 0
+
+  for (const raw of lines) {
+    const line = raw.replace(/\s{2,}/g, ' ')
+    // Skip obvious header / noise lines.
+    if (/^(week|date|opponent|time|kickoff|schedule|home|away|tv|network)\b/i.test(line)) continue
+
+    // Extract the date TOKEN first (a line that says "TBA" for the time must not
+    // make the whole date bail — parseDate short-circuits on "tba" anywhere).
+    const dateTok =
+      line.match(/\b\d{4}-\d{1,2}-\d{1,2}\b/)?.[0] ??
+      line.match(/\b\d{1,2}[/.\-]\d{1,2}(?:[/.\-]\d{2,4})?\b/)?.[0] ??
+      line.match(/\b[a-z]{3,9}\.?\s+\d{1,2}(?:,?\s*\d{4})?\b/i)?.[0] ??
+      ''
+    const date = dateTok ? parseDate(dateTok, opts.season) : ''
+
+    // Time: only a token that carries ':' or am/pm (or a window/TBA) — never the
+    // day-of-month digits. Preserve genuine TBA as an empty time (status TBD).
+    let time = ''
+    const isTba = /\b(tba|tbd)\b/i.test(line)
+    const timeTok = line.match(
+      /\b\d{1,2}(?::\d{2})?\s*[–-]\s*\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)/i, // window "2:30-3:30 PM"
+    )?.[0]
+      ?? line.match(/\b\d{1,2}:\d{2}\s*(?:a\.?m\.?|p\.?m\.?)?/i)?.[0] // "6:30 PM" / "18:30"
+      ?? line.match(/\b\d{1,2}\s*(?:a\.?m\.?|p\.?m\.?)/i)?.[0] // "7 PM"
+      ?? (/\bnoon\b/i.test(line) ? 'noon' : '')
+    if (timeTok) time = parseTime(timeTok)
+
+    const timezone = parseTimeZone(line) ?? opts.defaultTimeZone
+    const opponentId = matchOpponent(line, teams)
+
+    // Opponent name: the matched team's name, else a cleaned leftover (date/time/
+    // markers/weekday/tz stripped).
+    let opponentName = ''
+    if (opponentId) {
+      opponentName = teams.find((t) => t.id === opponentId)?.name ?? ''
+    } else {
+      opponentName = line
+        .replace(/\b\d{1,2}:\d{2}\s*(?:a\.?m\.?|p\.?m\.?)?/gi, ' ')
+        .replace(/\b\d{1,2}\s*(?:a\.?m\.?|p\.?m\.?)/gi, ' ')
+        .replace(/\b[a-z]{3,9}\.?\s+\d{1,2}(?:\s*,?\s*\d{4})?\b/gi, ' ') // month day[, year]
+        .replace(/\b\d{1,2}[/.\-]\d{1,2}(?:[/.\-]\d{2,4})?\b/g, ' ') // numeric date
+        .replace(/\b(et|est|edt|ct|cst|cdt|mt|mst|mdt|pt|pst|pdt|eastern|central|mountain|pacific)\b/gi, ' ')
+        .replace(/\b(sun|mon|tue|wed|thu|fri|sat)[a-z]*\b/gi, ' ')
+        .replace(/\b(vs\.?|v\.?|at|home|away|neutral|tba|tbd|noon|week)\b/gi, ' ')
+        .replace(/[@#|]/g, ' ')
+        .replace(/\bwk?\s*\d+\b/gi, ' ')
+        .replace(/[^A-Za-z0-9&'.\- ]/g, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim()
+    }
+
+    // A line is a game only if we found a real date OR a confidently-matched
+    // opponent from the team list. This keeps titles/records/notes ("2026 Texas
+    // Longhorns Football", "TV: ESPN") out of the schedule.
+    if (!date && !opponentId) continue
+
+    autoWeek += 1
+    const homeAway = parseHomeAway(line, line)
+    const errors: string[] = []
+    if (!opponentName) errors.push('Missing opponent')
+    if (!date) errors.push('Missing/invalid date')
+    if (!time) errors.push(isTba ? 'Kickoff TBA' : 'Kickoff time TBD')
+
+    rows.push({
+      week: autoWeek,
+      weekLabel: `Week ${autoWeek}`,
+      date,
+      time,
+      timezone,
+      opponentId,
+      opponentName,
+      homeAway,
+      venue: '',
+      errors,
+    })
+  }
+  return rows
+}
+
 export type RowStatus = 'new' | 'updated' | 'unchanged' | 'duplicate' | 'error'
 
 export interface DiffRow extends ParsedRow {

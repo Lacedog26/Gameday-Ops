@@ -4,6 +4,7 @@ import { getTeam, masterGames, teamsByDivision } from '../../product'
 import {
   diffSchedule,
   parseScheduleText,
+  parseLooseSchedule,
   rowsToGames,
   type DiffRow,
   type ParsedRow,
@@ -92,8 +93,23 @@ export default function ScheduleImportModal({ onClose }: { onClose: () => void }
           ingest(parseScheduleText(text, parseOpts), file.name)
         }
       } else if (file.type.startsWith('image/')) {
-        setNote('Image detected. Automatic reading of photos isn’t reliable — type the games into the grid, or paste the text below, then Parse.')
-        if (!rows) setRows([blankRow(1)])
+        setNote('Reading the image… this can take a few seconds.')
+        const ocrText = await extractImageText(file, (p) => setNote(`Reading the image… ${p}%`))
+        // Try the tabular parser and the OCR-tolerant loose parser; keep whichever
+        // recovered more real games (a date or a matched opponent).
+        const looseOpts = { ...parseOpts, excludeTeamId: teamId }
+        const tabular = parseScheduleText(ocrText, parseOpts)
+        const loose = parseLooseSchedule(ocrText, looseOpts)
+        const score = (rs: ParsedRow[]) => rs.filter((r) => r.date || r.opponentId).length
+        const best = score(loose) >= score(tabular) ? loose : tabular
+        if (!best.length || score(best) === 0) {
+          setNote(
+            'Couldn’t confidently read games from that image. Try a sharper, straight-on screenshot (not a photo at an angle), or paste the text below and press Parse.',
+          )
+          if (!rows) setRows(best.length ? best : [blankRow(1)])
+        } else {
+          ingest(best, `${file.name} (read by OCR — please double-check each row)`)
+        }
       } else {
         ingest(parseScheduleText(await file.text(), parseOpts), file.name)
       }
@@ -330,6 +346,27 @@ function validate(r: ParsedRow): string[] {
   if (!r.date) errors.push('Missing/invalid date')
   if (!r.time) errors.push('Kickoff time TBD')
   return errors
+}
+
+/**
+ * OCR an uploaded schedule image to text (Tesseract.js, lazy-loaded so it never
+ * bloats the main bundle). Runs entirely in the browser — no API key, no upload
+ * of the image anywhere. The recovered text is then parsed like any other paste.
+ */
+async function extractImageText(file: File, onProgress?: (pct: number) => void): Promise<string> {
+  const mod = (await import('tesseract.js')) as unknown as {
+    recognize?: (img: Blob, lang: string, opts?: unknown) => Promise<{ data: { text: string } }>
+    default?: { recognize: (img: Blob, lang: string, opts?: unknown) => Promise<{ data: { text: string } }> }
+  }
+  const recognize = mod.recognize ?? mod.default?.recognize
+  if (!recognize) throw new Error('OCR engine unavailable')
+  const res = await recognize(file, 'eng', {
+    // deno-lint-ignore no-explicit-any
+    logger: (m: { status?: string; progress?: number }) => {
+      if (m.status === 'recognizing text' && onProgress) onProgress(Math.round((m.progress ?? 0) * 100))
+    },
+  })
+  return res.data.text ?? ''
 }
 
 /** Extract selectable text from a text-based PDF using pd.js (lazy-loaded). */
