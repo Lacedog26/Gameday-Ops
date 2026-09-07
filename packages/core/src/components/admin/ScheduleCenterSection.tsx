@@ -42,13 +42,15 @@ export default function ScheduleCenterSection() {
   const [editId, setEditId] = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
 
-  // Merge master + custom games for this team/season, then apply overrides.
+  // Games for this team/season, then apply overrides. Once a schedule has been
+  // imported (custom games exist for this team+season) it SUPERSEDES the built-in
+  // master — one source of truth, no master/import duplicates.
   const games = useMemo(() => {
     const master = masterGames(viewTeamId, state.season)
     const custom = state.customGames.filter(
       (g) => g.teamId === viewTeamId && g.season === state.season,
     )
-    const all = [...master, ...custom]
+    const all = custom.length ? custom : master
     const phaseOrder: Record<string, number> = { preseason: 0, regular: 1, postseason: 2 }
     return all
       .map((g) => ({ base: g, current: applyOverride(g, state.gameOverrides[g.id]) }))

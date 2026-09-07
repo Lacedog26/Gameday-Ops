@@ -44,10 +44,12 @@ export default function ScheduleImportModal({ onClose }: { onClose: () => void }
     () => ({ season, teams, defaultTimeZone: state.game.timezone }),
     [season, teams, state.game.timezone],
   )
+  // Diff baseline: once a schedule is imported it supersedes master, so re-imports
+  // compare against the imported set (matching by week) — never against master.
   const existing = useMemo(() => {
     const master = masterGames(teamId, season)
     const custom = state.customGames.filter((g) => g.teamId === teamId && g.season === season)
-    return [...master, ...custom]
+    return custom.length ? custom : master
   }, [teamId, season, state.customGames])
 
   const [text, setText] = useState('')
