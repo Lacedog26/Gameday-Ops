@@ -99,7 +99,7 @@ export default function ScheduleCenterSection() {
   }
 
   return (
-    <Section title="Schedule Center" subtitle="Preloaded NFL schedule — pick a game to load" accent="red">
+    <Section title="Schedule Center" subtitle="Your 2026 college football schedule — select a game to load" accent="red">
       {/* Stats + selectors */}
       <div className="mb-4 grid gap-3 sm:grid-cols-4">
         <Stat label="Season" value={String(state.season)} />
@@ -136,13 +136,15 @@ export default function ScheduleCenterSection() {
       {games.length === 0 ? (
         <div className="rounded-xl border border-white/10 bg-navy-950/50 p-6 text-center">
           <p className="text-slate-300">
-            No preloaded schedule for <span className="font-bold text-white">{team.name}</span> yet.
+            We don’t have <span className="font-bold text-white">{team.name}</span>’s {state.season} schedule
+            loaded yet.
           </p>
           <p className="mt-1 text-sm text-slate-500">
-            Import the official schedule (JSON) to populate it — the app never invents games.
+            Import it in seconds — upload a screenshot, CSV, PDF, or paste it in. You review every game before it
+            goes live.
           </p>
           <div className="mt-3">
-            <Button onClick={() => setShowImport(true)}>Import Schedule</Button>
+            <Button onClick={() => setShowImport(true)}>Import {team.name}’s Schedule</Button>
           </div>
         </div>
       ) : (
@@ -169,7 +171,7 @@ export default function ScheduleCenterSection() {
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Button onClick={() => setShowImport(true)}>⬆ Import Schedule</Button>
         <Button variant="ghost" onClick={() => fileRef.current?.click()} className="text-xs">
-          Advanced: import CFBD JSON
+          Advanced: import schedule JSON
         </Button>
         <input
           ref={fileRef}

@@ -93,7 +93,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-6 text-center text-xs text-slate-500">
-          <Link to="/" className="hover:text-white">← Back to board</Link>
+          <Link to="/welcome" className="hover:text-white">← Back to home</Link>
         </div>
       </div>
     </div>

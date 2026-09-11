@@ -42,7 +42,7 @@ export default function AdminPage() {
             <div className="font-display text-lg font-extrabold uppercase leading-none tracking-wide">
               {productName}
             </div>
-            <div className="text-xs font-semibold tracking-widest text-slate-400">ADMIN CONTROL CENTER</div>
+            <div className="text-xs font-semibold tracking-widest text-slate-400">GAME DAY OPERATIONS</div>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -59,7 +59,7 @@ export default function AdminPage() {
             to="/"
             className="rounded-full bg-team-primary px-5 py-2 text-sm font-bold tracking-wider hover:bg-team-primary/85"
           >
-            ← BACK TO BOARD
+            ← HOME
           </Link>
         </div>
       </header>
