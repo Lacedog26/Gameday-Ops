@@ -77,7 +77,11 @@ const p2 = (n: number) => String(Math.floor(n)).padStart(2, '0')
  * desired — we always show HH:MM:SS for the big kickoff clock for consistency).
  */
 export function formatHMS(totalSeconds: number): string {
-  const s = Math.max(0, Math.floor(totalSeconds))
+  // Live countdowns round UP: while any part of a second remains it reads that
+  // whole second, so the display shows 05,04,03,02,01 → 0 (never a stray 00:00
+  // for a full second before the event). This is the SAME whole-second the
+  // audible countdown beeps on, keeping screen and sound perfectly in sync.
+  const s = Math.max(0, Math.ceil(totalSeconds))
   const h = Math.floor(s / 3600)
   const m = Math.floor((s % 3600) / 60)
   const sec = s % 60
@@ -86,7 +90,8 @@ export function formatHMS(totalSeconds: number): string {
 
 /** Format a duration as MM:SS (used for row/focus countdowns under an hour). */
 export function formatMS(totalSeconds: number): string {
-  const s = Math.max(0, Math.floor(totalSeconds))
+  // Round UP — see formatHMS: matches the audible final-seconds countdown.
+  const s = Math.max(0, Math.ceil(totalSeconds))
   const m = Math.floor(s / 60)
   const sec = s % 60
   return `${p2(m)}:${p2(sec)}`
