@@ -40,9 +40,13 @@ export default function GraphicsSection() {
 
   return (
     <Section
-      title="Team Culture Graphics"
-      subtitle="Rotating motivation panel · PNG / GIF / SVG · transparency preserved"
+      title="Culture"
+      subtitle="Your team’s culture messages on the display · PNG / JPG / WebP · transparency preserved"
     >
+      <p className="mb-3 text-sm text-slate-400">
+        Add one culture image and it shows on the display continuously. Add more and the display rotates through
+        them automatically — no game-day switching needed.
+      </p>
       <div
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
@@ -51,8 +55,8 @@ export default function GraphicsSection() {
         }}
         className="mb-5 flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-white/20 bg-navy-950/40 px-4 py-6 text-center"
       >
-        <p className="text-slate-300">Drag &amp; drop graphics here, or</p>
-        <Button onClick={() => fileRef.current?.click()}>Choose Files</Button>
+        <p className="text-slate-300">Drag &amp; drop your culture image here, or</p>
+        <Button onClick={() => fileRef.current?.click()}>+ Add Culture Image</Button>
         <input
           ref={fileRef}
           type="file"
@@ -63,6 +67,13 @@ export default function GraphicsSection() {
         />
         {error && <p className="text-sm text-bills-red">{error}</p>}
       </div>
+
+      {graphics.length > 0 && (
+        <div className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-500">
+          Current messages · {graphics.length}
+          {graphics.filter((g) => g.enabled).length > 1 ? ' (rotating)' : ' (showing continuously)'}
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         {graphics.map((g, i) => (
@@ -80,7 +91,9 @@ export default function GraphicsSection() {
         ))}
       </div>
       {graphics.length === 0 && (
-        <p className="py-4 text-center text-slate-500">No graphics yet.</p>
+        <p className="py-4 text-center text-slate-500">
+          No culture messages yet. Add one above — it’ll appear on your display right away.
+        </p>
       )}
     </Section>
   )

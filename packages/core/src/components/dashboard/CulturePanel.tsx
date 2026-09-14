@@ -32,12 +32,12 @@ export default function CulturePanel({ suppressed }: Props) {
   const branding = state.teamBranding?.[teamId]
   const teamSaying = branding?.culture ?? teamDefaultCulture(teamId)
 
-  // Combined rotation: the team's culture saying first, then enabled graphics,
-  // then enabled text quotes.
+  // Culture rotation = the operator's own culture content (uploaded images +
+  // text quotes). The team's shipped default saying is only a FALLBACK shown when
+  // the operator hasn't added anything yet — so the moment they add a single
+  // culture image it shows on its own (no rotation), and adding a second begins
+  // the rotation automatically. One item = shown continuously; 2+ = rotate.
   const slides = useMemo<Slide[]>(() => {
-    const s: Slide[] = teamSaying
-      ? [{ kind: 'quote', id: 'team-culture', quote: { id: 'team-culture', text: teamSaying, enabled: true, order: -1, accent: 'white' } }]
-      : []
     const g: Slide[] = graphics
       .filter((x) => x.enabled)
       .sort((a, b) => a.order - b.order)
@@ -46,7 +46,12 @@ export default function CulturePanel({ suppressed }: Props) {
       .filter((x) => x.enabled)
       .sort((a, b) => a.order - b.order)
       .map((quote) => ({ kind: 'quote', id: quote.id, quote }))
-    return [...s, ...g, ...q]
+    const own = [...g, ...q]
+    if (own.length > 0) return own
+    // Fallback: the team's default saying (if any) when nothing has been added.
+    return teamSaying
+      ? [{ kind: 'quote', id: 'team-culture', quote: { id: 'team-culture', text: teamSaying, enabled: true, order: -1, accent: 'white' } }]
+      : []
   }, [teamSaying, graphics, quotes])
 
   const [index, setIndex] = useState(0)
