@@ -2,17 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useDashboard } from '../../context/DashboardContext'
 import { getTeam, teamDefaultCulture } from '../../product'
-import type { CultureGraphic, Quote, TransitionStyle } from '../../types'
+import type { Quote, TransitionStyle } from '../../types'
+import { buildCultureSlides, cultureShouldRotate, type Slide } from '../../lib/culture'
 
 interface Props {
   /** When true (2-min / GO NOW active), the panel steps aside for the alert. */
   suppressed: boolean
 }
-
-// A rotation slide is either an uploaded image or a text quote.
-type Slide =
-  | { kind: 'image'; id: string; graphic: CultureGraphic; durationSec?: number }
-  | { kind: 'quote'; id: string; quote: Quote }
 
 /**
  * Rotating team-culture / motivation panel. Cycles enabled graphics AND text
@@ -32,27 +28,12 @@ export default function CulturePanel({ suppressed }: Props) {
   const branding = state.teamBranding?.[teamId]
   const teamSaying = branding?.culture ?? teamDefaultCulture(teamId)
 
-  // Culture rotation = the operator's own culture content (uploaded images +
-  // text quotes). The team's shipped default saying is only a FALLBACK shown when
-  // the operator hasn't added anything yet — so the moment they add a single
-  // culture image it shows on its own (no rotation), and adding a second begins
-  // the rotation automatically. One item = shown continuously; 2+ = rotate.
-  const slides = useMemo<Slide[]>(() => {
-    const g: Slide[] = graphics
-      .filter((x) => x.enabled)
-      .sort((a, b) => a.order - b.order)
-      .map((graphic) => ({ kind: 'image', id: graphic.id, graphic, durationSec: graphic.durationSec }))
-    const q: Slide[] = quotes
-      .filter((x) => x.enabled)
-      .sort((a, b) => a.order - b.order)
-      .map((quote) => ({ kind: 'quote', id: quote.id, quote }))
-    const own = [...g, ...q]
-    if (own.length > 0) return own
-    // Fallback: the team's default saying (if any) when nothing has been added.
-    return teamSaying
-      ? [{ kind: 'quote', id: 'team-culture', quote: { id: 'team-culture', text: teamSaying, enabled: true, order: -1, accent: 'white' } }]
-      : []
-  }, [teamSaying, graphics, quotes])
+  // Culture rotation (see buildCultureSlides): the operator's own content is the
+  // rotation; the team's default saying is a fallback shown only when empty.
+  const slides = useMemo<Slide[]>(
+    () => buildCultureSlides({ teamSaying, graphics, quotes }),
+    [teamSaying, graphics, quotes],
+  )
 
   const [index, setIndex] = useState(0)
 
@@ -62,8 +43,9 @@ export default function CulturePanel({ suppressed }: Props) {
   }, [slides.length, index])
 
   // Rotation timer — paused while suppressed so the same slide resumes after.
+  // Only rotates when there's more than one slide (one image shows continuously).
   useEffect(() => {
-    if (suppressed || slides.length <= 1) return
+    if (suppressed || !cultureShouldRotate(slides)) return
     const current = slides[index]
     const durationSec =
       (current?.kind === 'image' ? current.durationSec : undefined) ?? settings.cultureRotationSec
