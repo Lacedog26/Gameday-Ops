@@ -3,6 +3,7 @@ import { useDashboard } from '../../context/DashboardContext'
 import type { PregameEvent, ScheduleTemplate, TemplateKind } from '../../types'
 import { eventScheduledAt, formatCardClock, formatTMinus, kickoffMs, parseTMinus } from '../../lib/time'
 import { uid } from '../../lib/id'
+import { ANCHOR_PRESETS, routineAnchorSeconds, shiftRoutineToAnchor } from '../../lib/routine'
 import { Section, TextInput, Button, IconButton, Select } from './ui'
 
 function move<T>(arr: T[], from: number, to: number): T[] {
@@ -36,6 +37,7 @@ export default function ScheduleEditorSection() {
   const [savedAt, setSavedAt] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [anchorText, setAnchorText] = useState('')
 
   // Mirror live state into the draft while there are no unsaved edits (so
   // loading a game / template or a cross-TV sync shows through). Once the
@@ -113,6 +115,15 @@ export default function ScheduleEditorSection() {
 
   const justSaved = savedAt && Date.now() - savedAt < 4000
 
+  // Anchor system: the first event (largest T-minus) is the routine's anchor.
+  // Changing it shifts the whole routine by the same delta, preserving spacing
+  // and seconds; the T-0 kickoff stays put. Purely edits the draft (Save persists).
+  const anchorSec = routineAnchorSeconds(draft)
+  const applyAnchor = (sec: number) => {
+    if (sec > 0) edit(shiftRoutineToAnchor(draft, sec))
+    setAnchorText('')
+  }
+
   return (
     <Section title="Schedule Editor" subtitle="Events run automatically off their T-minus value" accent="red">
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -120,6 +131,52 @@ export default function ScheduleEditorSection() {
         <Button variant="ghost" onClick={sortByTime}>Sort by T-minus</Button>
         <Button variant="ghost" onClick={actions.clearAcks}>Reset Acknowledgements</Button>
       </div>
+
+      {/* Routine anchor — shift the whole routine while preserving spacing/seconds. */}
+      {draft.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-navy-950/50 px-3 py-2">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+            Routine start (anchor)
+          </span>
+          <span className="tnum font-mono text-sm font-bold text-sky-300">{formatTMinus(anchorSec)}</span>
+          <span className="mx-1 text-slate-600">·</span>
+          {ANCHOR_PRESETS.map((p) => (
+            <Button
+              key={p.label}
+              variant={anchorSec === p.seconds ? 'success' : 'ghost'}
+              onClick={() => applyAnchor(p.seconds)}
+              className="py-1.5"
+            >
+              {p.label}
+            </Button>
+          ))}
+          <TextInput
+            value={anchorText}
+            onChange={(e) => setAnchorText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const s = parseTMinus(anchorText)
+                if (s != null && s > 0) applyAnchor(s)
+              }
+            }}
+            placeholder="Custom e.g. 78:30"
+            className="w-32 py-1.5"
+          />
+          <Button
+            variant="ghost"
+            onClick={() => {
+              const s = parseTMinus(anchorText)
+              if (s != null && s > 0) applyAnchor(s)
+            }}
+            className="py-1.5"
+          >
+            Set
+          </Button>
+          <span className="basis-full text-[11px] text-slate-500">
+            Shifts every event together (T-minus values move, kickoff stays T-0). Clock times recalc from kickoff.
+          </span>
+        </div>
+      )}
 
       {/* Header row (hidden on mobile) */}
       <div className="hidden gap-2 px-2 pb-1 text-[11px] font-bold uppercase tracking-widest text-slate-500 sm:grid sm:grid-cols-[70px_120px_1fr_1fr_auto]">
