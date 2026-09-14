@@ -40,20 +40,20 @@ function buildEvents(rows: Row[]): PregameEvent[] {
 
 // The canonical routine transcribed from the Buffalo Bills pre-game card.
 const REGULAR_ROWS: Row[] = [
-  { label: 'K, P, LS OUT', t: mins(77) },
-  { label: 'RETURNERS OUT', t: mins(62) },
-  { label: 'DB OUT', t: mins(50) },
-  { label: 'QB, C, TE, WR, RB OUT', t: mins(50) },
-  { label: 'PAT & GO', t: mins(47) },
-  { label: 'OL, DL, LB OUT', t: mins(44) },
-  { label: 'TEAM STRETCH', t: mins(44) },
-  { label: 'INDIVIDUAL', t: mins(38) },
-  { label: "1 ON 1'S", t: mins(35, 30) },
-  { label: '7 ON 7', t: mins(33) },
-  { label: 'TEAM', t: mins(30) },
-  { label: 'LEAVE FIELD', t: mins(27) },
-  { label: '2 MINUTE WARNING', t: mins(12) },
-  { label: 'KICKOFF', t: 0, kickoff: true },
+  { label: 'K, P, LS OUT', t: mins(79) },
+  { label: 'RETURNERS OUT', t: mins(64) },
+  { label: 'DB OUT', t: mins(52) },
+  { label: 'QB, C, TE, WR, RB OUT', t: mins(52) },
+  { label: 'PAT & GO', t: mins(49) },
+  { label: 'OL, DL, LB OUT', t: mins(46) },
+  { label: 'TEAM STRETCH', t: mins(46) },
+  { label: 'INDIVIDUAL', t: mins(40) },
+  { label: 'ROUTES ON AIR', t: mins(37, 30) },
+  { label: '7 ON 7', t: mins(35), note: '3 Reps (1s), 2 Reps (2s)' },
+  { label: 'TEAM', t: mins(32, 30), note: '3 Reps (1s), 2 Reps (2s)' },
+  { label: 'LEAVE FIELD', t: mins(30) },
+  { label: '2 MINUTE WARNING', t: mins(15) },
+  { label: 'PUT BALL DOWN', t: 0, kickoff: true },
 ]
 
 // Preseason: slightly condensed, fewer team periods.

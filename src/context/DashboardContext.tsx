@@ -284,6 +284,13 @@ interface DashboardContextValue {
     setTeamLogo: (teamId: string, patch: Partial<TeamLogo>) => void
     removeTeamLogo: (teamId: string) => void
     reset: () => void
+    /**
+     * Atomically persist `next` and, ONLY if the write actually succeeds, adopt
+     * it as the in-memory state. Rejects (leaving state unchanged) if the DB
+     * rejected the write — so an explicit "Save Changes" never shows a false
+     * success and unsaved edits survive a failure.
+     */
+    commit: (next: AppState) => Promise<void>
   }
 }
 
@@ -370,6 +377,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       setTeamLogo: (teamId, patch) => dispatch({ type: 'SET_TEAM_LOGO', teamId, patch }),
       removeTeamLogo: (teamId) => dispatch({ type: 'REMOVE_TEAM_LOGO', teamId }),
       reset: () => dispatch({ type: 'RESET' }),
+      commit: async (next: AppState) => {
+        // Persist first; if the DB rejects it, throw WITHOUT mutating state so
+        // the caller keeps the user's unsaved edits and shows a real error.
+        await storage.saveNow(next)
+        skipPersistRef.current = true
+        dispatch({ type: 'HYDRATE', state: next, external: true })
+      },
     }),
     [],
   )

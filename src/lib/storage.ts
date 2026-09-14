@@ -17,6 +17,12 @@ export const STORAGE_KEY = 'bills-pregame-dashboard:v1'
 export interface StorageAdapter {
   load(): Promise<AppState | null>
   save(state: AppState): Promise<void>
+  /**
+   * Persist NOW and resolve only when the write actually SUCCEEDED; REJECTS if
+   * it failed. Unlike `save` (fire-and-forget, debounced), this is what an
+   * explicit "Save Changes" button awaits so the UI shows a truthful result.
+   */
+  saveNow(state: AppState): Promise<void>
   /** Subscribe to external changes (other TVs/tabs). Returns unsubscribe. */
   subscribe(handler: (state: AppState) => void): () => void
 }
@@ -46,6 +52,11 @@ export class LocalStorageAdapter implements StorageAdapter {
     } catch (err) {
       console.warn('[storage] failed to save state', err)
     }
+  }
+
+  /** Awaited save that surfaces failure (e.g. quota exceeded) to the caller. */
+  async saveNow(state: AppState): Promise<void> {
+    localStorage.setItem(this.key, JSON.stringify(state))
   }
 
   subscribe(handler: (state: AppState) => void): () => void {
@@ -114,6 +125,30 @@ export class SupabaseAdapter implements StorageAdapter {
     this.pending = state
     if (this.saveTimer) clearTimeout(this.saveTimer)
     this.saveTimer = setTimeout(() => this.flush(), 400)
+  }
+
+  /**
+   * Awaited, non-debounced save that REJECTS on failure so the caller can show
+   * a truthful result. Used by explicit "Save Changes" actions.
+   */
+  async saveNow(state: AppState): Promise<void> {
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer)
+      this.saveTimer = undefined
+    }
+    this.pending = null
+    this.cache.save(state)
+    if (!supabase) return
+    const { error } = await supabase.from('boards').upsert(
+      {
+        id: this.boardId,
+        state,
+        updated_by: this.clientId,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'id' },
+    )
+    if (error) throw new Error(error.message || 'Database write was rejected.')
   }
 
   private async flush(): Promise<void> {
