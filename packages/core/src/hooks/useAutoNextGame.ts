@@ -3,15 +3,19 @@ import { useDashboard } from '../context/DashboardContext'
 import { getTeam, masterGames, applyOverride } from '../product'
 import { getScope } from '../lib/session'
 import { etWallTimeToEpoch } from '../lib/time'
-import type { GameInfo, NflGame } from '../types'
+import { selectNextGame, toGameInfo, FINISHED_AFTER_MS } from '../lib/nextGame'
+import type { NflGame } from '../types'
 
 /**
- * Automatic next-game selection (#6). Once, after the board has hydrated, this
- * picks the team's NEXT upcoming game from the active schedule (imported/custom
- * supersedes the shipped master, overrides applied) and loads it — but ONLY when
- * the currently-loaded game is missing or already in the past. A valid current/
- * future selection (including a deliberate manual pick) is left untouched, so
- * manual selection is never corrupted. Skipped on read-only TV displays.
+ * Automatic next-game selection (Part 9). Once, after the board has hydrated,
+ * this picks the team's NEXT upcoming game from the active schedule (imported/
+ * custom supersedes the shipped master, overrides applied) and loads it — but
+ * ONLY when the currently-loaded game is missing or already in the past. A valid
+ * current/future selection (including a deliberate manual pick) is left
+ * untouched, so manual selection is never corrupted. Skipped on TV displays.
+ *
+ * Games are chosen by DATE (a TBD kickoff still counts, and loads as TBD rather
+ * than a fabricated time), impossible games are dropped, and byes are skipped.
  */
 export function useAutoNextGame(): void {
   const { state, actions, hydrated } = useDashboard()
@@ -24,40 +28,25 @@ export function useAutoNextGame(): void {
 
     const teamId = state.game.teamId
     const season = state.season
+    const teamName = getTeam(teamId)?.name
     const custom = state.customGames.filter((g) => g.teamId === teamId && g.season === season)
-    const base: NflGame[] = custom.length ? custom : masterGames(teamId, season)
-    const games = base
-      .map((g) => applyOverride(g, state.gameOverrides[g.id]))
-      .filter((g) => g.status !== 'bye' && g.date && g.time)
-    if (!games.length) return
+    const base: NflGame[] = (custom.length ? custom : masterGames(teamId, season)).map((g) =>
+      applyOverride(g, state.gameOverrides[g.id]),
+    )
 
     const now = Date.now()
-    const koMs = (g: NflGame) => etWallTimeToEpoch(`${g.date}T${g.time}`, g.timezone)
-    const upcoming = [...games]
-      .sort((a, b) => koMs(a) - koMs(b))
-      .find((g) => koMs(g) + 4 * 3600 * 1000 > now) // not finished (kickoff + 4h in future)
+    const upcoming = selectNextGame(base, now, teamName)
     if (!upcoming) return
 
-    // Is the currently-loaded game still valid (set and not long past)?
+    // Respect a valid current/future (or manual) selection.
     const curKo = state.game.kickoffISO
       ? etWallTimeToEpoch(state.game.kickoffISO, state.game.timezone)
       : NaN
     const currentValid =
-      Boolean(state.game.sourceGameId) && !Number.isNaN(curKo) && curKo + 4 * 3600 * 1000 > now
-    if (currentValid) return // respect a valid current/future (or manual) selection
+      Boolean(state.game.sourceGameId) && !Number.isNaN(curKo) && curKo + FINISHED_AFTER_MS > now
+    if (currentValid) return
 
     const opp = upcoming.opponentId ? getTeam(upcoming.opponentId) : null
-    const info: GameInfo = {
-      teamId: upcoming.teamId,
-      opponentId: upcoming.opponentId,
-      opponent: opp ? opp.name : upcoming.opponentName ?? '',
-      week: upcoming.weekLabel,
-      homeAway: upcoming.homeAway,
-      kickoffISO: `${upcoming.date}T${upcoming.time}`,
-      timezone: upcoming.timezone,
-      venue: upcoming.venue,
-      sourceGameId: upcoming.id,
-    }
-    actions.loadGame(info)
+    actions.loadGame(toGameInfo(upcoming, opp ? opp.name : upcoming.opponentName ?? ''))
   }, [hydrated, state, actions])
 }

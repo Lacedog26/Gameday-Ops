@@ -6,7 +6,7 @@ import type {
   ScheduleTemplate,
   Settings,
 } from '@gamedayops/core'
-import { epochToEtWallISO, uid } from '@gamedayops/core'
+import { uid } from '@gamedayops/core'
 
 // ---------------------------------------------------------------------------
 // GameDayOps College — shipped defaults (Texas demonstration org).
@@ -116,20 +116,23 @@ export function defaultSettings(): Settings {
   }
 }
 
-/** First-run state: Texas, kickoff seeded ~80 min out for an immediate demo. */
-export function makeDefaultState(now = Date.now()): AppState {
+/**
+ * First-run state. No game is fabricated: the board starts on the default team
+ * with a ready pre-game template, and automatic next-game selection loads the
+ * team's next scheduled game (or the operator picks/imports one). This keeps the
+ * very first screen honest instead of showing an invented matchup/kickoff.
+ */
+export function makeDefaultState(_now = Date.now()): AppState {
   const templates = defaultTemplates()
   const home = templates[0]
   return {
     version: 2,
     game: {
       teamId: 'TEX',
-      opponentId: 'GA',
-      opponent: 'Georgia',
-      week: 'Week 6',
-      kickoffISO: epochToEtWallISO(now + 80 * 60 * 1000),
+      opponent: '',
+      week: '',
+      kickoffISO: '',
       homeAway: 'HOME',
-      venue: 'DKR–Texas Memorial Stadium',
     },
     activeEvents: home.events.map((e) => ({ ...e })),
     templates,

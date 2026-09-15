@@ -182,7 +182,7 @@ export interface ScheduleTemplate {
 
 /** Game-day metadata shown in the header. */
 export interface GameInfo {
-  /** The team this board is themed as. Defaults to Buffalo. */
+  /** The team this board is themed as. Defaults to the product's default team. */
   teamId: TeamId
   /** The opponent team id (preferred). Falls back to the free-text `opponent`. */
   opponentId?: TeamId
@@ -202,6 +202,12 @@ export interface GameInfo {
   sourceGameId?: GameId
   /** Original kickoff (ISO) when this game's time was changed from the schedule. */
   originalKickoffISO?: string
+  /**
+   * True when the kickoff TIME is not yet known (schedule shows TBD). The date
+   * is still used to identify the next game; the board shows "Kickoff TBD" and
+   * prompts the operator to set the exact time rather than inventing one.
+   */
+  kickoffTbd?: boolean
 }
 
 /** A team-culture graphic shown in the rotating motivation panel. */

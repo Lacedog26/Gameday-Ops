@@ -26,12 +26,15 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
   // the default white→secondary gradient (keeps shipped team looks unchanged).
   const textOverride = state.teamBranding?.[game.teamId]?.colors?.text
 
+  const tbd = !!game.kickoffTbd
   const preKick = secondsToKickoff > 0
-  const kickClock = formatClock(kickoffAt)
+  const kickClock = tbd ? 'TBD' : formatClock(kickoffAt)
 
   // The big kickoff clock stays clean white, then turns red as kickoff nears —
   // solid red under 5 min, red + pulse under 2 min, green once we're LIVE.
-  const kickoffColor = !preKick
+  const kickoffColor = tbd
+    ? 'text-slate-300'
+    : !preKick
     ? 'text-alert-go drop-shadow-[0_4px_24px_rgba(34,197,94,0.5)]'
     : secondsToKickoff <= 120
       ? 'text-redbright animate-pulse-soft drop-shadow-[0_0_30px_rgba(255,31,62,0.9)]'
@@ -93,15 +96,15 @@ export default function Header({ nowMs, kickoffAt, secondsToKickoff }: HeaderPro
         <div className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(120%_120%_at_80%_20%,rgba(30,92,214,0.22),transparent_70%)]" />
         <div className="relative flex items-center gap-2 font-display text-[1.375rem] font-bold uppercase tracking-[0.4em] text-bills-red">
           <span className="inline-block h-2 w-2 animate-pulse-soft rounded-full bg-bills-red shadow-[0_0_10px_rgba(198,12,48,0.9)]" />
-          {preKick ? 'Kickoff In' : 'Kickoff'}
+          {tbd ? 'Kickoff' : preKick ? 'Kickoff In' : 'Kickoff'}
         </div>
         <motion.div
-          key={preKick ? 'pre' : 'post'}
+          key={tbd ? 'tbd' : preKick ? 'pre' : 'post'}
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`tnum relative font-mono font-bold leading-none text-[5.75rem] ${kickoffColor}`}
+          className={`tnum relative font-mono font-bold leading-none ${tbd ? 'text-[3.5rem]' : 'text-[5.75rem]'} ${kickoffColor}`}
         >
-          {preKick ? formatHMS(secondsToKickoff) : 'LIVE'}
+          {tbd ? 'TBD' : preKick ? formatHMS(secondsToKickoff) : 'LIVE'}
         </motion.div>
       </div>
 

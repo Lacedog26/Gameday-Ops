@@ -6,6 +6,7 @@ import { useOrg } from '../../context/OrgProvider'
 import { useNow } from '../../hooks/useNow'
 import { getTeam, masterGames, applyOverride, productConfig } from '../../product'
 import { usePageTitle } from '../../hooks/usePageTitle'
+import { sanitizeGames } from '../../lib/scheduleValidate'
 import { resolveTeam } from '../../brand'
 import { kickoffMs, formatCountdown, formatClock } from '../../lib/time'
 import { supabase } from '../../lib/supabaseConfig'
@@ -55,7 +56,7 @@ export default function HomePage() {
     const master = masterGames(team.id, state.season)
     const custom = state.customGames.filter((g) => g.teamId === team.id && g.season === state.season)
     const base = custom.length ? custom : master
-    return base
+    return sanitizeGames(base, team.name)
       .map((g) => applyOverride(g, state.gameOverrides[g.id]))
       .filter((g) => g.status !== 'bye')
       .sort((a, b) => `${a.date}T${a.time || '00:00'}`.localeCompare(`${b.date}T${b.time || '00:00'}`))
@@ -66,7 +67,9 @@ export default function HomePage() {
 
   // Live kickoff countdown for the loaded game.
   const hasGame = Boolean(state.game.kickoffISO && (state.game.opponent || state.game.opponentId))
-  const ko = hasGame ? kickoffMs(state.game) : NaN
+  const kickoffTbd = Boolean(state.game.kickoffTbd)
+  const kickoffKnown = hasGame && !kickoffTbd
+  const ko = kickoffKnown ? kickoffMs(state.game) : NaN
   const secsToKick = Number.isNaN(ko) ? NaN : Math.max(0, Math.floor((ko - now) / 1000))
 
   // TV displays connected (real count from the org's displays).
@@ -90,7 +93,7 @@ export default function HomePage() {
   // Readiness — computed from real state, never faked.
   const checks = [
     { label: 'Schedule loaded', ok: hasGame, fix: 'Import or select a game', required: true },
-    { label: 'Kickoff confirmed', ok: hasGame && !!state.game.kickoffISO, fix: 'Set the kickoff time', required: true },
+    { label: 'Kickoff confirmed', ok: kickoffKnown, fix: 'Set the kickoff time', required: true },
     { label: 'Timeline configured', ok: state.activeEvents.length > 0, fix: 'Build your pre-game timeline', required: true },
     { label: 'Team branding', ok: Boolean(logo || team.colors?.primary), fix: 'Add your logo & colors', required: false },
     {
@@ -120,6 +123,7 @@ export default function HomePage() {
       week: g.weekLabel,
       homeAway: g.homeAway,
       kickoffISO: g.time ? `${g.date}T${g.time}` : `${g.date}T12:00`,
+      kickoffTbd: !g.time,
       timezone: g.timezone,
       venue: g.venue,
       sourceGameId: g.id,
@@ -179,17 +183,28 @@ export default function HomePage() {
               </div>
               <div className="mt-1 text-slate-300">
                 {state.game.week ? `${state.game.week} · ` : ''}
-                {state.game.kickoffISO
-                  ? `${fmtDate(state.game.kickoffISO.slice(0, 10))} · ${formatClock(ko)}`
-                  : 'Date & kickoff TBD'}
+                {kickoffTbd
+                  ? `${fmtDate(state.game.kickoffISO.slice(0, 10))} · Kickoff TBD`
+                  : state.game.kickoffISO
+                    ? `${fmtDate(state.game.kickoffISO.slice(0, 10))} · ${formatClock(ko)}`
+                    : 'Date & kickoff TBD'}
                 {state.game.venue ? ` · ${state.game.venue}` : ''}
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-4">
                 <div>
-                  <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Kickoff in</div>
-                  <div className="tnum font-display text-4xl font-extrabold text-team-primary sm:text-5xl">
-                    {Number.isNaN(secsToKick) ? '—' : formatCountdown(secsToKick)}
+                  <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
+                    {kickoffTbd ? 'Kickoff' : 'Kickoff in'}
                   </div>
+                  {kickoffTbd ? (
+                    <div className="font-display text-2xl font-extrabold text-slate-300 sm:text-3xl">
+                      TBD —{' '}
+                      <Link to="/admin" className="text-team-primary hover:underline">set time</Link>
+                    </div>
+                  ) : (
+                    <div className="tnum font-display text-4xl font-extrabold text-team-primary sm:text-5xl">
+                      {Number.isNaN(secsToKick) ? '—' : formatCountdown(secsToKick)}
+                    </div>
+                  )}
                 </div>
                 <span className={`ml-auto rounded-full border px-4 py-2 text-sm font-bold tracking-wide ${statusUi.cls}`}>
                   {statusUi.text}
