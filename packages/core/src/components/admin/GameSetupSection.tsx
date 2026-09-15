@@ -2,7 +2,8 @@ import { useDashboard } from '../../context/DashboardContext'
 import { formatClock, kickoffMs } from '../../lib/time'
 import { getTeam, masterGames, applyOverride } from '../../product'
 import { selectNextGame, toGameInfo } from '../../lib/nextGame'
-import { Section, Field, TextInput, Select } from './ui'
+import { useResolvedSchedule } from '../../hooks/useResolvedSchedule'
+import { Section, Field, TextInput, Select, Button } from './ui'
 import TeamPicker from './TeamPicker'
 
 /** Edit the game-day header info: team, opponent, week, home/away, kickoff. */
@@ -12,6 +13,17 @@ export default function GameSetupSection() {
   const kickoffAt = kickoffMs(game)
   const kickoffValid = !Number.isNaN(kickoffAt)
   const team = getTeam(game.teamId)
+  const resolved = useResolvedSchedule()
+  const onManualPick =
+    Boolean(game.manualOverride) ||
+    Boolean(resolved.nextGame && game.sourceGameId && resolved.nextGame.id !== game.sourceGameId)
+
+  // Resume automatic, schedule-driven selection.
+  const useNextGame = () => {
+    if (!resolved.nextGame) return
+    const o = resolved.nextGame.opponentId ? getTeam(resolved.nextGame.opponentId) : null
+    actions.loadGame(toGameInfo(resolved.nextGame, o ? o.name : resolved.nextGame.opponentName ?? '', { manual: false }))
+  }
 
   // Switching teams re-themes the board AND loads that team's next scheduled
   // game (Part 9). If the new team has no schedule yet, the game is cleared so
@@ -44,6 +56,20 @@ export default function GameSetupSection() {
 
   return (
     <Section title="Game Setup" subtitle="Header info & kickoff time" accent="red">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-navy-950/50 px-4 py-2.5">
+        <span className="text-sm text-slate-300">
+          {onManualPick ? (
+            <>Manually selected game — automatic next-game is paused.</>
+          ) : resolved.nextGame ? (
+            <>Following the schedule automatically — next game resolves from your season.</>
+          ) : (
+            <>No upcoming games found — import or add a schedule below.</>
+          )}
+        </span>
+        {onManualPick && resolved.nextGame && (
+          <Button variant="ghost" onClick={useNextGame}>Use next scheduled game →</Button>
+        )}
+      </div>
       <div className="mb-4 grid gap-4 sm:grid-cols-2">
         <Field label="Team (themes the board)">
           <TeamPicker value={game.teamId} onChange={changeTeam} placeholder="Select your team" />
@@ -55,7 +81,9 @@ export default function GameSetupSection() {
             excludeId={game.teamId}
             allowEmpty
             placeholder="Select opponent"
-            onChange={(id) => actions.setGame({ opponentId: id || undefined, opponent: id ? getTeam(id).name : '' })}
+            onChange={(id) =>
+              actions.setGame({ opponentId: id || undefined, opponent: id ? getTeam(id).name : '', manualOverride: true })
+            }
           />
         </Field>
       </div>

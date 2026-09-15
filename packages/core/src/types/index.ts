@@ -208,7 +208,24 @@ export interface GameInfo {
    * prompts the operator to set the exact time rather than inventing one.
    */
   kickoffTbd?: boolean
+  /**
+   * True when the operator MANUALLY chose this game (a future game to prep, a
+   * past game to review, an override). While set, automatic next-game selection
+   * leaves the board alone; "Use Next Game" clears it and resumes auto mode.
+   */
+  manualOverride?: boolean
 }
+
+/**
+ * Where a game sits in real time relative to now. Drives schedule resolution and
+ * the "next game" the whole app agrees on.
+ */
+export type GameState =
+  | 'upcoming' // scheduled in the future
+  | 'live' // kicked off, not yet finished
+  | 'completed' // finished (season may be over)
+  | 'bye' // no game this week; the next real game is shown
+  | 'unknown' // no usable schedule data yet
 
 /** A team-culture graphic shown in the rotating motivation panel. */
 export interface CultureGraphic {

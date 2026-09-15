@@ -6,11 +6,13 @@ import { useOrg } from '../../context/OrgProvider'
 import { useNow } from '../../hooks/useNow'
 import { getTeam, masterGames, applyOverride, productConfig } from '../../product'
 import { usePageTitle } from '../../hooks/usePageTitle'
+import { useResolvedSchedule } from '../../hooks/useResolvedSchedule'
 import { sanitizeGames } from '../../lib/scheduleValidate'
+import { toGameInfo } from '../../lib/nextGame'
 import { resolveTeam } from '../../brand'
 import { kickoffMs, formatCountdown, formatClock } from '../../lib/time'
 import { supabase } from '../../lib/supabaseConfig'
-import type { GameInfo, NflGame } from '../../types'
+import type { NflGame } from '../../types'
 import TeamMonogram from '../common/TeamMonogram'
 import TrialBadge from '../billing/TrialBadge'
 
@@ -45,6 +47,7 @@ export default function HomePage() {
   const { user, signOut } = useAuth()
   const nav = useNavigate()
   const now = useNow(1000)
+  const resolved = useResolvedSchedule()
 
   const team = resolveTeam(getTeam(state.game.teamId), state.teamBranding?.[state.game.teamId])
   const logo = state.teamLogos[team.id]?.url || team.assets.primaryLogoUrl
@@ -115,23 +118,23 @@ export default function HomePage() {
     notready: { text: 'NOT READY', cls: 'text-bills-red border-bills-red/50 bg-bills-red/10' },
   }[status]
 
+  // Manually picking a game from the list is an OVERRIDE (prep/review a specific
+  // game) — it pauses auto-advancement until "Use next game" is clicked.
   const loadGameToBoard = (g: NflGame) => {
     const o = g.opponentId ? getTeam(g.opponentId) : null
-    const info: GameInfo = {
-      teamId: g.teamId,
-      opponentId: g.opponentId,
-      opponent: o ? o.name : g.opponentName ?? '',
-      week: g.weekLabel,
-      homeAway: g.homeAway,
-      kickoffISO: g.time ? `${g.date}T${g.time}` : `${g.date}T12:00`,
-      kickoffTbd: !g.time,
-      timezone: g.timezone,
-      venue: g.venue,
-      sourceGameId: g.id,
-    }
-    actions.loadGame(info)
+    actions.loadGame(toGameInfo(g, o ? o.name : g.opponentName ?? '', { manual: true }))
     nav('/board')
   }
+
+  // Resume automatic, schedule-driven selection.
+  const useNextGame = () => {
+    if (!resolved.nextGame) return
+    const o = resolved.nextGame.opponentId ? getTeam(resolved.nextGame.opponentId) : null
+    actions.loadGame(toGameInfo(resolved.nextGame, o ? o.name : resolved.nextGame.opponentName ?? '', { manual: false }))
+  }
+  const onManualPick =
+    Boolean(state.game.manualOverride) ||
+    Boolean(resolved.nextGame && state.game.sourceGameId && resolved.nextGame.id !== state.game.sourceGameId)
 
   return (
     <div className="field-bg min-h-full w-full overflow-y-auto text-white">
@@ -169,10 +172,20 @@ export default function HomePage() {
       </header>
 
       <main className="mx-auto flex max-w-4xl flex-col gap-5 px-4 py-6">
+        {/* Manual-override banner: schedule stays the source of truth. */}
+        {onManualPick && resolved.nextGame && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+            <span>You're on a manually selected game. The schedule's next game is <b>{resolved.nextGame.opponentName ?? 'your next opponent'}</b>.</span>
+            <button onClick={useNextGame} className="rounded-full bg-amber-400/90 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-navy-950 hover:bg-amber-300">
+              Use next game →
+            </button>
+          </div>
+        )}
+
         {/* NEXT GAME hero */}
         <section className="rounded-2xl border border-white/10 bg-navy-950/60 p-5 sm:p-6">
           <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-400">
-            {hasGame ? 'Next Game' : 'No game loaded'}
+            {hasGame ? (state.game.manualOverride ? 'Selected Game' : 'Next Game') : 'No game loaded'}
           </div>
           {hasGame ? (
             <>

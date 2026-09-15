@@ -34,16 +34,24 @@ export function useAutoNextGame(): void {
       applyOverride(g, state.gameOverrides[g.id]),
     )
 
+    // A deliberate manual override pauses auto-advancement until the operator
+    // clicks "Use Next Game" (which clears the flag). The schedule stays the
+    // source of truth; this is just the user temporarily steering.
+    if (state.game.manualOverride) return
+
     const now = Date.now()
     const upcoming = selectNextGame(base, now, teamName)
     if (!upcoming) return
 
-    // Respect a valid current/future (or manual) selection.
+    // Respect a valid current/future selection that is already the resolved game.
     const curKo = state.game.kickoffISO
       ? etWallTimeToEpoch(state.game.kickoffISO, state.game.timezone)
       : NaN
     const currentValid =
-      Boolean(state.game.sourceGameId) && !Number.isNaN(curKo) && curKo + FINISHED_AFTER_MS > now
+      Boolean(state.game.sourceGameId) &&
+      state.game.sourceGameId === upcoming.id &&
+      !Number.isNaN(curKo) &&
+      curKo + FINISHED_AFTER_MS > now
     if (currentValid) return
 
     const opp = upcoming.opponentId ? getTeam(upcoming.opponentId) : null
