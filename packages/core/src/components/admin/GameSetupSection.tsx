@@ -1,8 +1,9 @@
 import { useDashboard } from '../../context/DashboardContext'
 import { formatClock, kickoffMs } from '../../lib/time'
-import { getTeam, teamsByDivision, masterGames, applyOverride } from '../../product'
+import { getTeam, masterGames, applyOverride } from '../../product'
 import { selectNextGame, toGameInfo } from '../../lib/nextGame'
 import { Section, Field, TextInput, Select } from './ui'
+import TeamPicker from './TeamPicker'
 
 /** Edit the game-day header info: team, opponent, week, home/away, kickoff. */
 export default function GameSetupSection() {
@@ -10,7 +11,6 @@ export default function GameSetupSection() {
   const { game } = state
   const kickoffAt = kickoffMs(game)
   const kickoffValid = !Number.isNaN(kickoffAt)
-  const divisions = teamsByDivision()
   const team = getTeam(game.teamId)
 
   // Switching teams re-themes the board AND loads that team's next scheduled
@@ -46,43 +46,17 @@ export default function GameSetupSection() {
     <Section title="Game Setup" subtitle="Header info & kickoff time" accent="red">
       <div className="mb-4 grid gap-4 sm:grid-cols-2">
         <Field label="Team (themes the board)">
-          <Select
-            value={game.teamId}
-            onChange={(e) => changeTeam(e.target.value)}
-          >
-            {divisions.map((d) => (
-              <optgroup key={d.label} label={d.label}>
-                {d.teams.map((tm) => (
-                  <option key={tm.id} value={tm.id}>
-                    {tm.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </Select>
+          <TeamPicker value={game.teamId} onChange={changeTeam} placeholder="Select your team" />
         </Field>
 
         <Field label="Opponent">
-          <Select
+          <TeamPicker
             value={game.opponentId ?? ''}
-            onChange={(e) => {
-              const id = e.target.value
-              actions.setGame({ opponentId: id, opponent: id ? getTeam(id).name : '' })
-            }}
-          >
-            <option value="">— Select opponent —</option>
-            {divisions.map((d) => (
-              <optgroup key={d.label} label={d.label}>
-                {d.teams
-                  .filter((tm) => tm.id !== game.teamId)
-                  .map((tm) => (
-                    <option key={tm.id} value={tm.id}>
-                      {tm.name}
-                    </option>
-                  ))}
-              </optgroup>
-            ))}
-          </Select>
+            excludeId={game.teamId}
+            allowEmpty
+            placeholder="Select opponent"
+            onChange={(id) => actions.setGame({ opponentId: id || undefined, opponent: id ? getTeam(id).name : '' })}
+          />
         </Field>
       </div>
 

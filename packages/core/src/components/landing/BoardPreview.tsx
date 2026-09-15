@@ -82,3 +82,65 @@ export default function BoardPreview() {
     </div>
   )
 }
+
+/** A compact preview of the pre-game timeline editor (real admin UI language). */
+export function TimelinePreview() {
+  const rows = [
+    { t: 'T-90:00', label: 'SPECIALISTS OUT' },
+    { t: 'T-60:00', label: 'OFFENSE OUT' },
+    { t: 'T-38:00', label: 'INDIVIDUAL' },
+    { t: 'T-33:00', label: 'SEVEN ON SEVEN' },
+    { t: 'T-0', label: 'KICKOFF' },
+  ]
+  return (
+    <div className="overflow-hidden rounded-2xl border border-white/12 bg-[#070b16] shadow-xl shadow-black/40">
+      <div className="flex items-center justify-between border-b border-white/10 bg-[#0a1120] px-4 py-3">
+        <span className="font-display text-sm font-extrabold uppercase tracking-wide text-white">Pre-Game Timeline</span>
+        <span className="rounded-full bg-emerald-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-navy-950">Save changes</span>
+      </div>
+      <div className="flex flex-wrap gap-1.5 border-b border-white/5 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+        Anchor:
+        {['T-77', 'T-79', 'T-80'].map((a, i) => (
+          <span key={a} className={`rounded px-2 py-0.5 ${i === 1 ? 'bg-emerald-500 text-navy-950' : 'bg-white/10 text-slate-300'}`}>{a}</span>
+        ))}
+      </div>
+      <div className="flex flex-col gap-1.5 p-3">
+        {rows.map((r) => (
+          <div key={r.label} className="grid grid-cols-[16px_78px_1fr] items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+            <span className="text-slate-600">⋮⋮</span>
+            <span className="font-display text-xs font-bold tracking-wide text-emerald-300">{r.t}</span>
+            <span className="truncate font-display text-sm font-extrabold uppercase tracking-tight text-white">{r.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** A compact preview of the schedule / game setup (real admin UI language). */
+export function SchedulePreview() {
+  const games = [
+    { wk: 'Week 1', date: 'Sat, Sep 5', opp: 'vs Ohio State', time: 'TBD' },
+    { wk: 'Week 6', date: 'Sat, Oct 10', opp: 'at Oklahoma', time: '6:30 PM' },
+    { wk: 'Rivalry', date: 'Sat, Nov 28', opp: 'at Texas A&M', time: 'TBD' },
+  ]
+  return (
+    <div className="overflow-hidden rounded-2xl border border-white/12 bg-[#070b16] shadow-xl shadow-black/40">
+      <div className="flex items-center justify-between border-b border-white/10 bg-[#0a1120] px-4 py-3">
+        <span className="font-display text-sm font-extrabold uppercase tracking-wide text-white">Schedule</span>
+        <span className="rounded-full border border-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-200">Import schedule</span>
+      </div>
+      <div className="flex flex-col gap-1.5 p-3">
+        {games.map((g, i) => (
+          <div key={g.wk} className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border px-3 py-2 ${i === 0 ? 'border-emerald-400/40 bg-emerald-500/5' : 'border-white/10 bg-white/[0.03]'}`}>
+            <span className="w-16 shrink-0 font-display text-xs font-bold text-slate-300">{g.wk}</span>
+            <span className="w-24 shrink-0 text-xs font-semibold text-slate-300">{g.date}</span>
+            <span className="min-w-[120px] flex-1 font-display text-sm font-bold text-white">{g.opp}</span>
+            <span className="tnum font-mono text-xs font-bold text-sky-300">{g.time}</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-300">{i === 0 ? 'Loaded' : 'Load'}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

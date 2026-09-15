@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { productConfig } from '../../product'
 import { PLAN, TRIAL_POLICY } from '../../billing'
 import { usePageTitle } from '../../hooks/usePageTitle'
-import BoardPreview from './BoardPreview'
+import BoardPreview, { TimelinePreview, SchedulePreview } from './BoardPreview'
 import PricingCards from './PricingCards'
 import Faq from './Faq'
 import ContactForm from './ContactForm'
@@ -75,6 +75,16 @@ export default function Landing() {
       <section id="how" className="mx-auto max-w-6xl px-6 pb-14 pt-2">
         <BoardPreview />
         <p className="mt-3 text-center text-xs text-slate-500">The live operator board — mirrored to every TV in your facility.</p>
+        <div className="mt-8 grid gap-5 sm:grid-cols-2">
+          <div>
+            <TimelinePreview />
+            <p className="mt-2 text-center text-xs text-slate-500">Build your routine to the second — the whole timeline shifts with the anchor.</p>
+          </div>
+          <div>
+            <SchedulePreview />
+            <p className="mt-2 text-center text-xs text-slate-500">Your season, with the next game ready to load. Import any team in seconds.</p>
+          </div>
+        </div>
       </section>
 
       {/* What it does */}
