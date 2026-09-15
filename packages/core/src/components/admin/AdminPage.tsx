@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useDashboard } from '../../context/DashboardContext'
 import { useAuth } from '../../context/AuthProvider'
 import { getTeam, productConfig } from '../../product'
+import { usePageTitle } from '../../hooks/usePageTitle'
 import { resolveTeam } from '../../brand'
 import TeamMonogram from '../common/TeamMonogram'
 import ScheduleCenterSection from './ScheduleCenterSection'
@@ -23,6 +24,7 @@ import { buildLabel } from '../../lib/buildInfo'
  * localStorage across every open dashboard).
  */
 export default function AdminPage() {
+  usePageTitle(`${productConfig().productName} — Admin`)
   const { state } = useDashboard()
   const { user, signOut } = useAuth()
   const productName = productConfig().productName
@@ -46,6 +48,12 @@ export default function AdminPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            to="/billing"
+            className="hidden rounded-full border border-white/20 px-4 py-2 text-sm font-bold tracking-wider text-slate-200 hover:bg-white/10 sm:inline-block"
+          >
+            Billing
+          </Link>
           {user && (
             <button
               onClick={() => signOut()}

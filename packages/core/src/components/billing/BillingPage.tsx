@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthProvider'
 import { useOrg } from '../../context/OrgProvider'
 import { isEntitled } from '../../billing'
 import { productConfig } from '../../product'
+import { usePageTitle } from '../../hooks/usePageTitle'
 import BillingSection from '../admin/BillingSection'
 
 /**
@@ -11,6 +12,7 @@ import BillingSection from '../admin/BillingSection'
  * reactivate. When they become entitled again, the links below let them back in.
  */
 export default function BillingPage() {
+  usePageTitle(`${productConfig().productName} — Billing`)
   const { user, signOut } = useAuth()
   const { subscription } = useOrg()
   const entitled = isEntitled(subscription ?? undefined)

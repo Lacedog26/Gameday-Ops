@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDashboard } from '../../context/DashboardContext'
+import { productConfig } from '../../product'
+import { usePageTitle } from '../../hooks/usePageTitle'
 import { useNow } from '../../hooks/useNow'
 import { useTimeline } from '../../hooks/useTimeline'
 import { useAlertSounds } from '../../hooks/useAlertSounds'
@@ -22,6 +24,7 @@ import ConnectionStatus from './ConnectionStatus'
  * wake-lock, fullscreen, keyboard shortcuts, and browser notifications.
  */
 export default function Dashboard({ kiosk = false }: { kiosk?: boolean }) {
+  usePageTitle(`${productConfig().productName} — Live Board`)
   const { state, actions } = useDashboard()
   const { settings } = state
   const nowMs = useNow(1000)

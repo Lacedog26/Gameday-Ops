@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthProvider'
 import { productConfig } from '../../product'
+import { usePageTitle } from '../../hooks/usePageTitle'
 
-type Mode = 'signin' | 'signup' | 'reset'
+type Mode = 'signin' | 'reset'
 
-/** Email/password auth screen for the admin. Board & TV display stay public. */
+/** Email/password sign-in for the admin. New customers sign up at /signup. */
 export default function LoginPage() {
-  const { signIn, signUp, resetPassword, authAvailable } = useAuth()
+  usePageTitle(`${titleName()} — Sign In`)
+  const { signIn, resetPassword, authAvailable } = useAuth()
   const nav = useNavigate()
   const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
@@ -23,15 +25,10 @@ export default function LoginPage() {
       if (mode === 'reset') {
         const { error } = await resetPassword(email)
         setMsg(error ?? 'Password reset email sent (if the account exists).')
-      } else if (mode === 'signup') {
-        const { error, needsConfirm } = await signUp(email, password)
-        if (error) setMsg(error)
-        else if (needsConfirm) setMsg('Account created — check your email to confirm, then sign in.')
-        else nav('/admin')
       } else {
         const { error } = await signIn(email, password)
         if (error) setMsg(error)
-        else nav('/admin')
+        else nav('/')
       }
     } finally {
       setBusy(false)
@@ -46,7 +43,7 @@ export default function LoginPage() {
             {productConfig().productName}
           </div>
           <p className="mt-1 text-sm text-slate-400">
-            {mode === 'signup' ? 'Create your account' : mode === 'reset' ? 'Reset your password' : 'Sign in to your admin'}
+            {mode === 'reset' ? 'Reset your password' : 'Sign in to your account'}
           </p>
         </div>
 
@@ -65,7 +62,7 @@ export default function LoginPage() {
           {mode !== 'reset' && (
             <input
               type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+              placeholder="Password" autoComplete="current-password"
               className="rounded-lg border border-white/15 bg-white/[0.04] px-4 py-3 outline-none focus:border-emerald-400"
             />
           )}
@@ -73,23 +70,19 @@ export default function LoginPage() {
             type="submit" disabled={busy || !authAvailable}
             className="rounded-lg bg-emerald-500 px-4 py-3 font-bold uppercase tracking-wide text-navy-950 transition hover:bg-emerald-400 disabled:opacity-50"
           >
-            {busy ? '…' : mode === 'signup' ? 'Start Free Trial' : mode === 'reset' ? 'Send Reset Link' : 'Sign In'}
+            {busy ? '…' : mode === 'reset' ? 'Send Reset Link' : 'Sign In'}
           </button>
         </form>
 
         {msg && <p className="mt-3 text-center text-sm text-slate-300">{msg}</p>}
 
         <div className="mt-5 flex items-center justify-between text-xs text-slate-400">
-          {mode !== 'signin' ? (
+          {mode === 'reset' ? (
             <button onClick={() => setMode('signin')} className="hover:text-white">← Sign in</button>
           ) : (
             <button onClick={() => setMode('reset')} className="hover:text-white">Forgot password?</button>
           )}
-          {mode !== 'signup' ? (
-            <button onClick={() => setMode('signup')} className="hover:text-white">Create account →</button>
-          ) : (
-            <span />
-          )}
+          <Link to="/signup" className="hover:text-white">Start free trial →</Link>
         </div>
 
         <div className="mt-6 text-center text-xs text-slate-500">
@@ -98,4 +91,12 @@ export default function LoginPage() {
       </div>
     </div>
   )
+}
+
+function titleName(): string {
+  try {
+    return productConfig().productName
+  } catch {
+    return 'GameDayOps College'
+  }
 }

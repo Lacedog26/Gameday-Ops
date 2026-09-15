@@ -22,7 +22,11 @@ export interface AuthValue {
   /** True after a password-reset link is opened, until a new password is set. */
   recovery: boolean
   signIn: (email: string, password: string) => Promise<{ error?: string }>
-  signUp: (email: string, password: string) => Promise<{ error?: string; needsConfirm?: boolean }>
+  signUp: (
+    email: string,
+    password: string,
+    metadata?: Record<string, string>,
+  ) => Promise<{ error?: string; needsConfirm?: boolean }>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error?: string }>
   updatePassword: (password: string) => Promise<{ error?: string }>
@@ -69,12 +73,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       return { error: error?.message }
     },
-    async signUp(email, password) {
+    async signUp(email, password, metadata) {
       if (!supabase) return { error: 'Backend not configured.' }
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: redirectBase() },
+        // Store program/role on the account so it reads as a real football-program
+        // account (surfaced later in admin/support), not an anonymous login.
+        options: { emailRedirectTo: redirectBase(), data: metadata ?? {} },
       })
       return { error: error?.message, needsConfirm: !error && !data.session }
     },

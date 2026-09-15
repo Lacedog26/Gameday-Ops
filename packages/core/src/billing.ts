@@ -1,11 +1,14 @@
 // ---------------------------------------------------------------------------
-// Commercial / billing (Stripe-ready, NOT connected). No money moves here.
+// Commercial / billing. Stripe is the source of truth (checkout + webhook).
 //
 // ONE product, ONE simple plan (per product direction): low price, low friction.
-//   • GameDayOps College — $5.99/month  OR  $59.99/year
-//   • 14-day free trial, no card required to start.
+//   • GameDayOps College — $5.99/month  OR  $60/year
+//   • 14-day free trial. A credit card IS required to start. No charge today;
+//     it renews automatically at the selected plan after the trial unless
+//     canceled. This is the single, consistent trial policy across every
+//     surface (marketing, signup, billing, Terms, Stripe checkout).
 // Prices are CONFIGURABLE here (and via env at checkout), never hard-coded into
-// UI copy. A future Stripe integration + webhook fills in the subscription.
+// UI copy.
 // ---------------------------------------------------------------------------
 
 export type BillingInterval = 'monthly' | 'annual'
@@ -27,13 +30,13 @@ export const PLAN = {
   annualUsd: 60,
   trialDays: 14,
   features: [
-    'All FBS + FCS teams & schedules',
+    'Every FBS & FCS program selectable',
     'Live game-day countdown & alerts',
     'Position / group timing',
     'Team branding, logos & culture',
     'Editable pre-game templates',
-    'Unlimited TV displays',
-    'Schedule importer & overrides',
+    'Multiple TV displays',
+    'Schedule importer (screenshot, CSV, PDF, paste)',
   ],
 } as const
 
@@ -103,3 +106,21 @@ export function entitlementReason(sub?: Subscription, now = Date.now()): Entitle
 export function priceLabel(interval: BillingInterval): string {
   return interval === 'annual' ? `$${PLAN.annualUsd}/year` : `$${PLAN.monthlyUsd}/month`
 }
+
+/**
+ * The ONE trial policy statement, reused verbatim across marketing, signup,
+ * billing, and Terms so the customer never sees conflicting language.
+ */
+export const TRIAL_POLICY = {
+  short: `${PLAN.trialDays}-day free trial · credit card required · no charge today`,
+  sentence:
+    `Start your ${PLAN.trialDays}-day free trial today. A credit card is required to start, ` +
+    `but you won't be charged today. After the trial your plan renews automatically ` +
+    `($${PLAN.monthlyUsd}/month or $${PLAN.annualUsd}/year) unless you cancel first. Cancel anytime.`,
+  afterTrial:
+    `When your ${PLAN.trialDays}-day trial ends, your selected plan begins automatically ` +
+    `unless you cancel before then. Manage or cancel anytime from Admin → Billing.`,
+} as const
+
+/** Roughly how much the annual plan saves vs paying monthly for a year. */
+export const ANNUAL_SAVINGS_USD = Math.round((PLAN.monthlyUsd * 12 - PLAN.annualUsd) * 100) / 100

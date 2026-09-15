@@ -30,7 +30,7 @@ export default function QuotesSection() {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
-          placeholder='e.g. "PUT THE BALL DOWN."'
+          placeholder='e.g. "PROTECT THIS HOUSE."'
           className="flex-1"
         />
         <Button onClick={add}>+ Add Quote</Button>

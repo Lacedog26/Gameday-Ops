@@ -25,11 +25,6 @@ export default function SettingsSection() {
           checked={settings.keepAwake}
           onChange={(v) => actions.setSettings({ keepAwake: v })}
         />
-        <Toggle
-          label="Show weather in header"
-          checked={settings.showWeather}
-          onChange={(v) => actions.setSettings({ showWeather: v })}
-        />
 
         <Field label={`Alert volume — ${Math.round(settings.volume * 100)}%`}>
           <input

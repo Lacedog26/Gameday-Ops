@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthProvider'
 import { useOrg } from '../../context/OrgProvider'
 import { useNow } from '../../hooks/useNow'
 import { getTeam, masterGames, applyOverride, productConfig } from '../../product'
+import { usePageTitle } from '../../hooks/usePageTitle'
 import { resolveTeam } from '../../brand'
 import { kickoffMs, formatCountdown, formatClock } from '../../lib/time'
 import { supabase } from '../../lib/supabaseConfig'
@@ -36,6 +37,7 @@ function fmtTime(time: string): string {
  * everything else lives under Admin.
  */
 export default function HomePage() {
+  usePageTitle(`${productConfig().productName} — Home`)
   const { state, actions } = useDashboard()
   const { org } = useOrg()
   const { user, signOut } = useAuth()
