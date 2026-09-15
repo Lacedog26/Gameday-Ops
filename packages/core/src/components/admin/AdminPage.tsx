@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthProvider'
 import { getTeam, productConfig } from '../../product'
 import { usePageTitle } from '../../hooks/usePageTitle'
 import { resolveTeam } from '../../brand'
+import TrialBadge from '../billing/TrialBadge'
 import TeamMonogram from '../common/TeamMonogram'
 import ScheduleCenterSection from './ScheduleCenterSection'
 import GameSetupSection from './GameSetupSection'
@@ -48,6 +49,7 @@ export default function AdminPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <TrialBadge />
           <Link
             to="/billing"
             className="hidden rounded-full border border-white/20 px-4 py-2 text-sm font-bold tracking-wider text-slate-200 hover:bg-white/10 sm:inline-block"

@@ -12,6 +12,7 @@ import { kickoffMs, formatCountdown, formatClock } from '../../lib/time'
 import { supabase } from '../../lib/supabaseConfig'
 import type { GameInfo, NflGame } from '../../types'
 import TeamMonogram from '../common/TeamMonogram'
+import TrialBadge from '../billing/TrialBadge'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -149,6 +150,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <TrialBadge />
           <Link
             to="/admin"
             className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-bold tracking-wider text-slate-200 hover:bg-white/10 sm:px-4 sm:text-sm"

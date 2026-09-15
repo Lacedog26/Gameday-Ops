@@ -11,9 +11,13 @@ const WH_SECRET = (Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '').trim()
 const SB_URL = (Deno.env.get('SUPABASE_URL') ?? '').trim()
 const SB_KEY = (Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '').trim()
 
+// Map Stripe subscription statuses to our subscriptions_status_check values.
+// NOTE: 'unpaid' is deliberately mapped to 'suspended' (a valid, NOT-entitled
+// status) — Stripe's 'unpaid' is not in our CHECK constraint, so writing it
+// verbatim would fail the PATCH and wedge the webhook in an infinite retry.
 const STATUS: Record<string, string> = {
   trialing: 'trialing', active: 'active', past_due: 'past_due',
-  canceled: 'canceled', unpaid: 'unpaid', incomplete: 'incomplete',
+  canceled: 'canceled', unpaid: 'suspended', incomplete: 'incomplete',
   incomplete_expired: 'expired', paused: 'suspended',
 }
 

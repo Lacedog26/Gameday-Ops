@@ -87,6 +87,15 @@ export default function DisplaysSection() {
 
   return (
     <Section title="TV Displays" subtitle="One secure, no-login kiosk link per TV" accent="blue">
+      <ol className="mb-4 grid gap-1.5 rounded-xl border border-white/10 bg-navy-950/50 p-4 text-sm text-slate-300 sm:grid-cols-2">
+        <li><span className="font-bold text-white">1.</span> Add a display below (e.g. "Team Room TV").</li>
+        <li><span className="font-bold text-white">2.</span> Click <b>Copy URL</b> for that display.</li>
+        <li><span className="font-bold text-white">3.</span> Open the link in a browser on the TV or its computer.</li>
+        <li><span className="font-bold text-white">4.</span> Press <kbd className="rounded bg-white/10 px-1.5">F</kbd> for fullscreen and leave it running.</li>
+        <li className="sm:col-span-2 text-xs text-slate-500">
+          The link is read-only and secure — it shows only your board, needs no login, and can be revoked anytime.
+        </li>
+      </ol>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <TextInput
           value={name}
